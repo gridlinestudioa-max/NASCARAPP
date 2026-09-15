@@ -1,0 +1,215 @@
+// Fantasy NASCAR HQ — starter database schema
+// This is a first draft of the data model from the backend plan, written in
+// Prisma's schema language. Hand this to Claude Code as a starting point —
+// it will very likely suggest small refinements as the app takes shape,
+// and that's expected and fine.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Connection URL lives in prisma7.config.ts (Prisma 7 moved it out of the
+// schema); the client itself connects via a driver adapter — see src/lib/prisma.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Accounts & Leagues ----------
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  memberships LeagueMembership[]
+  picks       Pick[]
+}
+
+enum LeagueType {
+  PICKEM
+  TIERED_DRAFT
+}
+
+model League {
+  id        String   @id @default(cuid())
+  name      String
+  type      LeagueType
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  memberships LeagueMembership[]
+  ruleSets    RuleSet[]
+  seasons     Season[]
+  picks       Pick[]
+}
+
+enum MembershipRole {
+  OWNER
+  MEMBER
+}
+
+model LeagueMembership {
+  id       String         @id @default(cuid())
+  leagueId String
+  userId   String
+  role     MembershipRole @default(MEMBER)
+
+  league League @relation(fields: [leagueId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([leagueId, userId])
+}
+
+// ---------- Rules (versioned — never edited in place once a season uses it) ----------
+
+model RuleSet {
+  id        String   @id @default(cuid())
+  leagueId  String
+  label     String   // e.g. "2026 Season Rules"
+  // Holds: scoring formula values, picksPerWeek, eligibility ("any_driver" |
+  // "must_match_weekly_tier"), tier definitions, repeatPickRule, etc.
+  config    Json
+  createdAt DateTime @default(now())
+
+  league  League   @relation(fields: [leagueId], references: [id])
+  seasons Season[]
+  tiers   Tier[]
+}
+
+model Season {
+  id        String @id @default(cuid())
+  leagueId  String
+  year      Int
+  ruleSetId String
+
+  league  League  @relation(fields: [leagueId], references: [id])
+  ruleSet RuleSet @relation(fields: [ruleSetId], references: [id])
+  races   Race[]
+
+  @@unique([leagueId, year])
+}
+
+// ---------- Drivers & Races (shared across every league) ----------
+
+model Driver {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  isActive Boolean @default(true)
+
+  raceResults     RaceResult[]
+  stageResults    StageResult[]
+  tierAssignments DriverTierAssignment[]
+  picks           Pick[]
+}
+
+enum RaceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETE
+}
+
+model Race {
+  id           String     @id @default(cuid())
+  seasonId     String
+  trackName    String
+  date         DateTime
+  fieldSize    Int
+  stage1Length Int?
+  stage2Length Int?
+  status       RaceStatus @default(SCHEDULED)
+
+  season          Season                 @relation(fields: [seasonId], references: [id])
+  results         RaceResult[]
+  stageResults    StageResult[]
+  tierAssignments DriverTierAssignment[]
+  picks           Pick[]
+}
+
+model RaceResult {
+  id                String  @id @default(cuid())
+  raceId            String
+  driverId          String
+  finishingPosition Int
+  dnf               Boolean @default(false)
+
+  race   Race   @relation(fields: [raceId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  @@unique([raceId, driverId])
+}
+
+model StageResult {
+  id          String @id @default(cuid())
+  raceId      String
+  stageNumber Int
+  driverId    String
+
+  race   Race   @relation(fields: [raceId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  @@unique([raceId, stageNumber])
+}
+
+// ---------- Tiers (Tiered Draft league type only) ----------
+
+model Tier {
+  id        String @id @default(cuid())
+  ruleSetId String
+  name      String
+  order     Int
+
+  ruleSet     RuleSet                @relation(fields: [ruleSetId], references: [id])
+  assignments DriverTierAssignment[]
+  picks       Pick[]
+}
+
+// Which tier a driver sits in for one specific race week — re-set every
+// week for the "weekly team" format.
+model DriverTierAssignment {
+  id       String @id @default(cuid())
+  raceId   String
+  driverId String
+  tierId   String
+
+  race   Race   @relation(fields: [raceId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+  tier   Tier   @relation(fields: [tierId], references: [id])
+
+  @@unique([raceId, driverId])
+}
+
+// ---------- Picks & Scoring ----------
+
+// One row per driver a user selects for a race. Pick'em leagues: one row
+// per user per race, tierId is null. Tiered Draft leagues: several rows
+// per user per race (one per tier slot).
+model Pick {
+  id       String  @id @default(cuid())
+  leagueId String
+  userId   String
+  raceId   String
+  driverId String
+  tierId   String?
+
+  league League @relation(fields: [leagueId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  race   Race   @relation(fields: [raceId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+  tier   Tier?  @relation(fields: [tierId], references: [id])
+
+  score Score?
+
+  @@unique([leagueId, userId, raceId, driverId])
+}
+
+model Score {
+  id         String @id @default(cuid())
+  pickId     String @unique
+  baseScore  Int
+  winBonus   Int
+  stageBonus Int
+  total      Int
+
+  pick Pick @relation(fields: [pickId], references: [id])
+}
