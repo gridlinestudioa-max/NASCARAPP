@@ -68,6 +68,13 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
   const standings = [...standingsByUser.values()].sort((a, b) => b.total - a.total);
   const season = league.seasons[0];
 
+  const races = season
+    ? await prisma.race.findMany({
+        where: { seasonId: season.id },
+        orderBy: { week: "asc" },
+      })
+    : [];
+
   return (
     <main>
       <p>
@@ -98,6 +105,22 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
           ))}
         </tbody>
       </table>
+
+      {races.length > 0 && (
+        <>
+          <h2>Races</h2>
+          <ul>
+            {races.map((r) => (
+              <li key={r.id}>
+                <Link href={`/leagues/${league.id}/races/${r.id}`}>
+                  Week {r.week} — {r.trackName}
+                </Link>
+                {r.isNonPoints && " (non-points)"}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </main>
   );
 }
