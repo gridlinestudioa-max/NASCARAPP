@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import styles from "./page.module.css";
 
+// This queries live data (league/driver counts) — statically prerendering
+// it would freeze those numbers at build time instead of reflecting the
+// database as it actually is.
+export const dynamic = "force-dynamic";
+
 async function getStatus() {
   try {
     const [leagueCount, driverCount] = await Promise.all([
