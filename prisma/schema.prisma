@@ -22,6 +22,11 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
+  // Null passwordHash means the account (e.g. from a historical data
+  // import) hasn't been claimed with a username/password yet.
+  username     String? @unique
+  passwordHash String?
+
   memberships LeagueMembership[]
   picks       Pick[]
 }

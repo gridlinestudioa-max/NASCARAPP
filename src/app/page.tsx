@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { signOutAction } from "./actions";
 import styles from "./page.module.css";
 
 // This queries live data (league/driver counts) — statically prerendering
@@ -22,13 +25,26 @@ async function getStatus() {
 }
 
 export default async function Home() {
-  const status = await getStatus();
+  const [status, session] = await Promise.all([getStatus(), auth()]);
 
   return (
     <div className={styles.page}>
       <main className={styles.main}>
         <h1>Fantasy NASCAR HQ</h1>
         <p>Pick&apos;em and Tiered Draft leagues, built on Next.js + Prisma.</p>
+
+        {session?.user ? (
+          <p>
+            Signed in as {session.user.name ?? session.user.email}.{" "}
+            <form action={signOutAction} style={{ display: "inline" }}>
+              <button type="submit">Sign out</button>
+            </form>
+          </p>
+        ) : (
+          <p>
+            <Link href="/login">Sign in</Link> or <Link href="/claim">claim your account</Link>.
+          </p>
+        )}
 
         {status.connected ? (
           <p>
