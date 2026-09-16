@@ -47,7 +47,10 @@ const PLAYER_EMAILS: Record<(typeof PLAYERS)[number], string> = {
   "Barth Sr": "barth-sr@fantasynascarhq.local",
 };
 
-const SEASON_YEAR = 2025;
+// The source data has no real dates, only week numbers — it's actually
+// this league's 2026 season (confirmed against the real 2026 Cup schedule:
+// week 29 "Gateway" lines up with the real Sep 13, 2026 WWT race), not 2025.
+const SEASON_YEAR = 2026;
 const LEAGUE_NAME = "Fantasy NASCAR HQ";
 const RULESET_LABEL = `${SEASON_YEAR} Season Rules`;
 
