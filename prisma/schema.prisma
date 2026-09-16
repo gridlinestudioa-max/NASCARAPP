@@ -110,7 +110,11 @@ enum RaceStatus {
 }
 
 model Race {
-  id           String     @id @default(cuid())
+  id   String @id @default(cuid())
+  // Season-order race number (1-based). The authoritative ordinal for a race
+  // within its season — dates may be estimated, week is not.
+  week Int
+
   seasonId     String
   trackName    String
   date         DateTime
@@ -118,12 +122,17 @@ model Race {
   stage1Length Int?
   stage2Length Int?
   status       RaceStatus @default(SCHEDULED)
+  // True for exhibition races (e.g. the All-Star race) that don't count toward
+  // the standard scoring formula.
+  isNonPoints  Boolean    @default(false)
 
   season          Season                 @relation(fields: [seasonId], references: [id])
   results         RaceResult[]
   stageResults    StageResult[]
   tierAssignments DriverTierAssignment[]
   picks           Pick[]
+
+  @@unique([seasonId, week])
 }
 
 model RaceResult {
@@ -204,12 +213,21 @@ model Pick {
 }
 
 model Score {
-  id         String @id @default(cuid())
-  pickId     String @unique
-  baseScore  Int
-  winBonus   Int
+  id String @id @default(cuid())
+
+  pickId String @unique
+
+  // Finish position and its derived components are only known once results
+  // are resolved and reconciled; null (with needsReview set) means the
+  // source data for this pick couldn't be fully resolved yet.
+  finishPosition Int?
+  baseScore      Int?
+  winBonus       Int?
+  // Trusted regardless of needsReview: recorded directly from the league's
+  // historical records rather than derived from finishPosition.
   stageBonus Int
   total      Int
+  needsReview Boolean @default(false)
 
   pick Pick @relation(fields: [pickId], references: [id])
 }

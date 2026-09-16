@@ -1,0 +1,205 @@
+[
+  {
+    "week": 1,
+    "track": "Daytona 1",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 2,
+    "track": "Atlanta 1",
+    "non_points_event": false,
+    "needs_review": true,
+    "review_reason": "Formula does not reconcile (flagged by league owner) - verify real finishing order/field size."
+  },
+  {
+    "week": 3,
+    "track": "COTA",
+    "non_points_event": false,
+    "needs_review": true,
+    "review_reason": "Implied field size varies wildly across players (23-88) - Results sheet order for this race looks unreliable."
+  },
+  {
+    "week": 4,
+    "track": "Phoenix",
+    "non_points_event": false,
+    "needs_review": true,
+    "review_reason": "Formula does not reconcile (flagged by league owner) - verify real finishing order/field size."
+  },
+  {
+    "week": 5,
+    "track": "Vegas",
+    "non_points_event": false,
+    "needs_review": true,
+    "review_reason": "Implied field size inconsistent across players (13-45) - needs manual recheck against real results."
+  },
+  {
+    "week": 6,
+    "track": "Darlington 1",
+    "non_points_event": false,
+    "needs_review": true,
+    "review_reason": "Nearly all players scored 0-1 points regardless of finishing position - likely a rain-shortened/no-contest race, does not follow standard formula."
+  },
+  {
+    "week": 7,
+    "track": "Martinsville",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 8,
+    "track": "Bristol",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 9,
+    "track": "Kansas",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 10,
+    "track": "Talladega",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 11,
+    "track": "Texas",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 12,
+    "track": "Glen",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 13,
+    "track": "Dover",
+    "non_points_event": false,
+    "needs_review": true,
+    "review_reason": "Two players' scores do not reconcile even after resolving a duplicate \"Hamlin\" entry in the Results sheet; Results data for this week may be corrupted."
+  },
+  {
+    "week": 14,
+    "track": "Charlotte",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 15,
+    "track": "Nashville",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 16,
+    "track": "Michigan",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 17,
+    "track": "Pocono",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 18,
+    "track": "San Diego",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 19,
+    "track": "Sonoma",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 20,
+    "track": "Chicago",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 21,
+    "track": "Atlanta 2",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 22,
+    "track": "North Wilkesboro",
+    "non_points_event": true,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 23,
+    "track": "Indianapolis",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 24,
+    "track": "Iowa",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 25,
+    "track": "Richmond",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 26,
+    "track": "New Hampshire",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 27,
+    "track": "Daytona 2",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 28,
+    "track": "Darlington 2",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  },
+  {
+    "week": 29,
+    "track": "Gateway",
+    "non_points_event": false,
+    "needs_review": false,
+    "review_reason": null
+  }
+]
