@@ -37,9 +37,6 @@ export default async function Home() {
               Set <code>DATABASE_URL</code> and run{" "}
               <code>npm run db:migrate</code> to apply the schema.
             </p>
-            <p style={{ fontFamily: "monospace", fontSize: "0.85em" }}>
-              {status.message}
-            </p>
           </div>
         )}
       </main>
