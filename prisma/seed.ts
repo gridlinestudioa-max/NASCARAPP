@@ -130,6 +130,20 @@ async function main() {
     });
   }
 
+  // ---------- League memberships ----------
+  for (const player of PLAYERS) {
+    const user = userByPlayer.get(player)!;
+    await prisma.leagueMembership.upsert({
+      where: { leagueId_userId: { leagueId: league.id, userId: user.id } },
+      update: {},
+      create: {
+        leagueId: league.id,
+        userId: user.id,
+        role: user.id === league.ownerId ? "OWNER" : "MEMBER",
+      },
+    });
+  }
+
   // ---------- RuleSet ----------
   let ruleSet = await prisma.ruleSet.findFirst({
     where: { leagueId: league.id, label: RULESET_LABEL },

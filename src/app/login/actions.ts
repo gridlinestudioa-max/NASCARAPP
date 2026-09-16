@@ -11,7 +11,7 @@ export async function login(
     await signIn("credentials", {
       username: formData.get("username"),
       password: formData.get("password"),
-      redirectTo: "/",
+      redirectTo: "/my-leagues",
     });
   } catch (error) {
     // signIn() redirects on success by throwing a special Next.js redirect

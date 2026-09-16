@@ -36,6 +36,7 @@ export default async function Home() {
         {session?.user ? (
           <p>
             Signed in as {session.user.name ?? session.user.email}.{" "}
+            <Link href="/my-leagues">My Leagues</Link>{" "}
             <form action={signOutAction} style={{ display: "inline" }}>
               <button type="submit">Sign out</button>
             </form>
