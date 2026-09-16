@@ -8,11 +8,11 @@ export const dynamic = "force-dynamic";
 
 async function getStatus() {
   try {
-    const [leagueCount, driverCount] = await Promise.all([
+    const [leagueCount, playerCount] = await Promise.all([
       prisma.league.count(),
-      prisma.driver.count(),
+      prisma.user.count(),
     ]);
-    return { connected: true as const, leagueCount, driverCount };
+    return { connected: true as const, leagueCount, playerCount };
   } catch (error) {
     return {
       connected: false as const,
@@ -33,7 +33,7 @@ export default async function Home() {
         {status.connected ? (
           <p>
             Database connected — {status.leagueCount} league(s),{" "}
-            {status.driverCount} driver(s) on record.
+            {status.playerCount} player(s) on record.
           </p>
         ) : (
           <div>
