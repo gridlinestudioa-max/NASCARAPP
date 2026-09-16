@@ -45,36 +45,38 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
 
   const season = league.seasons[0];
 
-  const races = season
-    ? await prisma.race.findMany({
-        where: { seasonId: season.id },
-        orderBy: { week: "asc" },
-      })
-    : [];
+  const [races, members] = await Promise.all([
+    season
+      ? prisma.race.findMany({ where: { seasonId: season.id }, orderBy: { week: "asc" } })
+      : Promise.resolve([]),
+    prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
+  ]);
   // Scoped to this season's races only — standings shouldn't blend totals
   // across seasons once a league has more than one.
   const picks = season
     ? await prisma.pick.findMany({
         where: { leagueId, raceId: { in: races.map((r) => r.id) } },
-        include: { user: true, score: true },
+        include: { score: true },
       })
     : [];
 
-  const standingsByUser = new Map<string, Standing>();
+  // Seeded from every league member, not just those with a pick recorded,
+  // so a season with no picks yet still shows the full player list at 0
+  // rather than an empty table.
+  const standingsByUser = new Map<string, Standing>(
+    members.map((m) => [
+      m.userId,
+      { userId: m.userId, name: m.user.name ?? m.user.email, total: 0, picksCount: 0, needsReviewCount: 0 },
+    ]),
+  );
   for (const pick of picks) {
-    const existing = standingsByUser.get(pick.userId) ?? {
-      userId: pick.userId,
-      name: pick.user.name ?? pick.user.email,
-      total: 0,
-      picksCount: 0,
-      needsReviewCount: 0,
-    };
+    const existing = standingsByUser.get(pick.userId);
+    if (!existing) continue;
     existing.total += pick.score?.total ?? 0;
     existing.picksCount += 1;
     if (pick.score?.needsReview) {
       existing.needsReviewCount += 1;
     }
-    standingsByUser.set(pick.userId, existing);
   }
 
   const standings = [...standingsByUser.values()].sort((a, b) => b.total - a.total);
