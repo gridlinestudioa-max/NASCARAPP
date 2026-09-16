@@ -133,7 +133,6 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
                 <Link href={`/leagues/${league.id}/races/${r.id}`}>
                   Week {r.week} — {r.trackName}
                 </Link>
-                {r.isNonPoints && " (non-points)"}
               </li>
             ))}
           </ul>

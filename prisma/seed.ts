@@ -205,7 +205,10 @@ async function main() {
   for (const week of weeks) {
     const weekRecords = seedRecords.filter((r) => r.week === week);
     const track = weekRecords[0].track;
-    const isNonPoints = weekRecords[0].non_points_event;
+    // The source data's non_points_event flag (true for week 22, "North
+    // Wilkesboro") is wrong and not meaningful for this league anyway —
+    // every race scores points here, so it's never treated as non-points.
+    const isNonPoints = false;
     const fieldSize = inferFieldSize(weekRecords);
     const date = new Date(seasonAnchor + (week - 1) * 7 * 24 * 60 * 60 * 1000);
 

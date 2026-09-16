@@ -69,7 +69,6 @@ export default async function RaceDetailPage(
             month: "long",
             day: "numeric",
           })}
-          {race.isNonPoints && " · non-points event"}
         </p>
 
         <h2>{myPick ? "Your pick" : "Make your pick"}</h2>
@@ -100,10 +99,7 @@ export default async function RaceDetailPage(
       <h1>
         Week {race.week} — {race.trackName}
       </h1>
-      <p>
-        Field size {race.fieldSize}
-        {race.isNonPoints && " · non-points event"}
-      </p>
+      <p>Field size {race.fieldSize}</p>
 
       {picks.length === 0 && <p>No picks were recorded for this race.</p>}
 
