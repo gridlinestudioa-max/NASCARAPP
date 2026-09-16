@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import PickForm from "./PickForm";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,59 @@ export default async function RaceDetailPage(
     orderBy: { score: { total: "desc" } },
   });
 
+  // Picks are open (and other players' driver choices stay hidden) until
+  // either results come in or the race has already happened — whichever
+  // comes first. Once locked, everyone's picks become visible.
+  const hasResults = picks.some((p) => p.score);
+  // eslint-disable-next-line react-hooks/purity -- this route is force-dynamic (never prerendered), so wall-clock time here is safe
+  const now = Date.now();
+  const isOpenForPicks = !hasResults && race.date.getTime() > now;
+
+  if (isOpenForPicks) {
+    const [members, drivers] = await Promise.all([
+      prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
+      prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+    ]);
+    const myPick = picks.find((p) => p.userId === session.user!.id) ?? null;
+    const pickedUserIds = new Set(picks.map((p) => p.userId));
+
+    return (
+      <main>
+        <p>
+          <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
+        </p>
+        <h1>
+          Week {race.week} — {race.trackName}
+        </h1>
+        <p>
+          {new Date(race.date).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+          {race.isNonPoints && " · non-points event"}
+        </p>
+
+        <h2>{myPick ? "Your pick" : "Make your pick"}</h2>
+        <PickForm
+          leagueId={leagueId}
+          raceId={raceId}
+          drivers={drivers}
+          currentDriverId={myPick?.driverId ?? null}
+        />
+
+        <h2>Who&apos;s picked</h2>
+        <ul>
+          {members.map((m) => (
+            <li key={m.userId}>
+              {m.user.name ?? m.user.email} — {pickedUserIds.has(m.userId) ? "picked" : "not yet"}
+            </li>
+          ))}
+        </ul>
+      </main>
+    );
+  }
+
   return (
     <main>
       <p>
@@ -50,6 +104,8 @@ export default async function RaceDetailPage(
         Field size {race.fieldSize}
         {race.isNonPoints && " · non-points event"}
       </p>
+
+      {picks.length === 0 && <p>No picks were recorded for this race.</p>}
 
       <table>
         <thead>

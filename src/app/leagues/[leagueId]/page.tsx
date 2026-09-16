@@ -43,10 +43,22 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
     notFound();
   }
 
-  const picks = await prisma.pick.findMany({
-    where: { leagueId },
-    include: { user: true, score: true },
-  });
+  const season = league.seasons[0];
+
+  const races = season
+    ? await prisma.race.findMany({
+        where: { seasonId: season.id },
+        orderBy: { week: "asc" },
+      })
+    : [];
+  // Scoped to this season's races only — standings shouldn't blend totals
+  // across seasons once a league has more than one.
+  const picks = season
+    ? await prisma.pick.findMany({
+        where: { leagueId, raceId: { in: races.map((r) => r.id) } },
+        include: { user: true, score: true },
+      })
+    : [];
 
   const standingsByUser = new Map<string, Standing>();
   for (const pick of picks) {
@@ -66,14 +78,10 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
   }
 
   const standings = [...standingsByUser.values()].sort((a, b) => b.total - a.total);
-  const season = league.seasons[0];
 
-  const races = season
-    ? await prisma.race.findMany({
-        where: { seasonId: season.id },
-        orderBy: { week: "asc" },
-      })
-    : [];
+  // eslint-disable-next-line react-hooks/purity -- this route is force-dynamic (never prerendered), so wall-clock time here is safe
+  const now = Date.now();
+  const nextOpenRace = races.find((r) => r.date.getTime() > now);
 
   return (
     <main>
@@ -105,6 +113,14 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
           ))}
         </tbody>
       </table>
+
+      {nextOpenRace && (
+        <p>
+          <Link href={`/leagues/${league.id}/races/${nextOpenRace.id}`}>
+            Make your pick for Week {nextOpenRace.week} — {nextOpenRace.trackName}
+          </Link>
+        </p>
+      )}
 
       {races.length > 0 && (
         <>

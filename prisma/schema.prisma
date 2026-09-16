@@ -214,7 +214,10 @@ model Pick {
 
   score Score?
 
-  @@unique([leagueId, userId, raceId, driverId])
+  // One pick per user per race per league (picksPerWeek: 1 in every
+  // RuleSet so far) — was previously scoped down to driverId too, which
+  // let a user hold two different-driver picks for the same week.
+  @@unique([leagueId, userId, raceId])
 }
 
 model Score {

@@ -234,24 +234,11 @@ async function main() {
     }
     const driverId = resolveDriverId(record);
 
-    // Manual find-then-update-or-create on (league, user, race) rather than
-    // Prisma's upsert: the schema's unique constraint also includes
-    // driverId (to allow multiple picks per race in Tiered Draft leagues),
-    // so a plain upsert keyed on that combo wouldn't be idempotent if a
-    // driver resolution ever changed on rerun.
-    let pick = await prisma.pick.findFirst({
-      where: { leagueId: league.id, userId: user.id, raceId: race.id },
+    const pick = await prisma.pick.upsert({
+      where: { leagueId_userId_raceId: { leagueId: league.id, userId: user.id, raceId: race.id } },
+      update: { driverId, tierId: null },
+      create: { leagueId: league.id, userId: user.id, raceId: race.id, driverId, tierId: null },
     });
-    if (pick) {
-      pick = await prisma.pick.update({
-        where: { id: pick.id },
-        data: { driverId, tierId: null },
-      });
-    } else {
-      pick = await prisma.pick.create({
-        data: { leagueId: league.id, userId: user.id, raceId: race.id, driverId, tierId: null },
-      });
-    }
     pickCount++;
 
     await prisma.score.upsert({
