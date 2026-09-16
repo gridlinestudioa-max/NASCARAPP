@@ -7,7 +7,11 @@ export const dynamic = "force-dynamic";
 
 export default async function MyLeaguesPage() {
   const session = await auth();
-  if (!session?.user) {
+  // Also guards against a stale session predating a session-shape change
+  // (e.g. before user.id was added to the token) — without this, a
+  // missing id would silently drop the where-filter below instead of
+  // matching nothing.
+  if (!session?.user?.id) {
     redirect("/login");
   }
 

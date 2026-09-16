@@ -17,7 +17,10 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
   const { leagueId } = await props.params;
 
   const session = await auth();
-  if (!session?.user) {
+  // Also guards against a stale session predating a session-shape change
+  // (e.g. before user.id was added to the token) — findUnique's compound
+  // key throws on a missing id rather than matching nothing.
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
