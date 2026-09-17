@@ -3,27 +3,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { computeScore, parseRuleSetConfig, type PickemRuleSetConfig } from "@/lib/scoring";
 
-// Same shape as the one Pick'em leagues have used since the historical
-// import — a new league gets this as a starting point, editable later once
-// there's a rules-editing UI.
-const DEFAULT_RULESET_CONFIG = {
-  picksPerWeek: 1,
-  eligibility: "any_driver",
-  scoring: {
-    base: "fieldSize + 1 - finishPosition",
-    winBonus: 10,
-    stageBonusPerStageWin: 5,
-    maxStageBonus: 10,
-  },
-};
-
-export async function createLeague(
-  _prevState: string | undefined,
-  formData: FormData,
-): Promise<string | undefined> {
-  const name = formData.get("name");
-  if (typeof name !== "string" || name.trim().length < 3) {
+export async function createLeague(name: string, rawConfig: PickemRuleSetConfig): Promise<string | undefined> {
+  const trimmed = name.trim();
+  if (trimmed.length < 3) {
     return "League name must be at least 3 characters.";
   }
 
@@ -33,6 +17,9 @@ export async function createLeague(
   }
   const userId = session.user.id;
 
+  // Sanitize client-supplied config rather than trusting its shape directly.
+  const config = parseRuleSetConfig(rawConfig);
+
   // The league takes part in whatever the current shared season is, if one
   // exists yet — a brand-new deployment with no season seeded still lets a
   // league get created, it just won't show any races until one is.
@@ -40,7 +27,7 @@ export async function createLeague(
 
   const league = await prisma.$transaction(async (tx) => {
     const league = await tx.league.create({
-      data: { name: name.trim(), type: "PICKEM", ownerId: userId },
+      data: { name: trimmed, type: "PICKEM", ownerId: userId },
     });
     await tx.leagueMembership.create({
       data: { leagueId: league.id, userId, role: "OWNER" },
@@ -48,8 +35,8 @@ export async function createLeague(
     const ruleSet = await tx.ruleSet.create({
       data: {
         leagueId: league.id,
-        label: currentSeason ? `${currentSeason.year} Season Rules` : "Default Rules",
-        config: DEFAULT_RULESET_CONFIG,
+        label: currentSeason ? `${currentSeason.year} Season Rules` : "League Rules",
+        config,
       },
     });
     if (currentSeason) {
@@ -61,4 +48,51 @@ export async function createLeague(
   });
 
   redirect(`/leagues/${league.id}`);
+}
+
+export type PreviewRow = {
+  driverId: string;
+  driverName: string;
+  finishPosition: number;
+  baseScore: number;
+  winBonus: number;
+  stageBonus: number;
+  total: number;
+};
+
+// Runs the in-progress (not-yet-saved) rule config against a real race's
+// already-entered results, so a league owner can see what their rules
+// would have scored before committing to them.
+export async function previewRules(rawConfig: PickemRuleSetConfig, raceId: string): Promise<PreviewRow[] | string> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return "You need to be signed in.";
+  }
+  if (!raceId) {
+    return "Pick a race to preview against.";
+  }
+
+  const config = parseRuleSetConfig(rawConfig);
+  const [results, stageResults] = await Promise.all([
+    prisma.raceResult.findMany({
+      where: { raceId },
+      include: { driver: true },
+      orderBy: { finishingPosition: "asc" },
+    }),
+    prisma.stageResult.findMany({ where: { raceId } }),
+  ]);
+  if (results.length === 0) {
+    return "No results have been entered for that race yet.";
+  }
+
+  const stage1ByDriver = new Map(stageResults.filter((r) => r.stageNumber === 1).map((r) => [r.driverId, r.position]));
+  const stage2ByDriver = new Map(stageResults.filter((r) => r.stageNumber === 2).map((r) => [r.driverId, r.position]));
+
+  return results.map((r) => {
+    const stagePositions = [stage1ByDriver.get(r.driverId), stage2ByDriver.get(r.driverId)].filter(
+      (p): p is number => p != null,
+    );
+    const score = computeScore(r.finishingPosition, stagePositions, config);
+    return { driverId: r.driverId, driverName: r.driver.name, finishPosition: r.finishingPosition, ...score };
+  });
 }

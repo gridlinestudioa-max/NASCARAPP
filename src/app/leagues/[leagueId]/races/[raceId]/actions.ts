@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseRuleSetConfig } from "@/lib/scoring";
 
 export async function submitPick(
   _prevState: string | undefined,
@@ -10,10 +11,9 @@ export async function submitPick(
 ): Promise<string | undefined> {
   const leagueId = formData.get("leagueId");
   const raceId = formData.get("raceId");
-  const driverId = formData.get("driverId");
 
-  if (typeof leagueId !== "string" || typeof raceId !== "string" || typeof driverId !== "string" || !driverId) {
-    return "Pick a driver first.";
+  if (typeof leagueId !== "string" || typeof raceId !== "string") {
+    return "Missing league or race.";
   }
 
   const session = await auth();
@@ -40,6 +40,7 @@ export async function submitPick(
   // this league doesn't take part in shouldn't be pickable through this URL.
   const leagueSeason = await prisma.leagueSeason.findUnique({
     where: { leagueId_seasonId: { leagueId, seasonId: race.seasonId } },
+    include: { ruleSet: true },
   });
   if (!leagueSeason) {
     return "Race not found.";
@@ -52,16 +53,60 @@ export async function submitPick(
     return "Picks are closed for this race.";
   }
 
-  const driver = await prisma.driver.findUnique({ where: { id: driverId } });
-  if (!driver) {
-    return "Unknown driver.";
+  const config = parseRuleSetConfig(leagueSeason.ruleSet.config);
+
+  const driverIds: string[] = [];
+  for (let slot = 1; slot <= config.picksPerWeek; slot++) {
+    const driverId = formData.get(`driverId-${slot}`);
+    if (typeof driverId !== "string" || !driverId) {
+      return config.picksPerWeek > 1 ? `Pick a driver for slot ${slot}.` : "Pick a driver first.";
+    }
+    driverIds.push(driverId);
+  }
+  if (new Set(driverIds).size !== driverIds.length) {
+    return "You can't pick the same driver twice in one week.";
   }
 
-  await prisma.pick.upsert({
-    where: { leagueId_userId_raceId: { leagueId, userId, raceId } },
-    update: { driverId },
-    create: { leagueId, userId, raceId, driverId },
-  });
+  const drivers = await prisma.driver.findMany({ where: { id: { in: driverIds } } });
+  if (drivers.length !== driverIds.length) {
+    return "Unknown driver.";
+  }
+  const driverNameById = new Map(drivers.map((d) => [d.id, d.name]));
+
+  if (config.maxPicksPerDriverPerSeason != null) {
+    const seasonRaces = await prisma.race.findMany({
+      where: { seasonId: race.seasonId, id: { not: raceId } },
+      select: { id: true },
+    });
+    const priorPicks = await prisma.pick.findMany({
+      where: {
+        leagueId,
+        userId,
+        raceId: { in: seasonRaces.map((r) => r.id) },
+        driverId: { in: driverIds },
+      },
+    });
+    const countByDriver = new Map<string, number>();
+    for (const p of priorPicks) {
+      countByDriver.set(p.driverId, (countByDriver.get(p.driverId) ?? 0) + 1);
+    }
+    for (const driverId of driverIds) {
+      const count = countByDriver.get(driverId) ?? 0;
+      if (count + 1 > config.maxPicksPerDriverPerSeason) {
+        return `You've already picked ${driverNameById.get(driverId)} the maximum ${config.maxPicksPerDriverPerSeason} time(s) this season.`;
+      }
+    }
+  }
+
+  await prisma.$transaction(
+    driverIds.map((driverId, i) =>
+      prisma.pick.upsert({
+        where: { leagueId_userId_raceId_pickNumber: { leagueId, userId, raceId, pickNumber: i + 1 } },
+        update: { driverId },
+        create: { leagueId, userId, raceId, pickNumber: i + 1, driverId },
+      }),
+    ),
+  );
 
   revalidatePath(`/leagues/${leagueId}/races/${raceId}`);
   return undefined;

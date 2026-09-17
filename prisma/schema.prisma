@@ -167,16 +167,23 @@ model RaceResult {
   @@unique([raceId, driverId])
 }
 
+// Top-10 finishers of one stage. position is that stage's finishing
+// order (1-10) — the original unique([raceId, stageNumber]) only allowed
+// a single row per stage, which couldn't represent a top-10 at all; it's
+// replaced with one constraint per invariant (a slot can't be claimed
+// twice, a driver can't appear twice in the same stage).
 model StageResult {
   id          String @id @default(cuid())
   raceId      String
   stageNumber Int
+  position    Int
   driverId    String
 
   race   Race   @relation(fields: [raceId], references: [id])
   driver Driver @relation(fields: [driverId], references: [id])
 
-  @@unique([raceId, stageNumber])
+  @@unique([raceId, stageNumber, position])
+  @@unique([raceId, stageNumber, driverId])
 }
 
 // ---------- Tiers (Tiered Draft league type only) ----------
@@ -213,12 +220,15 @@ model DriverTierAssignment {
 // per user per race, tierId is null. Tiered Draft leagues: several rows
 // per user per race (one per tier slot).
 model Pick {
-  id       String  @id @default(cuid())
-  leagueId String
-  userId   String
-  raceId   String
-  driverId String
-  tierId   String?
+  id         String  @id @default(cuid())
+  leagueId   String
+  userId     String
+  raceId     String
+  // 1-based slot within a week's picks — a league's RuleSet.picksPerWeek
+  // controls how many slots a player fills; 1 for every league so far.
+  pickNumber Int     @default(1)
+  driverId   String
+  tierId     String?
 
   league League @relation(fields: [leagueId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
@@ -228,10 +238,10 @@ model Pick {
 
   score Score?
 
-  // One pick per user per race per league (picksPerWeek: 1 in every
-  // RuleSet so far) — was previously scoped down to driverId too, which
-  // let a user hold two different-driver picks for the same week.
-  @@unique([leagueId, userId, raceId])
+  // One pick per user per race per pick slot per league — was previously
+  // scoped down to driverId instead of pickNumber, which let a user hold
+  // two different-driver picks for the same week under the same slot.
+  @@unique([leagueId, userId, raceId, pickNumber])
 }
 
 model Score {

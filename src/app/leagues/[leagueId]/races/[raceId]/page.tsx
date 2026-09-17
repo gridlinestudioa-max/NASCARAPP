@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseRuleSetConfig } from "@/lib/scoring";
 import PickForm from "./PickForm";
 
 export const dynamic = "force-dynamic";
@@ -31,15 +32,17 @@ export default async function RaceDetailPage(
   // this league doesn't take part in shouldn't be reachable through this URL.
   const leagueSeason = await prisma.leagueSeason.findUnique({
     where: { leagueId_seasonId: { leagueId, seasonId: race.seasonId } },
+    include: { ruleSet: true },
   });
   if (!leagueSeason) {
     notFound();
   }
+  const config = parseRuleSetConfig(leagueSeason.ruleSet.config);
 
   const picks = await prisma.pick.findMany({
     where: { leagueId, raceId },
     include: { user: true, driver: true, score: true },
-    orderBy: { score: { total: "desc" } },
+    orderBy: [{ score: { total: "desc" } }, { pickNumber: "asc" }],
   });
 
   // Picks are open (and other players' driver choices stay hidden) until
@@ -55,7 +58,13 @@ export default async function RaceDetailPage(
       prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
       prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     ]);
-    const myPick = picks.find((p) => p.userId === session.user!.id) ?? null;
+    const myPicks = picks
+      .filter((p) => p.userId === session.user!.id)
+      .sort((a, b) => a.pickNumber - b.pickNumber);
+    const currentDriverIdBySlot = Array.from(
+      { length: config.picksPerWeek },
+      (_, i) => myPicks.find((p) => p.pickNumber === i + 1)?.driverId ?? null,
+    );
     const pickedUserIds = new Set(picks.map((p) => p.userId));
 
     return (
@@ -74,12 +83,13 @@ export default async function RaceDetailPage(
           })}
         </p>
 
-        <h2>{myPick ? "Your pick" : "Make your pick"}</h2>
+        <h2>{myPicks.length > 0 ? "Your pick" : "Make your pick"}</h2>
         <PickForm
           leagueId={leagueId}
           raceId={raceId}
           drivers={drivers}
-          currentDriverId={myPick?.driverId ?? null}
+          picksPerWeek={config.picksPerWeek}
+          currentDriverIdBySlot={currentDriverIdBySlot}
         />
 
         <h2>Who&apos;s picked</h2>

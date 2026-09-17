@@ -248,9 +248,11 @@ async function main() {
     const driverId = resolveDriverId(record);
 
     const pick = await prisma.pick.upsert({
-      where: { leagueId_userId_raceId: { leagueId: league.id, userId: user.id, raceId: race.id } },
+      where: {
+        leagueId_userId_raceId_pickNumber: { leagueId: league.id, userId: user.id, raceId: race.id, pickNumber: 1 },
+      },
       update: { driverId, tierId: null },
-      create: { leagueId: league.id, userId: user.id, raceId: race.id, driverId, tierId: null },
+      create: { leagueId: league.id, userId: user.id, raceId: race.id, pickNumber: 1, driverId, tierId: null },
     });
     pickCount++;
 

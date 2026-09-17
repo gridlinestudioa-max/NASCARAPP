@@ -5,7 +5,14 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
-import { computeScore, parseScoringConfig } from "@/lib/scoring";
+import { computeScore, parseRuleSetConfig } from "@/lib/scoring";
+
+function parseOptionalStagePosition(formData: FormData, key: string): number | null {
+  const raw = formData.get(key);
+  if (typeof raw !== "string" || raw.trim() === "") return null;
+  const n = parseInt(raw, 10);
+  return Number.isInteger(n) && n >= 1 && n <= 10 ? n : null;
+}
 
 export async function submitResults(
   _prevState: string | undefined,
@@ -35,8 +42,11 @@ export async function submitResults(
 
   // Only finishing positions for drivers someone actually picked are
   // collected (see ResultsForm) — that's the minimum needed to score every
-  // pick on this race, across every league that shares it.
+  // pick on this race, across every league that shares it. Stage top-10s
+  // are optional (blank = not top 10 that stage).
   const finishPositions = new Map<string, number>();
+  const stage1Positions = new Map<string, number>();
+  const stage2Positions = new Map<string, number>();
   for (const driverId of driverIds) {
     if (typeof driverId !== "string") continue;
     const raw = formData.get(`finish-${driverId}`);
@@ -45,6 +55,18 @@ export async function submitResults(
       return "Enter a valid finishing position for every driver.";
     }
     finishPositions.set(driverId, finishPosition);
+
+    const stage1 = parseOptionalStagePosition(formData, `stage1-${driverId}`);
+    if (stage1 != null) stage1Positions.set(driverId, stage1);
+    const stage2 = parseOptionalStagePosition(formData, `stage2-${driverId}`);
+    if (stage2 != null) stage2Positions.set(driverId, stage2);
+  }
+  // A stage position can only be claimed by one driver.
+  if (new Set(stage1Positions.values()).size !== stage1Positions.size) {
+    return "Two drivers can't share the same Stage 1 finishing position.";
+  }
+  if (new Set(stage2Positions.values()).size !== stage2Positions.size) {
+    return "Two drivers can't share the same Stage 2 finishing position.";
   }
 
   await prisma.$transaction(async (tx) => {
@@ -54,6 +76,22 @@ export async function submitResults(
         update: { finishingPosition: finishPosition },
         create: { raceId, driverId, finishingPosition: finishPosition },
       });
+
+      for (const [stageNumber, stagePositions] of [
+        [1, stage1Positions],
+        [2, stage2Positions],
+      ] as const) {
+        const position = stagePositions.get(driverId);
+        if (position != null) {
+          await tx.stageResult.upsert({
+            where: { raceId_stageNumber_driverId: { raceId, stageNumber, driverId } },
+            update: { position },
+            create: { raceId, stageNumber, position, driverId },
+          });
+        } else {
+          await tx.stageResult.deleteMany({ where: { raceId, stageNumber, driverId } });
+        }
+      }
     }
 
     // Results are shared data — recompute scores for every league's picks
@@ -67,14 +105,22 @@ export async function submitResults(
       include: { ruleSet: true },
     });
     const configByLeagueId = new Map(
-      leagueSeasons.map((ls) => [ls.leagueId, parseScoringConfig(ls.ruleSet.config)]),
+      leagueSeasons.map((ls) => [ls.leagueId, parseRuleSetConfig(ls.ruleSet.config)]),
     );
 
     for (const pick of picks) {
       const config = configByLeagueId.get(pick.leagueId);
       if (!config) continue;
+      // A league that didn't opt into non-points races doesn't score picks
+      // on one at all, rather than scoring them as 0 — they just stay
+      // unscored, same as a race that hasn't happened yet.
+      if (race.isNonPoints && !config.includeNonPointsRaces) continue;
+
       const finishPosition = finishPositions.get(pick.driverId)!;
-      const score = computeScore(finishPosition, race.fieldSize, config);
+      const stagePositions = [stage1Positions.get(pick.driverId), stage2Positions.get(pick.driverId)].filter(
+        (p): p is number => p != null,
+      );
+      const score = computeScore(finishPosition, stagePositions, config);
       await tx.score.upsert({
         where: { pickId: pick.id },
         update: { finishPosition, ...score, needsReview: false },
