@@ -167,11 +167,18 @@ async function main() {
     });
   }
 
-  // ---------- Season ----------
+  // ---------- Season (shared schedule data — not owned by this league) ----------
   const season = await prisma.season.upsert({
-    where: { leagueId_year: { leagueId: league.id, year: SEASON_YEAR } },
+    where: { year: SEASON_YEAR },
+    update: {},
+    create: { year: SEASON_YEAR },
+  });
+
+  // ---------- LeagueSeason (this league's participation + scoring rules) ----------
+  await prisma.leagueSeason.upsert({
+    where: { leagueId_seasonId: { leagueId: league.id, seasonId: season.id } },
     update: { ruleSetId: ruleSet.id },
-    create: { leagueId: league.id, year: SEASON_YEAR, ruleSetId: ruleSet.id },
+    create: { leagueId: league.id, seasonId: season.id, ruleSetId: ruleSet.id },
   });
 
   // ---------- Drivers ----------

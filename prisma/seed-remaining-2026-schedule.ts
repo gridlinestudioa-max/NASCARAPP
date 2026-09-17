@@ -9,7 +9,6 @@ if (!connectionString) {
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const LEAGUE_NAME = "Fantasy NASCAR HQ";
 const SEASON_YEAR = 2026;
 
 // The 29 races from prisma/seed.ts (Daytona 1 .. Gateway, weeks 1-29) are
@@ -37,14 +36,7 @@ const REMAINING_SCHEDULE: Array<{
 ];
 
 async function main() {
-  const league = await prisma.league.findFirst({ where: { name: LEAGUE_NAME } });
-  if (!league) {
-    throw new Error(`League "${LEAGUE_NAME}" not found — run the main seed script first.`);
-  }
-
-  const season = await prisma.season.findUnique({
-    where: { leagueId_year: { leagueId: league.id, year: SEASON_YEAR } },
-  });
+  const season = await prisma.season.findUnique({ where: { year: SEASON_YEAR } });
   if (!season) {
     throw new Error(`Season ${SEASON_YEAR} not found — run the main seed script first.`);
   }

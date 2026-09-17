@@ -31,9 +31,17 @@ export async function submitPick(
 
   const race = await prisma.race.findUnique({
     where: { id: raceId },
-    include: { season: true, picks: { where: { userId }, include: { score: true } } },
+    include: { picks: { where: { userId }, include: { score: true } } },
   });
-  if (!race || race.season.leagueId !== leagueId) {
+  if (!race) {
+    return "Race not found.";
+  }
+  // Scope to this league: a race id that's real but belongs to a season
+  // this league doesn't take part in shouldn't be pickable through this URL.
+  const leagueSeason = await prisma.leagueSeason.findUnique({
+    where: { leagueId_seasonId: { leagueId, seasonId: race.seasonId } },
+  });
+  if (!leagueSeason) {
     return "Race not found.";
   }
   // Picks close once the race has results recorded or has already happened —

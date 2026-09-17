@@ -33,17 +33,17 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
     notFound();
   }
 
-  const league = await prisma.league.findUnique({
-    where: { id: leagueId },
-    include: {
-      seasons: { orderBy: { year: "desc" }, take: 1 },
-    },
-  });
+  const league = await prisma.league.findUnique({ where: { id: leagueId } });
   if (!league) {
     notFound();
   }
 
-  const season = league.seasons[0];
+  const currentLeagueSeason = await prisma.leagueSeason.findFirst({
+    where: { leagueId },
+    include: { season: true },
+    orderBy: { season: { year: "desc" } },
+  });
+  const season = currentLeagueSeason?.season;
 
   const [races, members] = await Promise.all([
     season
@@ -92,6 +92,12 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
       </p>
       <h1>{league.name}</h1>
       {season && <p>{season.year} season</p>}
+      {membership.role === "OWNER" && (
+        <p>
+          Invite code: <code>{league.inviteCode}</code> — share it so others can{" "}
+          <Link href="/leagues/join">join this league</Link>.
+        </p>
+      )}
 
       <table>
         <thead>

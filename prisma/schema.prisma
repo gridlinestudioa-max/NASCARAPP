@@ -37,16 +37,18 @@ enum LeagueType {
 }
 
 model League {
-  id        String   @id @default(cuid())
-  name      String
-  type      LeagueType
-  ownerId   String
-  createdAt DateTime @default(now())
+  id         String     @id @default(cuid())
+  name       String
+  type       LeagueType
+  ownerId    String
+  // Share link for joining — regenerable, so it's not derived from name/id.
+  inviteCode String     @unique @default(cuid())
+  createdAt  DateTime   @default(now())
 
-  memberships LeagueMembership[]
-  ruleSets    RuleSet[]
-  seasons     Season[]
-  picks       Pick[]
+  memberships   LeagueMembership[]
+  ruleSets      RuleSet[]
+  leagueSeasons LeagueSeason[]
+  picks         Pick[]
 }
 
 enum MembershipRole {
@@ -77,22 +79,34 @@ model RuleSet {
   config    Json
   createdAt DateTime @default(now())
 
-  league  League   @relation(fields: [leagueId], references: [id])
-  seasons Season[]
-  tiers   Tier[]
+  league        League         @relation(fields: [leagueId], references: [id])
+  leagueSeasons LeagueSeason[]
+  tiers         Tier[]
 }
 
+// The real-world schedule for one year — shared across every league, not
+// owned by any single one. A league takes part in it via LeagueSeason.
 model Season {
+  id   String @id @default(cuid())
+  year Int    @unique
+
+  races         Race[]
+  leagueSeasons LeagueSeason[]
+}
+
+// Join record: one league's participation in one shared Season, scored
+// under one of that league's own RuleSets.
+model LeagueSeason {
   id        String @id @default(cuid())
   leagueId  String
-  year      Int
+  seasonId  String
   ruleSetId String
 
   league  League  @relation(fields: [leagueId], references: [id])
+  season  Season  @relation(fields: [seasonId], references: [id])
   ruleSet RuleSet @relation(fields: [ruleSetId], references: [id])
-  races   Race[]
 
-  @@unique([leagueId, year])
+  @@unique([leagueId, seasonId])
 }
 
 // ---------- Drivers & Races (shared across every league) ----------

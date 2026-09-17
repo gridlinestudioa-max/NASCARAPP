@@ -43,7 +43,7 @@ export default async function Home() {
           </p>
         ) : (
           <p>
-            <Link href="/login">Sign in</Link> or <Link href="/claim">claim your account</Link>.
+            <Link href="/login">Sign in</Link> or <Link href="/signup">create an account</Link>.
           </p>
         )}
 

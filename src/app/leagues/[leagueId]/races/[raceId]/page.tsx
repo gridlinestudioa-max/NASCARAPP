@@ -23,13 +23,16 @@ export default async function RaceDetailPage(
     notFound();
   }
 
-  const race = await prisma.race.findUnique({
-    where: { id: raceId },
-    include: { season: true },
+  const race = await prisma.race.findUnique({ where: { id: raceId } });
+  if (!race) {
+    notFound();
+  }
+  // Scope to this league: a race id that's real but belongs to a season
+  // this league doesn't take part in shouldn't be reachable through this URL.
+  const leagueSeason = await prisma.leagueSeason.findUnique({
+    where: { leagueId_seasonId: { leagueId, seasonId: race.seasonId } },
   });
-  // Scope to this league: a race id that's real but belongs to a
-  // different league's season shouldn't be reachable through this URL.
-  if (!race || race.season.leagueId !== leagueId) {
+  if (!leagueSeason) {
     notFound();
   }
 

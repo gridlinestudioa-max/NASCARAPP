@@ -36,6 +36,10 @@ export default async function MyLeaguesPage() {
           ))}
         </ul>
       )}
+      <p>
+        <Link href="/leagues/new">Create a league</Link> or{" "}
+        <Link href="/leagues/join">join one with an invite code</Link>.
+      </p>
     </main>
   );
 }

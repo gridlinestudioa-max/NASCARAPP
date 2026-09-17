@@ -11,7 +11,10 @@ export default async function LoginPage(props: PageProps<"/login">) {
       {claimed && <p>Account claimed — sign in below.</p>}
       <LoginForm />
       <p>
-        Haven&apos;t claimed your account yet? <Link href="/claim">Claim it here</Link>.
+        New here? <Link href="/signup">Create an account</Link>.
+      </p>
+      <p>
+        Have a pre-2026 account to claim instead? <Link href="/claim">Claim it here</Link>.
       </p>
     </main>
   );
