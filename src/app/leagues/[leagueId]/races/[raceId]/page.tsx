@@ -104,6 +104,14 @@ export default async function RaceDetailPage(
       </h1>
       <p>Field size {race.fieldSize}</p>
 
+      {membership.role === "OWNER" && (
+        <p>
+          <Link href={`/leagues/${leagueId}/races/${raceId}/results`}>
+            {hasResults ? "Edit results" : "Enter results"}
+          </Link>
+        </p>
+      )}
+
       {picks.length === 0 && <p>No picks were recorded for this race.</p>}
 
       <table>
