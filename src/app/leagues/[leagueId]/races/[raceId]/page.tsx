@@ -106,9 +106,7 @@ export default async function RaceDetailPage(
 
       {membership.role === "OWNER" && (
         <p>
-          <Link href={`/leagues/${leagueId}/races/${raceId}/results`}>
-            {hasResults ? "Edit results" : "Enter results"}
-          </Link>
+          <Link href={`/races/${raceId}/results`}>{hasResults ? "Edit results" : "Enter results"}</Link>
         </p>
       )}
 

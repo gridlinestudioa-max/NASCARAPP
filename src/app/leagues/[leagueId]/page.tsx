@@ -92,6 +92,9 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
       </p>
       <h1>{league.name}</h1>
       {season && <p>{season.year} season</p>}
+      <p>
+        <Link href="/races">Schedule</Link> · <Link href="/stats">Driver Stats</Link>
+      </p>
       {membership.role === "OWNER" && (
         <p>
           Invite code: <code>{league.inviteCode}</code> — share it so others can{" "}

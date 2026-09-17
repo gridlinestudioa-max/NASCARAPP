@@ -5,20 +5,11 @@ import { submitResults } from "./actions";
 
 type DriverRow = { driverId: string; name: string; finishPosition: number | null };
 
-export default function ResultsForm({
-  leagueId,
-  raceId,
-  drivers,
-}: {
-  leagueId: string;
-  raceId: string;
-  drivers: DriverRow[];
-}) {
+export default function ResultsForm({ raceId, drivers }: { raceId: string; drivers: DriverRow[] }) {
   const [error, formAction, pending] = useActionState(submitResults, undefined);
 
   return (
     <form action={formAction}>
-      <input type="hidden" name="leagueId" value={leagueId} />
       <input type="hidden" name="raceId" value={raceId} />
 
       <table>

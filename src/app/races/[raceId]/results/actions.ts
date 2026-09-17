@@ -4,17 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ownsALeagueInSeason } from "@/lib/authz";
 import { computeScore, parseScoringConfig } from "@/lib/scoring";
 
 export async function submitResults(
   _prevState: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
-  const leagueId = formData.get("leagueId");
   const raceId = formData.get("raceId");
   const driverIds = formData.getAll("driverId");
 
-  if (typeof leagueId !== "string" || typeof raceId !== "string" || driverIds.length === 0) {
+  if (typeof raceId !== "string" || driverIds.length === 0) {
     return "Missing race or driver data.";
   }
 
@@ -23,22 +23,14 @@ export async function submitResults(
     return "You need to be signed in to enter results.";
   }
 
-  const membership = await prisma.leagueMembership.findUnique({
-    where: { leagueId_userId: { leagueId, userId: session.user.id } },
-  });
-  if (!membership || membership.role !== "OWNER") {
-    return "Only a league owner can enter results.";
-  }
-
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     return "Race not found.";
   }
-  const leagueSeason = await prisma.leagueSeason.findUnique({
-    where: { leagueId_seasonId: { leagueId, seasonId: race.seasonId } },
-  });
-  if (!leagueSeason) {
-    return "Race not found.";
+
+  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
+  if (!authorized) {
+    return "Only an owner of a league in this season can enter results.";
   }
 
   // Only finishing positions for drivers someone actually picked are
@@ -65,7 +57,7 @@ export async function submitResults(
     }
 
     // Results are shared data — recompute scores for every league's picks
-    // on this race, not just the league the submitter belongs to.
+    // on this race, not just the submitter's own league.
     const picks = await tx.pick.findMany({
       where: { raceId, driverId: { in: [...finishPositions.keys()] } },
     });
@@ -93,6 +85,7 @@ export async function submitResults(
     await tx.race.update({ where: { id: raceId }, data: { status: "COMPLETE" } });
   });
 
-  revalidatePath(`/leagues/${leagueId}/races/${raceId}`);
-  redirect(`/leagues/${leagueId}/races/${raceId}`);
+  revalidatePath(`/races/${raceId}`);
+  revalidatePath(`/stats`);
+  redirect(`/races/${raceId}`);
 }

@@ -24,6 +24,9 @@ export default async function MyLeaguesPage() {
   return (
     <main>
       <h1>My Leagues</h1>
+      <p>
+        <Link href="/races">Schedule</Link> · <Link href="/stats">Driver Stats</Link>
+      </p>
       {memberships.length === 0 ? (
         <p>You&apos;re not in any leagues yet.</p>
       ) : (
