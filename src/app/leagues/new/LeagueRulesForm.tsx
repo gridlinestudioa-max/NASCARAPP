@@ -185,36 +185,67 @@ export default function LeagueRulesForm({ completedRaces }: { completedRaces: Ra
       </div>
 
       <h3>Position points</h3>
-      <p>Points awarded for each finishing position.</p>
-      <div style={{ display: "flex", gap: "1em", flexWrap: "wrap" }}>
-        {[0, 10, 20, 30].map((start) => (
-          <table key={start}>
-            <thead>
-              <tr>
-                <th>Pos</th>
-                <th>Pts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 10 }, (_, i) => start + i).map((i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  <td>
-                    <input
-                      type="number"
-                      aria-label={`Points for position ${i + 1}`}
-                      value={config.positionPoints[i]}
-                      onChange={(e) => updatePositionPoint(i, parseInt(e.target.value, 10) || 0)}
-                      style={{ width: "4em" }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ))}
+      <div>
+        <label>
+          <input
+            type="radio"
+            name="pointsMode"
+            checked={config.pointsMode === "fixed"}
+            onChange={() => setConfig((c) => ({ ...c, pointsMode: "fixed" }))}
+          />{" "}
+          Fixed points matrix — each position is always worth the same, like real NASCAR points
+        </label>
+        <br />
+        <label>
+          <input
+            type="radio"
+            name="pointsMode"
+            checked={config.pointsMode === "fieldSizeRelative"}
+            onChange={() => setConfig((c) => ({ ...c, pointsMode: "fieldSizeRelative" }))}
+          />{" "}
+          Field-size relative — 1st place is worth however many cars started, scaling down each race
+        </label>
       </div>
-      <p>(Positions 1 through {MAX_FIELD_SIZE}.)</p>
+
+      {config.pointsMode === "fixed" ? (
+        <>
+          <p>Points awarded for each finishing position.</p>
+          <div style={{ display: "flex", gap: "1em", flexWrap: "wrap" }}>
+            {[0, 10, 20, 30].map((start) => (
+              <table key={start}>
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 10 }, (_, i) => start + i).map((i) => (
+                    <tr key={i}>
+                      <td>{i + 1}</td>
+                      <td>
+                        <input
+                          type="number"
+                          aria-label={`Points for position ${i + 1}`}
+                          value={config.positionPoints[i]}
+                          onChange={(e) => updatePositionPoint(i, parseInt(e.target.value, 10) || 0)}
+                          style={{ width: "4em" }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ))}
+          </div>
+          <p>(Positions 1 through {MAX_FIELD_SIZE}.)</p>
+        </>
+      ) : (
+        <p>
+          A finisher scores (field size + 1 − finishing position) points — e.g. 1st in a 36-car field scores 36,
+          last scores 1.
+        </p>
+      )}
 
       {config.includeStagePoints && (
         <>

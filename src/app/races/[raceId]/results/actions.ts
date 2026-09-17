@@ -120,7 +120,7 @@ export async function submitResults(
       const stagePositions = [stage1Positions.get(pick.driverId), stage2Positions.get(pick.driverId)].filter(
         (p): p is number => p != null,
       );
-      const score = computeScore(finishPosition, stagePositions, config);
+      const score = computeScore(finishPosition, race.fieldSize, stagePositions, config);
       await tx.score.upsert({
         where: { pickId: pick.id },
         update: { finishPosition, ...score, needsReview: false },

@@ -73,7 +73,8 @@ export async function previewRules(rawConfig: PickemRuleSetConfig, raceId: strin
   }
 
   const config = parseRuleSetConfig(rawConfig);
-  const [results, stageResults] = await Promise.all([
+  const [race, results, stageResults] = await Promise.all([
+    prisma.race.findUnique({ where: { id: raceId } }),
     prisma.raceResult.findMany({
       where: { raceId },
       include: { driver: true },
@@ -81,7 +82,7 @@ export async function previewRules(rawConfig: PickemRuleSetConfig, raceId: strin
     }),
     prisma.stageResult.findMany({ where: { raceId } }),
   ]);
-  if (results.length === 0) {
+  if (!race || results.length === 0) {
     return "No results have been entered for that race yet.";
   }
 
@@ -92,7 +93,7 @@ export async function previewRules(rawConfig: PickemRuleSetConfig, raceId: strin
     const stagePositions = [stage1ByDriver.get(r.driverId), stage2ByDriver.get(r.driverId)].filter(
       (p): p is number => p != null,
     );
-    const score = computeScore(r.finishingPosition, stagePositions, config);
+    const score = computeScore(r.finishingPosition, race.fieldSize, stagePositions, config);
     return { driverId: r.driverId, driverName: r.driver.name, finishPosition: r.finishingPosition, ...score };
   });
 }

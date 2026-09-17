@@ -1,11 +1,15 @@
 // Pick'em scoring engine. A league's RuleSet.config holds a
 // PickemRuleSetConfig; this module parses it safely, ships two presets,
-// and computes points from it. Position values are fixed slots (like real
-// NASCAR points — 1st is always worth the same regardless of how many cars
-// started), not relative to a given race's field size.
+// and computes points from it. Finish points come from one of two modes:
+// a fixed matrix (like real NASCAR points — 1st is always worth the same
+// regardless of how many cars started), or a field-size-relative formula
+// (1st is worth however many cars started, scaling down with the field).
+// Stage points and the winner bonus are always fixed, in both modes.
 
 export const MAX_FIELD_SIZE = 40;
 export const MAX_STAGE_POSITIONS = 10;
+
+export type PointsMode = "fixed" | "fieldSizeRelative";
 
 export type PickemRuleSetConfig = {
   // Editable Rules
@@ -15,13 +19,17 @@ export type PickemRuleSetConfig = {
   includeNonPointsRaces: boolean;
 
   // Points Rules
+  pointsMode: PointsMode;
   includeStagePoints: boolean;
   includeWinnerBonus: boolean;
   winnerBonus: number;
-  // Index 0 = 1st place ... index 39 = 40th place.
+  // Used when pointsMode is "fixed". Index 0 = 1st place ... index 39 =
+  // 40th place. Ignored (but still stored, so switching modes doesn't
+  // lose your edits) when pointsMode is "fieldSizeRelative".
   positionPoints: number[];
   // Index 0 = 1st in a stage ... index 9 = 10th. Only the top 10 in a
   // stage score, so this is deliberately shorter than positionPoints.
+  // Always fixed, regardless of pointsMode.
   stagePositionPoints: number[];
 };
 
@@ -43,6 +51,7 @@ function buildNascarOfficialPreset(): PickemRuleSetConfig {
     picksPerWeek: 1,
     maxPicksPerDriverPerSeason: null,
     includeNonPointsRaces: false,
+    pointsMode: "fixed",
     includeStagePoints: true,
     includeWinnerBonus: false,
     winnerBonus: 0,
@@ -52,8 +61,11 @@ function buildNascarOfficialPreset(): PickemRuleSetConfig {
 }
 
 function buildOurDefaultPreset(): PickemRuleSetConfig {
-  // This league's original formula: one point per position (40 down to 1),
-  // +10 for a win, +5 for a stage win only (not the rest of the stage top 10).
+  // This league's original formula: one point per position, scaled to
+  // each race's actual field size (fieldSize + 1 - finishPosition), +10
+  // for a win, +5 for a stage win only (not the rest of the stage top 10).
+  // positionPoints is still populated (40 down to 1) as a sensible
+  // starting point if the league switches to the fixed-matrix mode later.
   const positionPoints = Array.from({ length: MAX_FIELD_SIZE }, (_, i) => MAX_FIELD_SIZE - i);
   const stagePositionPoints = Array.from({ length: MAX_STAGE_POSITIONS }, (_, i) => (i === 0 ? 5 : 0));
 
@@ -61,6 +73,7 @@ function buildOurDefaultPreset(): PickemRuleSetConfig {
     picksPerWeek: 1,
     maxPicksPerDriverPerSeason: null,
     includeNonPointsRaces: false,
+    pointsMode: "fieldSizeRelative",
     includeStagePoints: true,
     includeWinnerBonus: true,
     winnerBonus: 10,
@@ -93,6 +106,7 @@ export function parseRuleSetConfig(config: unknown): PickemRuleSetConfig {
         ? Math.floor(c.maxPicksPerDriverPerSeason)
         : null,
     includeNonPointsRaces: c?.includeNonPointsRaces === true,
+    pointsMode: c?.pointsMode === "fieldSizeRelative" ? "fieldSizeRelative" : "fixed",
     includeStagePoints: c?.includeStagePoints !== false,
     includeWinnerBonus: c?.includeWinnerBonus === true,
     winnerBonus: typeof c?.winnerBonus === "number" ? c.winnerBonus : 0,
@@ -113,15 +127,24 @@ function pointsForPosition(position: number, matrix: number[]): number {
   return idx >= 0 && idx < matrix.length ? matrix[idx] : 0;
 }
 
+function computeBaseScore(finishPosition: number, fieldSize: number, config: PickemRuleSetConfig): number {
+  if (config.pointsMode === "fieldSizeRelative") {
+    return Math.max(0, fieldSize + 1 - finishPosition);
+  }
+  return pointsForPosition(finishPosition, config.positionPoints);
+}
+
 // stagePositions: this driver's finishing position in each stage they
 // placed top-10 in (e.g. [4, 1] = 4th in stage 1, won stage 2). Omit a
-// stage entirely if the driver didn't finish top 10 in it.
+// stage entirely if the driver didn't finish top 10 in it. fieldSize only
+// matters when config.pointsMode is "fieldSizeRelative".
 export function computeScore(
   finishPosition: number,
+  fieldSize: number,
   stagePositions: number[],
   config: PickemRuleSetConfig,
 ): ScoreBreakdown {
-  const baseScore = pointsForPosition(finishPosition, config.positionPoints);
+  const baseScore = computeBaseScore(finishPosition, fieldSize, config);
   const winBonus = config.includeWinnerBonus && finishPosition === 1 ? config.winnerBonus : 0;
   const stageBonus = config.includeStagePoints
     ? stagePositions.reduce((sum, sp) => sum + pointsForPosition(sp, config.stagePositionPoints), 0)
