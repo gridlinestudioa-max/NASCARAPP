@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import LeagueRulesForm from "./LeagueRulesForm";
+import LeagueRulesForm from "@/components/LeagueRulesForm";
 
 export const dynamic = "force-dynamic";
 

@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
 import { computeScore, parseRuleSetConfig } from "@/lib/scoring";
-import { materializeCarriedOverLineups, scoreTieredFinish } from "@/lib/tieredDraft";
+import { materializeCarriedOverLineups, parseTieredDraftRuleSetConfig, scoreTieredFinish } from "@/lib/tieredDraft";
 
 function parseOptionalStagePosition(formData: FormData, key: string): number | null {
   const raw = formData.get(key);
@@ -138,7 +138,15 @@ export async function submitResults(
       });
     }
 
-    await scoreTieredFinish(tx, raceId, finishPositions);
+    const tieredLeagueIds = [...new Set(picks.filter((p) => p.league.type === "TIERED_DRAFT").map((p) => p.leagueId))];
+    const tieredLeagueSeasons = await tx.leagueSeason.findMany({
+      where: { leagueId: { in: tieredLeagueIds }, seasonId: race.seasonId },
+      include: { ruleSet: true },
+    });
+    const tieredConfigByLeagueId = new Map(
+      tieredLeagueSeasons.map((ls) => [ls.leagueId, parseTieredDraftRuleSetConfig(ls.ruleSet.config)]),
+    );
+    await scoreTieredFinish(tx, raceId, finishPositions, tieredConfigByLeagueId);
 
     await tx.race.update({ where: { id: raceId }, data: { status: "COMPLETE" } });
   });

@@ -191,17 +191,21 @@ async function renderTieredLineup({
   leagueId: string;
   raceId: string;
   userId: string;
-  race: { week: number; trackName: string; date: Date; qualifyingAt: Date | null; seasonId: string };
+  race: { week: number; trackName: string; date: Date; qualifyingAt: Date | null; seasonId: string; status: string };
   leagueSeason: { ruleSet: { config: unknown } };
   isOwner: boolean;
 }) {
   const config = parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config);
   const now = Date.now();
   const phase = lineupLockPhase(race, now);
+  // A race can be scored before its natural lock time passes (results
+  // entered early, or a race rescheduled after the fact) — show the
+  // scored view whenever that's happened, not just once the clock says so.
+  const hasResults = race.status === "COMPLETE";
 
   const tierAssignments = await prisma.driverTierAssignment.findMany({ where: { raceId }, include: { driver: true } });
 
-  if (phase === "locked") {
+  if (phase === "locked" || hasResults) {
     const picks = await prisma.pick.findMany({
       where: { leagueId, raceId },
       include: { user: true, driver: true, score: true },
@@ -224,7 +228,7 @@ async function renderTieredLineup({
         <h1>
           Week {race.week} — {race.trackName}
         </h1>
-        <p>Lineups are locked for this race.</p>
+        <p>{phase === "locked" ? "Lineups are locked for this race." : "Results are in for this race."}</p>
 
         <h2>Your lineup</h2>
         {myPicks.length === 0 ? (

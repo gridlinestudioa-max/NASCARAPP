@@ -8,10 +8,21 @@ import {
   PRESETS,
   type PickemRuleSetConfig,
 } from "@/lib/scoring";
-import { DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
-import { createLeague, previewRules, type PreviewRow } from "./actions";
+import { buildTieredDraftDefaultConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
+import { createLeague, previewRules, type PreviewRow } from "@/app/leagues/new/actions";
+import { updateLeagueRules } from "@/app/leagues/[leagueId]/settings/actions";
 
 type RaceOption = { id: string; label: string };
+
+// When set, the form edits this existing league's rules instead of
+// creating a new one — the name and league type are fixed and hidden,
+// and fields are seeded from its current config rather than a preset.
+type EditingLeague = {
+  id: string;
+  type: LeagueType;
+  pickemConfig?: PickemRuleSetConfig;
+  tieredConfig?: TieredDraftRuleSetConfig;
+};
 
 function clonePreset(preset: PickemRuleSetConfig): PickemRuleSetConfig {
   return {
@@ -21,14 +32,24 @@ function clonePreset(preset: PickemRuleSetConfig): PickemRuleSetConfig {
   };
 }
 
-export default function LeagueRulesForm({ completedRaces }: { completedRaces: RaceOption[] }) {
+export default function LeagueRulesForm({
+  completedRaces,
+  editingLeague,
+}: {
+  completedRaces: RaceOption[];
+  editingLeague?: EditingLeague;
+}) {
   const [name, setName] = useState("");
-  const [leagueType, setLeagueType] = useState<LeagueType>("PICKEM");
-  const [config, setConfig] = useState<PickemRuleSetConfig>(() => clonePreset(PRESETS.ourDefault));
-  const [unlimitedRepeats, setUnlimitedRepeats] = useState(true);
-  const [tieredConfig, setTieredConfig] = useState<TieredDraftRuleSetConfig>({
-    maxStartsPerDriverPerSeason: DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON,
-  });
+  const [leagueType, setLeagueType] = useState<LeagueType>(editingLeague?.type ?? "PICKEM");
+  const [config, setConfig] = useState<PickemRuleSetConfig>(() =>
+    editingLeague?.pickemConfig ? clonePreset(editingLeague.pickemConfig) : clonePreset(PRESETS.ourDefault),
+  );
+  const [unlimitedRepeats, setUnlimitedRepeats] = useState(
+    editingLeague?.pickemConfig ? editingLeague.pickemConfig.maxPicksPerDriverPerSeason == null : true,
+  );
+  const [tieredConfig, setTieredConfig] = useState<TieredDraftRuleSetConfig>(
+    editingLeague?.tieredConfig ?? buildTieredDraftDefaultConfig(),
+  );
 
   const [createError, setCreateError] = useState<string | undefined>();
   const [creating, startCreate] = useTransition();
@@ -59,6 +80,22 @@ export default function LeagueRulesForm({ completedRaces }: { completedRaces: Ra
     });
   }
 
+  function updateTieredQualifyingPoint(index: number, value: number) {
+    setTieredConfig((c) => {
+      const qualifyingPositionPoints = [...c.qualifyingPositionPoints];
+      qualifyingPositionPoints[index] = value;
+      return { ...c, qualifyingPositionPoints };
+    });
+  }
+
+  function updateTieredFinishPoint(index: number, value: number) {
+    setTieredConfig((c) => {
+      const finishPositionPoints = [...c.finishPositionPoints];
+      finishPositionPoints[index] = value;
+      return { ...c, finishPositionPoints };
+    });
+  }
+
   function handlePreview() {
     setPreviewError(undefined);
     startPreview(async () => {
@@ -76,21 +113,26 @@ export default function LeagueRulesForm({ completedRaces }: { completedRaces: Ra
     e.preventDefault();
     setCreateError(undefined);
     startCreate(async () => {
-      const error = await createLeague(name, leagueType, leagueType === "TIERED_DRAFT" ? tieredConfig : config);
+      const rawConfig = leagueType === "TIERED_DRAFT" ? tieredConfig : config;
+      const error = editingLeague
+        ? await updateLeagueRules(editingLeague.id, leagueType, rawConfig)
+        : await createLeague(name, leagueType, rawConfig);
       if (error) setCreateError(error);
     });
   }
 
   return (
     <form onSubmit={handleCreate}>
-      <div>
-        <label htmlFor="name">League name</label>
-        <br />
-        <input id="name" value={name} onChange={(e) => setName(e.target.value)} required minLength={3} autoFocus />
-      </div>
+      {!editingLeague && (
+        <div>
+          <label htmlFor="name">League name</label>
+          <br />
+          <input id="name" value={name} onChange={(e) => setName(e.target.value)} required minLength={3} autoFocus />
+        </div>
+      )}
 
-      <h2>League type</h2>
-      <div>
+      {!editingLeague && <h2>League type</h2>}
+      <div style={editingLeague ? { display: "none" } : undefined}>
         <label>
           <input
             type="radio"
@@ -126,12 +168,11 @@ export default function LeagueRulesForm({ completedRaces }: { completedRaces: Ra
             race starts. If you never touch your lineup for a week, last week&apos;s carries over.
           </p>
           <p>
-            <strong>Scoring:</strong> only the top 4 qualifiers score qualifying points (1st=10, 2nd=5, 3rd=3,
-            4th=1) — every rostered driver, starter or bench, earns these. Starters additionally score finishing
-            points, from 90 for the win down by 2 per position (43rd=6); bench drivers don&apos;t score finishing
-            points at all, win or lose.
+            <strong>Scoring:</strong> every rostered driver, starter or bench, scores qualifying points (only the
+            top 4 qualifiers ever score). Starters additionally score finishing points; bench drivers never score
+            finishing points, win or lose. The tier structure and lock timing aren&apos;t editable, but every point
+            value below is — the defaults shown match the classic Yahoo Fantasy NASCAR payouts.
           </p>
-          <p>None of the above is editable. The one rule you can set:</p>
           <div>
             <label htmlFor="maxStarts">Max times a player can START the same driver per season</label>
             <br />
@@ -141,17 +182,79 @@ export default function LeagueRulesForm({ completedRaces }: { completedRaces: Ra
               min={1}
               value={tieredConfig.maxStartsPerDriverPerSeason}
               onChange={(e) =>
-                setTieredConfig({ maxStartsPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1) })
+                setTieredConfig((c) => ({
+                  ...c,
+                  maxStartsPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1),
+                }))
               }
             />{" "}
             (benching a driver doesn&apos;t count against this cap — only starting them does)
           </div>
 
+          <h3>Qualifying points</h3>
+          <p>Every rostered driver earns these — only the top 4 qualifiers score anything.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Qual. pos</th>
+                <th>Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tieredConfig.qualifyingPositionPoints.map((pts, i) => (
+                <tr key={i}>
+                  <td>{i + 1}</td>
+                  <td>
+                    <input
+                      type="number"
+                      aria-label={`Qualifying points for position ${i + 1}`}
+                      value={pts}
+                      onChange={(e) => updateTieredQualifyingPoint(i, parseInt(e.target.value, 10) || 0)}
+                      style={{ width: "4em" }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <h3>Finishing points</h3>
+          <p>Starters only — bench drivers never score these.</p>
+          <div style={{ display: "flex", gap: "1em", flexWrap: "wrap" }}>
+            {[0, 10, 20, 30].map((start) => (
+              <table key={start}>
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 10 }, (_, i) => start + i).map((i) => (
+                    <tr key={i}>
+                      <td>{i + 1}</td>
+                      <td>
+                        <input
+                          type="number"
+                          aria-label={`Finishing points for position ${i + 1}`}
+                          value={tieredConfig.finishPositionPoints[i]}
+                          onChange={(e) => updateTieredFinishPoint(i, parseInt(e.target.value, 10) || 0)}
+                          style={{ width: "4em" }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ))}
+          </div>
+          <p>(Positions 1 through {MAX_FIELD_SIZE}.)</p>
+
           {createError && <p role="alert">{createError}</p>}
 
           <p>
             <button type="submit" disabled={creating}>
-              {creating ? "Creating..." : "Create league"}
+              {creating ? "Saving..." : editingLeague ? "Save changes" : "Create league"}
             </button>
           </p>
         </>
@@ -428,7 +531,7 @@ export default function LeagueRulesForm({ completedRaces }: { completedRaces: Ra
 
       <p>
         <button type="submit" disabled={creating}>
-          {creating ? "Creating..." : "Create league"}
+          {creating ? "Saving..." : editingLeague ? "Save changes" : "Create league"}
         </button>
       </p>
         </>

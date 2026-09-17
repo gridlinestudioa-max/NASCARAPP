@@ -98,7 +98,7 @@ export const PRESETS = {
   ourDefault: buildOurDefaultPreset(),
 };
 
-function coerceMatrix(value: unknown, length: number, fallback: number[]): number[] {
+export function coerceMatrix(value: unknown, length: number, fallback: number[]): number[] {
   if (!Array.isArray(value) || value.length !== length) return fallback;
   return value.map((n) => (typeof n === "number" && Number.isFinite(n) ? n : 0));
 }

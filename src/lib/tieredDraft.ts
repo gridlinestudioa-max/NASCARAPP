@@ -1,10 +1,11 @@
 // Tiered Lineup scoring/lock engine — the second league type, modeled on
-// the old Yahoo Fantasy NASCAR "tiered draft" format. Unlike Pick'em, none
-// of this format's structure is league-editable except the season start
-// cap: 3 fixed tiers (A/B/C), a fixed 8-slot roster (4 starters + 4 bench),
-// and fixed qualifying/finish points tables.
+// the old Yahoo Fantasy NASCAR "tiered draft" format. Unlike Pick'em's
+// picksPerWeek/eligibility rules, this format's structure (3 fixed tiers,
+// a fixed 8-slot roster, the lock timing) isn't league-editable — but the
+// season start cap and every point value are.
 
 import type { DriverTier, Prisma } from "@prisma/client";
+import { MAX_FIELD_SIZE, coerceMatrix } from "@/lib/scoring";
 
 export type { DriverTier };
 export type PickRole = "STARTER" | "BENCH";
@@ -41,50 +42,70 @@ export const LATE_SWAP_GROUPS: { tier: DriverTier; pickNumbers: number[] }[] = [
 
 export const DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON = 9;
 
+// Only the top 4 qualifiers ever score qualifying points — a fixed
+// structural rule, like the 3 tiers themselves — but the point VALUES for
+// those 4 spots are editable, same as finishPositionPoints below.
+export const QUALIFYING_SCORING_POSITIONS = 4;
+
 export type TieredDraftRuleSetConfig = {
   // How many times any one driver may be started (not benched) across a
-  // season by one owner — the only editable rule for this league type.
+  // season by one owner.
   maxStartsPerDriverPerSeason: number;
+  // Index 0 = 1st in qualifying ... index 3 = 4th. Every rostered driver,
+  // starter or bench, earns these.
+  qualifyingPositionPoints: number[];
+  // Index 0 = 1st place ... index (MAX_FIELD_SIZE-1) = last. Only starters
+  // earn these — bench drivers never score finish points.
+  finishPositionPoints: number[];
 };
 
+function buildDefaultFinishPositionPoints(): number[] {
+  // The winner scores 90, decreasing by 2 per position.
+  return Array.from({ length: MAX_FIELD_SIZE }, (_, i) => Math.max(0, 90 - 2 * i));
+}
+
 export function buildTieredDraftDefaultConfig(): TieredDraftRuleSetConfig {
-  return { maxStartsPerDriverPerSeason: DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON };
+  return {
+    maxStartsPerDriverPerSeason: DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON,
+    qualifyingPositionPoints: [10, 5, 3, 1],
+    finishPositionPoints: buildDefaultFinishPositionPoints(),
+  };
 }
 
 export function parseTieredDraftRuleSetConfig(config: unknown): TieredDraftRuleSetConfig {
   const c = config as Partial<TieredDraftRuleSetConfig> | null;
+  const fallback = buildTieredDraftDefaultConfig();
   return {
     maxStartsPerDriverPerSeason:
       typeof c?.maxStartsPerDriverPerSeason === "number" && c.maxStartsPerDriverPerSeason >= 1
         ? Math.floor(c.maxStartsPerDriverPerSeason)
         : DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON,
+    qualifyingPositionPoints: coerceMatrix(
+      c?.qualifyingPositionPoints,
+      QUALIFYING_SCORING_POSITIONS,
+      fallback.qualifyingPositionPoints,
+    ),
+    finishPositionPoints: coerceMatrix(c?.finishPositionPoints, MAX_FIELD_SIZE, fallback.finishPositionPoints),
   };
 }
 
 // ---------- Scoring ----------
 
-// Only the top 4 qualifiers score, and every rostered driver (starter or
-// bench) earns these points regardless of how the race itself goes.
-export function qualifyingPoints(qualifyingPosition: number | null | undefined): number {
-  switch (qualifyingPosition) {
-    case 1:
-      return 10;
-    case 2:
-      return 5;
-    case 3:
-      return 3;
-    case 4:
-      return 1;
-    default:
-      return 0;
-  }
+function pointsForPosition(position: number | null | undefined, matrix: number[]): number {
+  if (position == null) return 0;
+  const idx = position - 1;
+  return idx >= 0 && idx < matrix.length ? matrix[idx] : 0;
 }
 
-// Race winner scores 90, decreasing by 2 per position down to 43rd (6).
+// Only the top 4 qualifiers score, and every rostered driver (starter or
+// bench) earns these points regardless of how the race itself goes.
+export function qualifyingPoints(qualifyingPosition: number | null | undefined, config: TieredDraftRuleSetConfig): number {
+  return pointsForPosition(qualifyingPosition, config.qualifyingPositionPoints);
+}
+
 // Only starters earn this — bench drivers score qualifying points only.
-export function finishPoints(finishPosition: number | null | undefined): number {
-  if (finishPosition == null) return 0;
-  return Math.max(0, 90 - 2 * (finishPosition - 1));
+export function finishPoints(finishPosition: number | null | undefined, config: TieredDraftRuleSetConfig): number {
+  return pointsForPosition(finishPosition, config.finishPositionPoints);
 }
 
 export type TieredScoreBreakdown = {
@@ -97,9 +118,10 @@ export function computeTieredScore(
   role: PickRole,
   qualifyingPosition: number | null,
   finishPosition: number | null,
+  config: TieredDraftRuleSetConfig,
 ): TieredScoreBreakdown {
-  const qualifyingBonus = qualifyingPoints(qualifyingPosition);
-  const baseScore = role === "STARTER" ? finishPoints(finishPosition) : 0;
+  const qualifyingBonus = qualifyingPoints(qualifyingPosition, config);
+  const baseScore = role === "STARTER" ? finishPoints(finishPosition, config) : 0;
   return { baseScore, qualifyingBonus, total: baseScore + qualifyingBonus };
 }
 
@@ -223,19 +245,24 @@ export async function materializeCarriedOverLineups(tx: Prisma.TransactionClient
 
 // Scores (or re-scores) every Tiered Lineup pick for the given drivers'
 // qualifying results — every rostered driver, starter or bench, earns
-// qualifying points regardless of how the race itself goes.
+// qualifying points regardless of how the race itself goes. configByLeagueId
+// covers every TIERED_DRAFT league taking part in this race's season, since
+// each scores under its own point values.
 export async function scoreTieredQualifying(
   tx: Prisma.TransactionClient,
   raceId: string,
   qualifyingPositions: Map<string, number>,
+  configByLeagueId: Map<string, TieredDraftRuleSetConfig>,
 ): Promise<void> {
   const picks = await tx.pick.findMany({
     where: { raceId, driverId: { in: [...qualifyingPositions.keys()] }, league: { type: "TIERED_DRAFT" } },
     include: { score: true },
   });
   for (const pick of picks) {
+    const config = configByLeagueId.get(pick.leagueId);
+    if (!config) continue;
     const qualifyingPosition = qualifyingPositions.get(pick.driverId) ?? null;
-    const qualifyingBonus = qualifyingPoints(qualifyingPosition);
+    const qualifyingBonus = qualifyingPoints(qualifyingPosition, config);
     const baseScore = pick.score?.baseScore ?? 0;
     const stageBonus = pick.score?.stageBonus ?? 0;
     const total = baseScore + stageBonus + qualifyingBonus;
@@ -256,21 +283,25 @@ export async function scoreTieredQualifying(
 
 // Scores (or re-scores) every Tiered Lineup pick for the given drivers'
 // race results — only starters earn finish points; bench picks keep
-// whatever qualifying points they already have.
+// whatever qualifying points they already have. configByLeagueId covers
+// every TIERED_DRAFT league taking part in this race's season.
 export async function scoreTieredFinish(
   tx: Prisma.TransactionClient,
   raceId: string,
   finishPositions: Map<string, number>,
+  configByLeagueId: Map<string, TieredDraftRuleSetConfig>,
 ): Promise<void> {
   const picks = await tx.pick.findMany({
     where: { raceId, driverId: { in: [...finishPositions.keys()] }, league: { type: "TIERED_DRAFT" } },
     include: { score: true },
   });
   for (const pick of picks) {
+    const config = configByLeagueId.get(pick.leagueId);
+    if (!config) continue;
     const slot = slotForPickNumber(pick.pickNumber);
     const role: PickRole = slot?.role ?? "BENCH";
     const finishPosition = finishPositions.get(pick.driverId) ?? null;
-    const baseScore = role === "STARTER" ? finishPoints(finishPosition) : 0;
+    const baseScore = role === "STARTER" ? finishPoints(finishPosition, config) : 0;
     const qualifyingBonus = pick.score?.qualifyingBonus ?? 0;
     const qualifyingPosition = pick.score?.qualifyingPosition ?? null;
     const stageBonus = pick.score?.stageBonus ?? 0;

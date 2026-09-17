@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
-import { scoreTieredQualifying } from "@/lib/tieredDraft";
+import { parseTieredDraftRuleSetConfig, scoreTieredQualifying } from "@/lib/tieredDraft";
 
 export async function submitQualifying(
   _prevState: string | undefined,
@@ -55,7 +55,15 @@ export async function submitQualifying(
         create: { raceId, driverId, qualifyingPosition },
       });
     }
-    await scoreTieredQualifying(tx, raceId, positions);
+
+    const tieredLeagueSeasons = await tx.leagueSeason.findMany({
+      where: { seasonId: race.seasonId, league: { type: "TIERED_DRAFT" } },
+      include: { ruleSet: true },
+    });
+    const configByLeagueId = new Map(
+      tieredLeagueSeasons.map((ls) => [ls.leagueId, parseTieredDraftRuleSetConfig(ls.ruleSet.config)]),
+    );
+    await scoreTieredQualifying(tx, raceId, positions, configByLeagueId);
   });
 
   revalidatePath(`/races/${raceId}`);
