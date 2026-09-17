@@ -11,12 +11,21 @@ export const MAX_STAGE_POSITIONS = 10;
 
 export type PointsMode = "fixed" | "fieldSizeRelative";
 
+// When picks lock for a race: "afterQualifying" (the default, and this
+// league's original behavior) locks 5 minutes before the race starts, so
+// picks can be informed by qualifying results. "beforeQualifying" locks
+// blind, at the moment qualifying itself begins — a race with no
+// qualifyingAt recorded falls back to the same 5-minutes-before-race-start
+// cutoff either way.
+export type LockTiming = "beforeQualifying" | "afterQualifying";
+
 export type PickemRuleSetConfig = {
   // Editable Rules
   picksPerWeek: number;
   // null = unlimited.
   maxPicksPerDriverPerSeason: number | null;
   includeNonPointsRaces: boolean;
+  lockTiming: LockTiming;
 
   // Points Rules
   pointsMode: PointsMode;
@@ -51,6 +60,7 @@ function buildNascarOfficialPreset(): PickemRuleSetConfig {
     picksPerWeek: 1,
     maxPicksPerDriverPerSeason: null,
     includeNonPointsRaces: false,
+    lockTiming: "afterQualifying",
     pointsMode: "fixed",
     includeStagePoints: true,
     includeWinnerBonus: false,
@@ -73,6 +83,7 @@ function buildOurDefaultPreset(): PickemRuleSetConfig {
     picksPerWeek: 1,
     maxPicksPerDriverPerSeason: null,
     includeNonPointsRaces: false,
+    lockTiming: "afterQualifying",
     pointsMode: "fieldSizeRelative",
     includeStagePoints: true,
     includeWinnerBonus: true,
@@ -106,6 +117,7 @@ export function parseRuleSetConfig(config: unknown): PickemRuleSetConfig {
         ? Math.floor(c.maxPicksPerDriverPerSeason)
         : null,
     includeNonPointsRaces: c?.includeNonPointsRaces === true,
+    lockTiming: c?.lockTiming === "beforeQualifying" ? "beforeQualifying" : "afterQualifying",
     pointsMode: c?.pointsMode === "fieldSizeRelative" ? "fieldSizeRelative" : "fixed",
     includeStagePoints: c?.includeStagePoints !== false,
     includeWinnerBonus: c?.includeWinnerBonus === true,
@@ -150,4 +162,15 @@ export function computeScore(
     ? stagePositions.reduce((sum, sp) => sum + pointsForPosition(sp, config.stagePositionPoints), 0)
     : 0;
   return { baseScore, winBonus, stageBonus, total: baseScore + winBonus + stageBonus };
+}
+
+// When picks lock for a given race, per the league's lockTiming setting.
+// "beforeQualifying" locks the moment qualifying begins (blind picks); a
+// race with no qualifyingAt recorded, or a league using "afterQualifying",
+// locks 5 minutes before the race itself starts.
+export function pickemLockAt(race: { qualifyingAt: Date | null; date: Date }, lockTiming: LockTiming): Date {
+  if (lockTiming === "beforeQualifying" && race.qualifyingAt) {
+    return race.qualifyingAt;
+  }
+  return new Date(race.date.getTime() - 5 * 60 * 1000);
 }

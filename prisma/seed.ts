@@ -251,8 +251,8 @@ async function main() {
       where: {
         leagueId_userId_raceId_pickNumber: { leagueId: league.id, userId: user.id, raceId: race.id, pickNumber: 1 },
       },
-      update: { driverId, tierId: null },
-      create: { leagueId: league.id, userId: user.id, raceId: race.id, pickNumber: 1, driverId, tierId: null },
+      update: { driverId },
+      create: { leagueId: league.id, userId: user.id, raceId: race.id, pickNumber: 1, driverId },
     });
     pickCount++;
 

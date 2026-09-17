@@ -39,6 +39,8 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
 
       {canEnterResults && (
         <p>
+          <Link href={`/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
+          <Link href={`/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
           <Link href={`/races/${raceId}/results`}>
             {race.results.length > 0 ? "Edit results" : "Enter results"}
           </Link>

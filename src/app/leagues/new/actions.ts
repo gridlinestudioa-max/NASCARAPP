@@ -1,11 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import type { LeagueType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { computeScore, parseRuleSetConfig, type PickemRuleSetConfig } from "@/lib/scoring";
+import { parseTieredDraftRuleSetConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 
-export async function createLeague(name: string, rawConfig: PickemRuleSetConfig): Promise<string | undefined> {
+export async function createLeague(
+  name: string,
+  leagueType: LeagueType,
+  rawConfig: PickemRuleSetConfig | TieredDraftRuleSetConfig,
+): Promise<string | undefined> {
   const trimmed = name.trim();
   if (trimmed.length < 3) {
     return "League name must be at least 3 characters.";
@@ -18,7 +24,10 @@ export async function createLeague(name: string, rawConfig: PickemRuleSetConfig)
   const userId = session.user.id;
 
   // Sanitize client-supplied config rather than trusting its shape directly.
-  const config = parseRuleSetConfig(rawConfig);
+  const config: PickemRuleSetConfig | TieredDraftRuleSetConfig =
+    leagueType === "TIERED_DRAFT"
+      ? parseTieredDraftRuleSetConfig(rawConfig)
+      : parseRuleSetConfig(rawConfig as PickemRuleSetConfig);
 
   // The league takes part in whatever the current shared season is, if one
   // exists yet — a brand-new deployment with no season seeded still lets a
@@ -27,7 +36,7 @@ export async function createLeague(name: string, rawConfig: PickemRuleSetConfig)
 
   const league = await prisma.$transaction(async (tx) => {
     const league = await tx.league.create({
-      data: { name: trimmed, type: "PICKEM", ownerId: userId },
+      data: { name: trimmed, type: leagueType, ownerId: userId },
     });
     await tx.leagueMembership.create({
       data: { leagueId: league.id, userId, role: "OWNER" },

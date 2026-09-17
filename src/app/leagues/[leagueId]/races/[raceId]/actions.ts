@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { parseRuleSetConfig } from "@/lib/scoring";
+import { parseRuleSetConfig, pickemLockAt } from "@/lib/scoring";
+import {
+  LATE_SWAP_GROUPS,
+  TIERED_LINEUP_SLOTS,
+  lineupLockPhase,
+  parseTieredDraftRuleSetConfig,
+} from "@/lib/tieredDraft";
 
 export async function submitPick(
   _prevState: string | undefined,
@@ -45,15 +51,15 @@ export async function submitPick(
   if (!leagueSeason) {
     return "Race not found.";
   }
-  // Picks close once the race has results recorded or has already happened —
-  // whichever field flips first, since this app doesn't backfill picks for
-  // races that ran outside it.
+  const config = parseRuleSetConfig(leagueSeason.ruleSet.config);
+
+  // Picks close once the race has results recorded or its lock time has
+  // passed — whichever field flips first, since this app doesn't backfill
+  // picks for races that ran outside it.
   const alreadyScored = race.picks.some((p) => p.score);
-  if (alreadyScored || race.date.getTime() <= Date.now()) {
+  if (alreadyScored || pickemLockAt(race, config.lockTiming).getTime() <= Date.now()) {
     return "Picks are closed for this race.";
   }
-
-  const config = parseRuleSetConfig(leagueSeason.ruleSet.config);
 
   const driverIds: string[] = [];
   for (let slot = 1; slot <= config.picksPerWeek; slot++) {
@@ -104,6 +110,139 @@ export async function submitPick(
         where: { leagueId_userId_raceId_pickNumber: { leagueId, userId, raceId, pickNumber: i + 1 } },
         update: { driverId },
         create: { leagueId, userId, raceId, pickNumber: i + 1, driverId },
+      }),
+    ),
+  );
+
+  revalidatePath(`/leagues/${leagueId}/races/${raceId}`);
+  return undefined;
+}
+
+export async function submitTieredLineup(
+  _prevState: string | undefined,
+  formData: FormData,
+): Promise<string | undefined> {
+  const leagueId = formData.get("leagueId");
+  const raceId = formData.get("raceId");
+
+  if (typeof leagueId !== "string" || typeof raceId !== "string") {
+    return "Missing league or race.";
+  }
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    return "You need to be signed in to set a lineup.";
+  }
+  const userId = session.user.id;
+
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { leagueId_userId: { leagueId, userId } },
+  });
+  if (!membership) {
+    return "You're not a member of this league.";
+  }
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId } });
+  if (!league || league.type !== "TIERED_DRAFT") {
+    return "This league doesn't use Tiered Lineup rosters.";
+  }
+
+  const race = await prisma.race.findUnique({ where: { id: raceId } });
+  if (!race) {
+    return "Race not found.";
+  }
+  const leagueSeason = await prisma.leagueSeason.findUnique({
+    where: { leagueId_seasonId: { leagueId, seasonId: race.seasonId } },
+    include: { ruleSet: true },
+  });
+  if (!leagueSeason) {
+    return "Race not found.";
+  }
+  const config = parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config);
+
+  const phase = lineupLockPhase(race, Date.now());
+  if (phase === "locked") {
+    return "Lineups are locked for this race.";
+  }
+
+  const submitted = new Map<number, string>();
+  for (const slot of TIERED_LINEUP_SLOTS) {
+    const driverId = formData.get(`driverId-${slot.pickNumber}`);
+    if (typeof driverId !== "string" || !driverId) {
+      return `Pick a ${slot.role === "STARTER" ? "starter" : "bench"} driver for Tier ${slot.tier}.`;
+    }
+    submitted.set(slot.pickNumber, driverId);
+  }
+  const allDriverIds = [...submitted.values()];
+  if (new Set(allDriverIds).size !== allDriverIds.length) {
+    return "Each driver can only appear once in your lineup.";
+  }
+
+  const drivers = await prisma.driver.findMany({ where: { id: { in: allDriverIds } } });
+  const driverNameById = new Map(drivers.map((d) => [d.id, d.name]));
+  if (drivers.length !== allDriverIds.length) {
+    return "Unknown driver.";
+  }
+
+  const tierAssignments = await prisma.driverTierAssignment.findMany({
+    where: { raceId, driverId: { in: allDriverIds } },
+  });
+  const tierByDriverId = new Map(tierAssignments.map((a) => [a.driverId, a.tier]));
+  for (const slot of TIERED_LINEUP_SLOTS) {
+    const driverId = submitted.get(slot.pickNumber)!;
+    if (tierByDriverId.get(driverId) !== slot.tier) {
+      return `${driverNameById.get(driverId)} isn't assigned to Tier ${slot.tier} this week.`;
+    }
+  }
+
+  if (phase === "lateSwapOnly") {
+    const existingPicks = await prisma.pick.findMany({ where: { leagueId, userId, raceId } });
+    if (existingPicks.length === 0) {
+      return "You didn't set a lineup before it locked, so there's nothing left to swap.";
+    }
+    const existingByPickNumber = new Map(existingPicks.map((p) => [p.pickNumber, p.driverId]));
+    for (const group of LATE_SWAP_GROUPS) {
+      const before = group.pickNumbers.map((pn) => existingByPickNumber.get(pn)).sort();
+      const after = group.pickNumbers.map((pn) => submitted.get(pn)).sort();
+      if (JSON.stringify(before) !== JSON.stringify(after)) {
+        return `During the late-swap window you can only swap Tier ${group.tier}'s starter(s) with its own bench driver(s) — not bring in a new driver.`;
+      }
+    }
+  }
+
+  // Season starts cap (starter slots only — benching a driver doesn't count).
+  const starterSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER");
+  const starterDriverIds = starterSlots.map((s) => submitted.get(s.pickNumber)!);
+  const seasonRaces = await prisma.race.findMany({
+    where: { seasonId: race.seasonId, id: { not: raceId } },
+    select: { id: true },
+  });
+  const priorStarterPicks = await prisma.pick.findMany({
+    where: {
+      leagueId,
+      userId,
+      raceId: { in: seasonRaces.map((r) => r.id) },
+      pickNumber: { in: starterSlots.map((s) => s.pickNumber) },
+      driverId: { in: starterDriverIds },
+    },
+  });
+  const priorStartsByDriver = new Map<string, number>();
+  for (const p of priorStarterPicks) {
+    priorStartsByDriver.set(p.driverId, (priorStartsByDriver.get(p.driverId) ?? 0) + 1);
+  }
+  for (const driverId of starterDriverIds) {
+    const projected = (priorStartsByDriver.get(driverId) ?? 0) + 1;
+    if (projected > config.maxStartsPerDriverPerSeason) {
+      return `${driverNameById.get(driverId)} has already started the maximum ${config.maxStartsPerDriverPerSeason} time(s) this season.`;
+    }
+  }
+
+  await prisma.$transaction(
+    TIERED_LINEUP_SLOTS.map((slot) =>
+      prisma.pick.upsert({
+        where: { leagueId_userId_raceId_pickNumber: { leagueId, userId, raceId, pickNumber: slot.pickNumber } },
+        update: { driverId: submitted.get(slot.pickNumber)! },
+        create: { leagueId, userId, raceId, pickNumber: slot.pickNumber, driverId: submitted.get(slot.pickNumber)! },
       }),
     ),
   );

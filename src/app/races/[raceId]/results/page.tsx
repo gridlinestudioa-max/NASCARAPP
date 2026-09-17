@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
+import { materializeCarriedOverLineups } from "@/lib/tieredDraft";
 import ResultsForm from "./ResultsForm";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,11 @@ export default async function EnterResultsPage(props: PageProps<"/races/[raceId]
   if (!authorized) {
     redirect(`/races/${raceId}`);
   }
+
+  // Materialize any Tiered Lineup members' carried-over lineups first, so
+  // their drivers show up here too — otherwise a member who never touched
+  // their lineup this week would silently get no finishing positions.
+  await materializeCarriedOverLineups(prisma, raceId);
 
   // Only drivers someone actually picked for this race need a finishing
   // position entered — that's the minimum needed to score every pick on

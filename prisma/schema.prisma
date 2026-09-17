@@ -74,14 +74,14 @@ model RuleSet {
   id        String   @id @default(cuid())
   leagueId  String
   label     String   // e.g. "2026 Season Rules"
-  // Holds: scoring formula values, picksPerWeek, eligibility ("any_driver" |
-  // "must_match_weekly_tier"), tier definitions, repeatPickRule, etc.
+  // Holds a PickemRuleSetConfig or TieredDraftRuleSetConfig (see
+  // src/lib/scoring.ts / src/lib/tieredDraft.ts), depending on the parent
+  // League's type.
   config    Json
   createdAt DateTime @default(now())
 
   league        League         @relation(fields: [leagueId], references: [id])
   leagueSeasons LeagueSeason[]
-  tiers         Tier[]
 }
 
 // The real-world schedule for one year — shared across every league, not
@@ -116,10 +116,11 @@ model Driver {
   name     String  @unique
   isActive Boolean @default(true)
 
-  raceResults     RaceResult[]
-  stageResults    StageResult[]
-  tierAssignments DriverTierAssignment[]
-  picks           Pick[]
+  raceResults       RaceResult[]
+  stageResults      StageResult[]
+  qualifyingResults QualifyingResult[]
+  tierAssignments   DriverTierAssignment[]
+  picks             Pick[]
 }
 
 enum RaceStatus {
@@ -134,9 +135,15 @@ model Race {
   // within its season — dates may be estimated, week is not.
   week Int
 
-  seasonId     String
-  trackName    String
-  date         DateTime
+  seasonId String
+  trackName String
+  date      DateTime
+  // When qualifying happens for this race — nullable since older/seeded
+  // races have no real qualifying data. Drives both the Tiered Lineup
+  // league's initial lock (2am Pacific on this date) and a Pick'em league's
+  // optional "lock before qualifying" timing; a race with no qualifyingAt
+  // set falls back to locking the same as "before race start" everywhere.
+  qualifyingAt DateTime?
   fieldSize    Int
   stage1Length Int?
   stage2Length Int?
@@ -145,11 +152,12 @@ model Race {
   // the standard scoring formula.
   isNonPoints  Boolean    @default(false)
 
-  season          Season                 @relation(fields: [seasonId], references: [id])
-  results         RaceResult[]
-  stageResults    StageResult[]
-  tierAssignments DriverTierAssignment[]
-  picks           Pick[]
+  season            Season                 @relation(fields: [seasonId], references: [id])
+  results           RaceResult[]
+  stageResults      StageResult[]
+  qualifyingResults QualifyingResult[]
+  tierAssignments   DriverTierAssignment[]
+  picks             Pick[]
 
   @@unique([seasonId, week])
 }
@@ -186,55 +194,65 @@ model StageResult {
   @@unique([raceId, stageNumber, driverId])
 }
 
-// ---------- Tiers (Tiered Draft league type only) ----------
-
-model Tier {
-  id        String @id @default(cuid())
-  ruleSetId String
-  name      String
-  order     Int
-
-  ruleSet     RuleSet                @relation(fields: [ruleSetId], references: [id])
-  assignments DriverTierAssignment[]
-  picks       Pick[]
-}
-
-// Which tier a driver sits in for one specific race week — re-set every
-// week for the "weekly team" format.
-model DriverTierAssignment {
-  id       String @id @default(cuid())
-  raceId   String
-  driverId String
-  tierId   String
+// A driver's official qualifying finishing position for one race — shared,
+// site-wide fact like RaceResult/StageResult. Drives both the Tiered
+// Lineup league's qualifying points and its weekly A/B/C tier assignment.
+model QualifyingResult {
+  id                 String @id @default(cuid())
+  raceId             String
+  driverId           String
+  qualifyingPosition Int
 
   race   Race   @relation(fields: [raceId], references: [id])
   driver Driver @relation(fields: [driverId], references: [id])
-  tier   Tier   @relation(fields: [tierId], references: [id])
+
+  @@unique([raceId, driverId])
+}
+
+// ---------- Tiers (Tiered Lineup league type only) ----------
+
+// The three fixed performance tiers Tiered Lineup leagues draft from each
+// week — not league-configurable, unlike Pick'em's rules.
+enum DriverTier {
+  A
+  B
+  C
+}
+
+// Which tier a driver sits in for one specific race week — shared, site-wide
+// (every Tiered Lineup league drafts from the same weekly tiers), re-set
+// every week.
+model DriverTierAssignment {
+  id       String     @id @default(cuid())
+  raceId   String
+  driverId String
+  tier     DriverTier
+
+  race   Race   @relation(fields: [raceId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
 
   @@unique([raceId, driverId])
 }
 
 // ---------- Picks & Scoring ----------
 
-// One row per driver a user selects for a race. Pick'em leagues: one row
-// per user per race, tierId is null. Tiered Draft leagues: several rows
-// per user per race (one per tier slot).
+// One row per driver a user rosters for a race. Pick'em leagues: one row
+// per user per race per RuleSet.picksPerWeek slot. Tiered Lineup leagues:
+// 8 rows per user per race — pickNumber 1-4 are the starter slots (Tier A,
+// Tier B x2, Tier C), 5-8 are the matching bench slots (see
+// TIERED_LINEUP_SLOTS in src/lib/tieredDraft.ts for the fixed mapping).
 model Pick {
   id         String  @id @default(cuid())
   leagueId   String
   userId     String
   raceId     String
-  // 1-based slot within a week's picks — a league's RuleSet.picksPerWeek
-  // controls how many slots a player fills; 1 for every league so far.
   pickNumber Int     @default(1)
   driverId   String
-  tierId     String?
 
   league League @relation(fields: [leagueId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
   race   Race   @relation(fields: [raceId], references: [id])
   driver Driver @relation(fields: [driverId], references: [id])
-  tier   Tier?  @relation(fields: [tierId], references: [id])
 
   score Score?
 
@@ -258,8 +276,13 @@ model Score {
   // Trusted regardless of needsReview: recorded directly from the league's
   // historical records rather than derived from finishPosition.
   stageBonus Int
-  total      Int
-  needsReview Boolean @default(false)
+  // Tiered Lineup leagues only: this driver's qualifying result and the
+  // points it earned (every rostered driver scores qualifying points,
+  // starter or bench). Both stay null/0 for Pick'em picks.
+  qualifyingPosition Int?
+  qualifyingBonus    Int     @default(0)
+  total              Int
+  needsReview        Boolean @default(false)
 
   pick Pick @relation(fields: [pickId], references: [id])
 }

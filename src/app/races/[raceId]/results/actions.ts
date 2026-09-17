@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
 import { computeScore, parseRuleSetConfig } from "@/lib/scoring";
+import { materializeCarriedOverLineups, scoreTieredFinish } from "@/lib/tieredDraft";
 
 function parseOptionalStagePosition(formData: FormData, key: string): number | null {
   const raw = formData.get(key);
@@ -94,14 +95,22 @@ export async function submitResults(
       }
     }
 
+    // Before scoring, make sure every Tiered Lineup member who never
+    // touched their lineup this week has one carried forward from their
+    // last set lineup — otherwise they'd silently score nothing.
+    await materializeCarriedOverLineups(tx, raceId);
+
     // Results are shared data — recompute scores for every league's picks
-    // on this race, not just the submitter's own league.
+    // on this race, not just the submitter's own league. Pick'em and
+    // Tiered Lineup leagues score under entirely different formulas, so
+    // they're handled separately below.
     const picks = await tx.pick.findMany({
       where: { raceId, driverId: { in: [...finishPositions.keys()] } },
+      include: { league: true },
     });
-    const leagueIds = [...new Set(picks.map((p) => p.leagueId))];
+    const pickemLeagueIds = [...new Set(picks.filter((p) => p.league.type === "PICKEM").map((p) => p.leagueId))];
     const leagueSeasons = await tx.leagueSeason.findMany({
-      where: { leagueId: { in: leagueIds }, seasonId: race.seasonId },
+      where: { leagueId: { in: pickemLeagueIds }, seasonId: race.seasonId },
       include: { ruleSet: true },
     });
     const configByLeagueId = new Map(
@@ -109,6 +118,7 @@ export async function submitResults(
     );
 
     for (const pick of picks) {
+      if (pick.league.type !== "PICKEM") continue;
       const config = configByLeagueId.get(pick.leagueId);
       if (!config) continue;
       // A league that didn't opt into non-points races doesn't score picks
@@ -127,6 +137,8 @@ export async function submitResults(
         create: { pickId: pick.id, finishPosition, ...score, needsReview: false },
       });
     }
+
+    await scoreTieredFinish(tx, raceId, finishPositions);
 
     await tx.race.update({ where: { id: raceId }, data: { status: "COMPLETE" } });
   });
