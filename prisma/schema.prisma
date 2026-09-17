@@ -120,6 +120,7 @@ model Driver {
   stageResults      StageResult[]
   qualifyingResults QualifyingResult[]
   tierAssignments   DriverTierAssignment[]
+  raceEntries       RaceEntry[]
   picks             Pick[]
 }
 
@@ -152,11 +153,20 @@ model Race {
   // the standard scoring formula.
   isNonPoints  Boolean    @default(false)
 
+  // cf.nascar.com's own numeric id for this race, once matched — lets
+  // entries/qualifying/results be pulled automatically instead of entered
+  // by hand. nascarSeriesId defaults to Cup (1); nullable/unmatched until
+  // a schedule sync (or a commissioner) links it.
+  nascarRaceId   Int?      @unique
+  nascarSeriesId Int       @default(1)
+  lastSyncedAt   DateTime?
+
   season            Season                 @relation(fields: [seasonId], references: [id])
   results           RaceResult[]
   stageResults      StageResult[]
   qualifyingResults QualifyingResult[]
   tierAssignments   DriverTierAssignment[]
+  raceEntries       RaceEntry[]
   picks             Pick[]
 
   @@unique([seasonId, week])
@@ -168,6 +178,28 @@ model RaceResult {
   driverId          String
   finishingPosition Int
   dnf               Boolean @default(false)
+  // Nullable enrichment from synced data — not used by any scoring formula
+  // today, but cheap to capture now for stats/future rules rather than
+  // adding another migration later.
+  lapsLed           Int?
+
+  race   Race   @relation(fields: [raceId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  @@unique([raceId, driverId])
+}
+
+// The announced field for a race week — published before qualifying,
+// shared/site-wide like RaceResult. Scopes driver-selection lists (tier
+// assignment, Pick'em picks) to who's actually entered once known, rather
+// than every driver the site has ever seen.
+model RaceEntry {
+  id           String  @id @default(cuid())
+  raceId       String
+  driverId     String
+  carNumber    Int?
+  teamName     String?
+  manufacturer String?
 
   race   Race   @relation(fields: [raceId], references: [id])
   driver Driver @relation(fields: [driverId], references: [id])

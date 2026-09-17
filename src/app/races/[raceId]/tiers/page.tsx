@@ -25,12 +25,17 @@ export default async function AssignTiersPage(props: PageProps<"/races/[raceId]/
     redirect(`/races/${raceId}`);
   }
 
-  const [drivers, assignments] = await Promise.all([
+  const [entries, allActiveDrivers, assignments] = await Promise.all([
+    prisma.raceEntry.findMany({ where: { raceId }, include: { driver: true }, orderBy: { driver: { name: "asc" } } }),
     prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     prisma.driverTierAssignment.findMany({ where: { raceId } }),
   ]);
   const tierByDriverId = new Map(assignments.map((a) => [a.driverId, a.tier]));
 
+  // Once this week's entry list is known (from a NASCAR sync), scope the
+  // list to who's actually racing instead of every driver the site has
+  // ever seen.
+  const drivers = entries.length > 0 ? entries.map((e) => e.driver) : allActiveDrivers;
   const driverRows = drivers.map((d) => ({ driverId: d.id, name: d.name, tier: tierByDriverId.get(d.id) ?? null }));
 
   return (

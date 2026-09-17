@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
-import { computeScore, parseRuleSetConfig } from "@/lib/scoring";
-import { materializeCarriedOverLineups, parseTieredDraftRuleSetConfig, scoreTieredFinish } from "@/lib/tieredDraft";
+import { applyRaceResults } from "@/lib/raceSync";
 
 function parseOptionalStagePosition(formData: FormData, key: string): number | null {
   const raw = formData.get(key);
@@ -70,86 +69,7 @@ export async function submitResults(
     return "Two drivers can't share the same Stage 2 finishing position.";
   }
 
-  await prisma.$transaction(async (tx) => {
-    for (const [driverId, finishPosition] of finishPositions) {
-      await tx.raceResult.upsert({
-        where: { raceId_driverId: { raceId, driverId } },
-        update: { finishingPosition: finishPosition },
-        create: { raceId, driverId, finishingPosition: finishPosition },
-      });
-
-      for (const [stageNumber, stagePositions] of [
-        [1, stage1Positions],
-        [2, stage2Positions],
-      ] as const) {
-        const position = stagePositions.get(driverId);
-        if (position != null) {
-          await tx.stageResult.upsert({
-            where: { raceId_stageNumber_driverId: { raceId, stageNumber, driverId } },
-            update: { position },
-            create: { raceId, stageNumber, position, driverId },
-          });
-        } else {
-          await tx.stageResult.deleteMany({ where: { raceId, stageNumber, driverId } });
-        }
-      }
-    }
-
-    // Before scoring, make sure every Tiered Lineup member who never
-    // touched their lineup this week has one carried forward from their
-    // last set lineup — otherwise they'd silently score nothing.
-    await materializeCarriedOverLineups(tx, raceId);
-
-    // Results are shared data — recompute scores for every league's picks
-    // on this race, not just the submitter's own league. Pick'em and
-    // Tiered Lineup leagues score under entirely different formulas, so
-    // they're handled separately below.
-    const picks = await tx.pick.findMany({
-      where: { raceId, driverId: { in: [...finishPositions.keys()] } },
-      include: { league: true },
-    });
-    const pickemLeagueIds = [...new Set(picks.filter((p) => p.league.type === "PICKEM").map((p) => p.leagueId))];
-    const leagueSeasons = await tx.leagueSeason.findMany({
-      where: { leagueId: { in: pickemLeagueIds }, seasonId: race.seasonId },
-      include: { ruleSet: true },
-    });
-    const configByLeagueId = new Map(
-      leagueSeasons.map((ls) => [ls.leagueId, parseRuleSetConfig(ls.ruleSet.config)]),
-    );
-
-    for (const pick of picks) {
-      if (pick.league.type !== "PICKEM") continue;
-      const config = configByLeagueId.get(pick.leagueId);
-      if (!config) continue;
-      // A league that didn't opt into non-points races doesn't score picks
-      // on one at all, rather than scoring them as 0 — they just stay
-      // unscored, same as a race that hasn't happened yet.
-      if (race.isNonPoints && !config.includeNonPointsRaces) continue;
-
-      const finishPosition = finishPositions.get(pick.driverId)!;
-      const stagePositions = [stage1Positions.get(pick.driverId), stage2Positions.get(pick.driverId)].filter(
-        (p): p is number => p != null,
-      );
-      const score = computeScore(finishPosition, race.fieldSize, stagePositions, config);
-      await tx.score.upsert({
-        where: { pickId: pick.id },
-        update: { finishPosition, ...score, needsReview: false },
-        create: { pickId: pick.id, finishPosition, ...score, needsReview: false },
-      });
-    }
-
-    const tieredLeagueIds = [...new Set(picks.filter((p) => p.league.type === "TIERED_DRAFT").map((p) => p.leagueId))];
-    const tieredLeagueSeasons = await tx.leagueSeason.findMany({
-      where: { leagueId: { in: tieredLeagueIds }, seasonId: race.seasonId },
-      include: { ruleSet: true },
-    });
-    const tieredConfigByLeagueId = new Map(
-      tieredLeagueSeasons.map((ls) => [ls.leagueId, parseTieredDraftRuleSetConfig(ls.ruleSet.config)]),
-    );
-    await scoreTieredFinish(tx, raceId, finishPositions, tieredConfigByLeagueId);
-
-    await tx.race.update({ where: { id: raceId }, data: { status: "COMPLETE" } });
-  });
+  await prisma.$transaction((tx) => applyRaceResults(tx, race, finishPositions, stage1Positions, stage2Positions));
 
   revalidatePath(`/races/${raceId}`);
   revalidatePath(`/stats`);

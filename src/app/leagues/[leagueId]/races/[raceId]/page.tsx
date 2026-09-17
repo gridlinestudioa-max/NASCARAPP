@@ -88,10 +88,14 @@ async function renderPickem({
   const isOpenForPicks = !hasResults && pickemLockAt(race, config.lockTiming).getTime() > now;
 
   if (isOpenForPicks) {
-    const [members, drivers] = await Promise.all([
+    const [members, entries, allActiveDrivers] = await Promise.all([
       prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
+      prisma.raceEntry.findMany({ where: { raceId }, include: { driver: true }, orderBy: { driver: { name: "asc" } } }),
       prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     ]);
+    // Once this week's entry list is known (from a NASCAR sync), scope
+    // picks to who's actually racing instead of every driver ever seen.
+    const drivers = entries.length > 0 ? entries.map((e) => e.driver) : allActiveDrivers;
     const myPicks = picks.filter((p) => p.userId === userId).sort((a, b) => a.pickNumber - b.pickNumber);
     const currentDriverIdBySlot = Array.from(
       { length: config.picksPerWeek },

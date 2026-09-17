@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
-import { parseTieredDraftRuleSetConfig, scoreTieredQualifying } from "@/lib/tieredDraft";
+import { applyQualifyingResults } from "@/lib/raceSync";
 
 export async function submitQualifying(
   _prevState: string | undefined,
@@ -47,24 +47,7 @@ export async function submitQualifying(
     return "Two drivers can't share the same qualifying position.";
   }
 
-  await prisma.$transaction(async (tx) => {
-    for (const [driverId, qualifyingPosition] of positions) {
-      await tx.qualifyingResult.upsert({
-        where: { raceId_driverId: { raceId, driverId } },
-        update: { qualifyingPosition },
-        create: { raceId, driverId, qualifyingPosition },
-      });
-    }
-
-    const tieredLeagueSeasons = await tx.leagueSeason.findMany({
-      where: { seasonId: race.seasonId, league: { type: "TIERED_DRAFT" } },
-      include: { ruleSet: true },
-    });
-    const configByLeagueId = new Map(
-      tieredLeagueSeasons.map((ls) => [ls.leagueId, parseTieredDraftRuleSetConfig(ls.ruleSet.config)]),
-    );
-    await scoreTieredQualifying(tx, raceId, positions, configByLeagueId);
-  });
+  await prisma.$transaction((tx) => applyQualifyingResults(tx, race, positions));
 
   revalidatePath(`/races/${raceId}`);
   redirect(`/races/${raceId}`);

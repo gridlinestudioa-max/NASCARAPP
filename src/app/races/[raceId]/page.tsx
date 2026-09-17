@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
+import SyncFromNascarButton from "./SyncFromNascarButton";
 
 export const dynamic = "force-dynamic";
 
@@ -38,13 +39,16 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
       </p>
 
       {canEnterResults && (
-        <p>
-          <Link href={`/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
-          <Link href={`/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
-          <Link href={`/races/${raceId}/results`}>
-            {race.results.length > 0 ? "Edit results" : "Enter results"}
-          </Link>
-        </p>
+        <>
+          <p>
+            <Link href={`/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
+            <Link href={`/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
+            <Link href={`/races/${raceId}/results`}>
+              {race.results.length > 0 ? "Edit results" : "Enter results"}
+            </Link>
+          </p>
+          <SyncFromNascarButton raceId={raceId} lastSyncedAt={race.lastSyncedAt?.toISOString() ?? null} />
+        </>
       )}
 
       {race.results.length === 0 ? (

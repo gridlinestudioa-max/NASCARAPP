@@ -1,0 +1,277 @@
+// Shared "apply results to the database" logic, used identically whether
+// the data came from a commissioner's manual entry form or an automated
+// NASCAR feed sync — same upserts, same scoring, same shared-across-every-
+// league semantics either way.
+
+import type { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { computeScore, parseRuleSetConfig } from "@/lib/scoring";
+import {
+  materializeCarriedOverLineups,
+  parseTieredDraftRuleSetConfig,
+  scoreTieredFinish,
+  scoreTieredQualifying,
+} from "@/lib/tieredDraft";
+import { fetchSeasonRaceList, fetchWeekendFeed, matchScheduleEntry, parseWeekendData } from "@/lib/nascarFeed";
+
+type RaceForScoring = { id: string; seasonId: string; fieldSize: number; isNonPoints: boolean };
+
+export async function applyQualifyingResults(
+  tx: Prisma.TransactionClient,
+  race: Pick<RaceForScoring, "id" | "seasonId">,
+  qualifyingPositions: Map<string, number>,
+): Promise<void> {
+  for (const [driverId, qualifyingPosition] of qualifyingPositions) {
+    await tx.qualifyingResult.upsert({
+      where: { raceId_driverId: { raceId: race.id, driverId } },
+      update: { qualifyingPosition },
+      create: { raceId: race.id, driverId, qualifyingPosition },
+    });
+  }
+
+  const tieredLeagueSeasons = await tx.leagueSeason.findMany({
+    where: { seasonId: race.seasonId, league: { type: "TIERED_DRAFT" } },
+    include: { ruleSet: true },
+  });
+  const configByLeagueId = new Map(
+    tieredLeagueSeasons.map((ls) => [ls.leagueId, parseTieredDraftRuleSetConfig(ls.ruleSet.config)]),
+  );
+  await scoreTieredQualifying(tx, race.id, qualifyingPositions, configByLeagueId);
+}
+
+export async function applyRaceResults(
+  tx: Prisma.TransactionClient,
+  race: RaceForScoring,
+  finishPositions: Map<string, number>,
+  stage1Positions: Map<string, number>,
+  stage2Positions: Map<string, number>,
+  options?: { dnfByDriverId?: Map<string, boolean>; lapsLedByDriverId?: Map<string, number> },
+): Promise<void> {
+  const dnfByDriverId = options?.dnfByDriverId ?? new Map<string, boolean>();
+  const lapsLedByDriverId = options?.lapsLedByDriverId ?? new Map<string, number>();
+
+  for (const [driverId, finishPosition] of finishPositions) {
+    const dnf = dnfByDriverId.get(driverId) ?? false;
+    const lapsLed = lapsLedByDriverId.get(driverId) ?? null;
+    await tx.raceResult.upsert({
+      where: { raceId_driverId: { raceId: race.id, driverId } },
+      update: { finishingPosition: finishPosition, dnf, lapsLed },
+      create: { raceId: race.id, driverId, finishingPosition: finishPosition, dnf, lapsLed },
+    });
+
+    for (const [stageNumber, stagePositions] of [
+      [1, stage1Positions],
+      [2, stage2Positions],
+    ] as const) {
+      const position = stagePositions.get(driverId);
+      if (position != null) {
+        await tx.stageResult.upsert({
+          where: { raceId_stageNumber_driverId: { raceId: race.id, stageNumber, driverId } },
+          update: { position },
+          create: { raceId: race.id, stageNumber, position, driverId },
+        });
+      } else {
+        await tx.stageResult.deleteMany({ where: { raceId: race.id, stageNumber, driverId } });
+      }
+    }
+  }
+
+  // Before scoring, make sure every Tiered Lineup member who never
+  // touched their lineup this week has one carried forward from their
+  // last set lineup — otherwise they'd silently score nothing.
+  await materializeCarriedOverLineups(tx, race.id);
+
+  // Results are shared data — recompute scores for every league's picks
+  // on this race, not just whichever league prompted the sync/entry.
+  // Pick'em and Tiered Lineup leagues score under entirely different
+  // formulas, so they're handled separately.
+  const picks = await tx.pick.findMany({
+    where: { raceId: race.id, driverId: { in: [...finishPositions.keys()] } },
+    include: { league: true },
+  });
+
+  const pickemLeagueIds = [...new Set(picks.filter((p) => p.league.type === "PICKEM").map((p) => p.leagueId))];
+  const pickemLeagueSeasons = await tx.leagueSeason.findMany({
+    where: { leagueId: { in: pickemLeagueIds }, seasonId: race.seasonId },
+    include: { ruleSet: true },
+  });
+  const pickemConfigByLeagueId = new Map(
+    pickemLeagueSeasons.map((ls) => [ls.leagueId, parseRuleSetConfig(ls.ruleSet.config)]),
+  );
+
+  for (const pick of picks) {
+    if (pick.league.type !== "PICKEM") continue;
+    const config = pickemConfigByLeagueId.get(pick.leagueId);
+    if (!config) continue;
+    // A league that didn't opt into non-points races doesn't score picks
+    // on one at all, rather than scoring them as 0 — they just stay
+    // unscored, same as a race that hasn't happened yet.
+    if (race.isNonPoints && !config.includeNonPointsRaces) continue;
+
+    const finishPosition = finishPositions.get(pick.driverId)!;
+    const stagePositions = [stage1Positions.get(pick.driverId), stage2Positions.get(pick.driverId)].filter(
+      (p): p is number => p != null,
+    );
+    const score = computeScore(finishPosition, race.fieldSize, stagePositions, config);
+    await tx.score.upsert({
+      where: { pickId: pick.id },
+      update: { finishPosition, ...score, needsReview: false },
+      create: { pickId: pick.id, finishPosition, ...score, needsReview: false },
+    });
+  }
+
+  const tieredLeagueIds = [...new Set(picks.filter((p) => p.league.type === "TIERED_DRAFT").map((p) => p.leagueId))];
+  const tieredLeagueSeasons = await tx.leagueSeason.findMany({
+    where: { leagueId: { in: tieredLeagueIds }, seasonId: race.seasonId },
+    include: { ruleSet: true },
+  });
+  const tieredConfigByLeagueId = new Map(
+    tieredLeagueSeasons.map((ls) => [ls.leagueId, parseTieredDraftRuleSetConfig(ls.ruleSet.config)]),
+  );
+  await scoreTieredFinish(tx, race.id, finishPositions, tieredConfigByLeagueId);
+
+  await tx.race.update({ where: { id: race.id }, data: { status: "COMPLETE" } });
+}
+
+// Upserts the announced field for a race week. Auto-creates any Driver
+// row that doesn't already exist by name (the entry list is the
+// authoritative source of truth for "who's racing" — new drivers show up
+// here before anywhere else in the app).
+export async function applyRaceEntries(
+  tx: Prisma.TransactionClient,
+  raceId: string,
+  entries: { driverName: string; carNumber: number | null; teamName?: string | null; manufacturer?: string | null }[],
+): Promise<Map<string, string>> {
+  const driverIdByName = new Map<string, string>();
+  for (const entry of entries) {
+    const driver = await tx.driver.upsert({
+      where: { name: entry.driverName },
+      update: {},
+      create: { name: entry.driverName },
+    });
+    driverIdByName.set(entry.driverName, driver.id);
+    await tx.raceEntry.upsert({
+      where: { raceId_driverId: { raceId, driverId: driver.id } },
+      update: { carNumber: entry.carNumber, teamName: entry.teamName, manufacturer: entry.manufacturer },
+      create: {
+        raceId,
+        driverId: driver.id,
+        carNumber: entry.carNumber,
+        teamName: entry.teamName,
+        manufacturer: entry.manufacturer,
+      },
+    });
+  }
+  return driverIdByName;
+}
+
+// ---------- Full sync orchestration ----------
+//
+// This is the single entry point both the manual "Sync from NASCAR"
+// button and any future scheduled job (e.g. a Vercel Cron route) should
+// call — it does its own fetch, so it does not take a caller-supplied
+// transaction. Callers are responsible for their own authorization; this
+// function assumes the caller has already confirmed the requester is
+// allowed to sync this race.
+export type SyncResult = { ok: true; message: string } | { ok: false; error: string };
+
+export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult> {
+  const race = await prisma.race.findUnique({ where: { id: raceId }, include: { season: true } });
+  if (!race) {
+    return { ok: false, error: "Race not found." };
+  }
+
+  let nascarRaceId = race.nascarRaceId;
+  if (!nascarRaceId) {
+    let scheduleList;
+    try {
+      scheduleList = await fetchSeasonRaceList(race.season.year);
+    } catch (cause) {
+      return { ok: false, error: `Couldn't reach NASCAR's schedule feed: ${(cause as Error).message}` };
+    }
+    const candidates = scheduleList.filter((r) => r.series_id === race.nascarSeriesId);
+    const match = matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
+    if (!match) {
+      return {
+        ok: false,
+        error:
+          "Couldn't automatically match this race to a NASCAR schedule entry (track name or date didn't line up with exactly one candidate).",
+      };
+    }
+    nascarRaceId = match.race_id;
+    await prisma.race.update({ where: { id: raceId }, data: { nascarRaceId } });
+  }
+
+  let weekend;
+  try {
+    weekend = await fetchWeekendFeed(race.season.year, race.nascarSeriesId, nascarRaceId);
+  } catch (cause) {
+    return { ok: false, error: `Couldn't reach NASCAR's race feed: ${(cause as Error).message}` };
+  }
+
+  const parsed = parseWeekendData(weekend);
+  if (!parsed) {
+    return { ok: false, error: "NASCAR hasn't published data for this race yet." };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.race.update({
+      where: { id: raceId },
+      data: {
+        lastSyncedAt: new Date(),
+        ...(parsed.qualifyingAt ? { qualifyingAt: parsed.qualifyingAt } : {}),
+        ...(parsed.fieldSize ? { fieldSize: parsed.fieldSize } : {}),
+        ...(parsed.stage1Laps ? { stage1Length: parsed.stage1Laps } : {}),
+        ...(parsed.stage2Laps ? { stage2Length: parsed.stage2Laps } : {}),
+      },
+    });
+    // Scoring (fieldSizeRelative Pick'em mode) needs the just-synced field
+    // size, not the value fetched into `race` before this update.
+    const effectiveRace = { ...race, fieldSize: parsed.fieldSize ?? race.fieldSize };
+
+    const driverIdByName = await applyRaceEntries(tx, raceId, parsed.entries);
+
+    if (parsed.qualifying.length > 0) {
+      const qualifyingPositions = new Map<string, number>();
+      for (const q of parsed.qualifying) {
+        const driverId = driverIdByName.get(q.driverName);
+        if (driverId) qualifyingPositions.set(driverId, q.position);
+      }
+      if (qualifyingPositions.size > 0) {
+        await applyQualifyingResults(tx, effectiveRace, qualifyingPositions);
+      }
+    }
+
+    if (parsed.results.length > 0) {
+      const finishPositions = new Map<string, number>();
+      const dnfByDriverId = new Map<string, boolean>();
+      const lapsLedByDriverId = new Map<string, number>();
+      for (const r of parsed.results) {
+        const driverId = driverIdByName.get(r.driverName);
+        if (!driverId) continue;
+        finishPositions.set(driverId, r.position);
+        dnfByDriverId.set(driverId, r.dnf);
+        if (r.lapsLed != null) lapsLedByDriverId.set(driverId, r.lapsLed);
+      }
+      const stage1Positions = new Map<string, number>();
+      const stage2Positions = new Map<string, number>();
+      for (const s of parsed.stageResults) {
+        const driverId = driverIdByName.get(s.driverName);
+        if (!driverId) continue;
+        if (s.stageNumber === 1) stage1Positions.set(driverId, s.position);
+        else if (s.stageNumber === 2) stage2Positions.set(driverId, s.position);
+      }
+      if (finishPositions.size > 0) {
+        await applyRaceResults(tx, effectiveRace, finishPositions, stage1Positions, stage2Positions, {
+          dnfByDriverId,
+          lapsLedByDriverId,
+        });
+      }
+    }
+  });
+
+  return {
+    ok: true,
+    message: `Synced: ${parsed.entries.length} entries, ${parsed.qualifying.length} qualifying positions, ${parsed.results.length} results, ${parsed.stageResults.length} stage results.`,
+  };
+}
