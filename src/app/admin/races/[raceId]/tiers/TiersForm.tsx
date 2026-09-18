@@ -33,7 +33,7 @@ export default function TiersForm({ raceId, drivers }: { raceId: string; drivers
         <button type="button" onClick={handleAutoAssign} disabled={autoAssigning}>
           {autoAssigning ? "Computing..." : "Auto-assign tiers"}
         </button>{" "}
-        <small>weighted 65% season points / 25% recent form / 10% team strength — review before saving</small>
+        <small>weighted 65% season points / 25% recent form / 10% track history — review before saving</small>
       </p>
       {autoMessage && <p role="status">{autoMessage}</p>}
 

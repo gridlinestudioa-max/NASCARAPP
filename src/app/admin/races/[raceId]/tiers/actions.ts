@@ -50,7 +50,7 @@ export async function submitTiers(_prevState: string | undefined, formData: Form
   redirect(`/admin/races/${raceId}`);
 }
 
-// Computes tiers from season points/recent form/team prestige and
+// Computes tiers from season points/recent form/track history and
 // pre-fills them as this race's DriverTierAssignment rows — the
 // commissioner still reviews and can adjust every value on this same page
 // before saving, exactly as if they'd been entered by hand.

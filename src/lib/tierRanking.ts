@@ -1,18 +1,17 @@
 // Automatic weekly tier determination for Tiered Lineup leagues.
 //
 // Computes a composite "power score" per driver in this week's entry
-// list and buckets them into Tier A/B/C. This is a starting formula that
-// will likely need tuning over time: 65% season points, 25% recent race
-// form, 10% team prestige. It never writes without going through the
-// same DriverTierAssignment rows the manual tiers page reads — a
-// commissioner always sees (and can override) the computed result there
-// before it's used for anything.
+// list and buckets them into Tier A/B/C: 65% season points, 25% recent
+// race form (last 5 finishes), 10% history at this same race. It never
+// writes without going through the same DriverTierAssignment rows the
+// manual tiers page reads — a commissioner always sees (and can override)
+// the computed result there before it's used for anything.
 
 import type { DriverTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { fetchLivePoints } from "@/lib/nascarFeed";
+import { fetchLivePoints, normalizeTrackName } from "@/lib/nascarFeed";
 
-export const AUTO_TIER_WEIGHTS = { seasonPoints: 0.65, recentForm: 0.25, teamPrestige: 0.1 };
+export const AUTO_TIER_WEIGHTS = { seasonPoints: 0.65, recentForm: 0.25, trackHistory: 0.1 };
 
 // How many of the most recent (already-synced) races count toward a
 // driver's "recent form" component.
@@ -24,41 +23,6 @@ const RECENT_FORM_RACE_WINDOW = 5;
 // being any particular size.
 const TIER_A_SIZE = 8;
 const TIER_B_SIZE = 20;
-
-// A hand-maintained, deliberately coarse read on organizational strength.
-// Current multi-car powerhouse teams score highest, competitive mid-pack
-// organizations in the middle, smaller/part-time teams lowest. Matched
-// against RaceEntry.teamName by substring (case-insensitive), since the
-// feed's exact team name can vary. An unrecognized team defaults to 0.5
-// (dead center) instead of being penalized for a name this table doesn't
-// know. This table will drift out of date as team fortunes change and
-// should be revisited periodically — it's the most subjective of the
-// three inputs by a wide margin.
-const TEAM_PRESTIGE: { match: string; score: number }[] = [
-  { match: "hendrick", score: 1.0 },
-  { match: "joe gibbs", score: 1.0 },
-  { match: "team penske", score: 0.95 },
-  { match: "trackhouse", score: 0.8 },
-  { match: "23xi", score: 0.8 },
-  { match: "rfk", score: 0.75 },
-  { match: "roush fenway keselowski", score: 0.75 },
-  { match: "stewart-haas", score: 0.7 },
-  { match: "kaulig", score: 0.55 },
-  { match: "wood brothers", score: 0.55 },
-  { match: "legacy", score: 0.4 },
-  { match: "front row", score: 0.45 },
-  { match: "jtg daugherty", score: 0.45 },
-  { match: "spire", score: 0.4 },
-  { match: "live fast", score: 0.25 },
-  { match: "rick ware", score: 0.2 },
-];
-
-function teamPrestigeScore(teamName: string | null | undefined): number {
-  if (!teamName) return 0.5;
-  const normalized = teamName.toLowerCase();
-  const match = TEAM_PRESTIGE.find((t) => normalized.includes(t.match));
-  return match?.score ?? 0.5;
-}
 
 function minMaxNormalize(values: Map<string, number>, invert = false): Map<string, number> {
   const nums = [...values.values()];
@@ -136,20 +100,45 @@ export async function computeAutoTiers(raceId: string): Promise<AutoTierOutcome>
     warnings.push("No synced results yet this season, so recent form couldn't be weighed — its share was neutral.");
   }
 
+  // ---------- Track history (this same race, any past season we have data for) ----------
+  const normalizedTrack = normalizeTrackName(race.trackName);
+  const historicalResults = await prisma.raceResult.findMany({
+    where: { driverId: { in: entries.map((e) => e.driverId) }, raceId: { not: raceId } },
+    include: { race: { select: { trackName: true } } },
+  });
+  const trackHistorySumByDriverId = new Map<string, number>();
+  const trackHistoryCountByDriverId = new Map<string, number>();
+  for (const r of historicalResults) {
+    if (normalizeTrackName(r.race.trackName) !== normalizedTrack) continue;
+    trackHistorySumByDriverId.set(r.driverId, (trackHistorySumByDriverId.get(r.driverId) ?? 0) + r.finishingPosition);
+    trackHistoryCountByDriverId.set(r.driverId, (trackHistoryCountByDriverId.get(r.driverId) ?? 0) + 1);
+  }
+  const avgTrackFinishByDriverId = new Map<string, number>();
+  for (const [driverId, sum] of trackHistorySumByDriverId) {
+    avgTrackFinishByDriverId.set(driverId, sum / trackHistoryCountByDriverId.get(driverId)!);
+  }
+  if (avgTrackFinishByDriverId.size === 0) {
+    warnings.push(
+      "No past results found for this race in our data yet (first time we've tracked it), so track history couldn't be weighed — its share was neutral.",
+    );
+  }
+
   // ---------- Combine ----------
   const normSeasonPoints = minMaxNormalize(seasonPointsByDriverId);
   const normRecentForm = minMaxNormalize(avgFinishByDriverId, true); // lower average finish = better
+  const normTrackHistory = minMaxNormalize(avgTrackFinishByDriverId, true); // lower average finish = better
   const seasonPointsFallback = median([...normSeasonPoints.values()]);
   const recentFormFallback = median([...normRecentForm.values()]);
+  const trackHistoryFallback = median([...normTrackHistory.values()]);
 
   const scored = entries.map((e) => {
     const seasonPointsScore = normSeasonPoints.get(e.driverId) ?? seasonPointsFallback;
     const recentFormScore = normRecentForm.get(e.driverId) ?? recentFormFallback;
-    const prestigeScore = teamPrestigeScore(e.teamName);
+    const trackHistoryScore = normTrackHistory.get(e.driverId) ?? trackHistoryFallback;
     const score =
       AUTO_TIER_WEIGHTS.seasonPoints * seasonPointsScore +
       AUTO_TIER_WEIGHTS.recentForm * recentFormScore +
-      AUTO_TIER_WEIGHTS.teamPrestige * prestigeScore;
+      AUTO_TIER_WEIGHTS.trackHistory * trackHistoryScore;
     return { driverId: e.driverId, driverName: e.driver.name, score };
   });
   scored.sort((a, b) => b.score - a.score);
