@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
+import Card from "@/components/ui/Card";
 import TiersForm from "./TiersForm";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +51,9 @@ export default async function AssignTiersPage(props: PageProps<"/races/[raceId]/
         Shared across every Tiered Lineup league — sort each driver into Tier A, B, or C for this race based on
         this week&apos;s performance/ranking. Leave a driver unassigned if they aren&apos;t in play this week.
       </p>
-      <TiersForm raceId={raceId} drivers={driverRows} />
+      <Card>
+        <TiersForm raceId={raceId} drivers={driverRows} />
+      </Card>
     </main>
   );
 }

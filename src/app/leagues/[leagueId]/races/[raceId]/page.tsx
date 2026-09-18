@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
 import { parseRuleSetConfig, pickemLockAt } from "@/lib/scoring";
 import {
   TIERED_LINEUP_SLOTS,
@@ -119,23 +121,28 @@ async function renderPickem({
           })}
         </p>
 
-        <h2>{myPicks.length > 0 ? "Your pick" : "Make your pick"}</h2>
-        <PickForm
-          leagueId={leagueId}
-          raceId={raceId}
-          drivers={drivers}
-          picksPerWeek={config.picksPerWeek}
-          currentDriverIdBySlot={currentDriverIdBySlot}
-        />
+        <Card title={myPicks.length > 0 ? "Your pick" : "Make your pick"}>
+          <PickForm
+            leagueId={leagueId}
+            raceId={raceId}
+            drivers={drivers}
+            picksPerWeek={config.picksPerWeek}
+            currentDriverIdBySlot={currentDriverIdBySlot}
+          />
+        </Card>
 
-        <h2>Who&apos;s picked</h2>
-        <ul>
-          {members.map((m) => (
-            <li key={m.userId}>
-              {m.user.name ?? m.user.email} — {pickedUserIds.has(m.userId) ? "picked" : "not yet"}
-            </li>
-          ))}
-        </ul>
+        <Card title="Who's picked">
+          <ul className="rowList">
+            {members.map((m) => (
+              <li key={m.userId}>
+                {m.user.name ?? m.user.email}
+                <Badge tone={pickedUserIds.has(m.userId) ? "success" : "neutral"}>
+                  {pickedUserIds.has(m.userId) ? "Picked" : "Not yet"}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </main>
     );
   }
@@ -150,36 +157,38 @@ async function renderPickem({
       </h1>
       <p>Field size {race.fieldSize}</p>
 
-      {picks.length === 0 && <p>No picks were recorded for this race.</p>}
+      <Card title="Results">
+        {picks.length === 0 && <p>No picks were recorded for this race.</p>}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Driver</th>
-            <th>Finish</th>
-            <th>Base</th>
-            <th>Win bonus</th>
-            <th>Stage bonus</th>
-            <th>Total</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {picks.map((p) => (
-            <tr key={p.id} style={p.userId === userId ? { fontWeight: "bold" } : undefined}>
-              <td>{p.user.name ?? p.user.email}</td>
-              <td>{p.driver.name}</td>
-              <td>{p.score?.finishPosition ?? "—"}</td>
-              <td>{p.score?.baseScore ?? "—"}</td>
-              <td>{p.score?.winBonus ?? "—"}</td>
-              <td>{p.score?.stageBonus ?? "—"}</td>
-              <td>{p.score?.total ?? "—"}</td>
-              <td>{p.score?.needsReview ? "flagged" : ""}</td>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Driver</th>
+              <th>Finish</th>
+              <th>Base</th>
+              <th>Win bonus</th>
+              <th>Stage bonus</th>
+              <th>Total</th>
+              <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {picks.map((p) => (
+              <tr key={p.id} style={p.userId === userId ? { fontWeight: 700 } : undefined}>
+                <td>{p.user.name ?? p.user.email}</td>
+                <td>{p.driver.name}</td>
+                <td>{p.score?.finishPosition ?? "—"}</td>
+                <td>{p.score?.baseScore ?? "—"}</td>
+                <td>{p.score?.winBonus ?? "—"}</td>
+                <td>{p.score?.stageBonus ?? "—"}</td>
+                <td>{p.score?.total ?? "—"}</td>
+                <td>{p.score?.needsReview ? <Badge tone="warning">Flagged</Badge> : ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
     </main>
   );
 }
@@ -234,54 +243,57 @@ async function renderTieredLineup({
         </h1>
         <p>{phase === "locked" ? "Lineups are locked for this race." : "Results are in for this race."}</p>
 
-        <h2>Your lineup</h2>
-        {myPicks.length === 0 ? (
-          <p>You didn&apos;t have a lineup set for this race.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Slot</th>
-                <th>Driver</th>
-                <th>Qualified</th>
-                <th>Qual. pts</th>
-                <th>Finish</th>
-                <th>Finish pts</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {myPicks.map((p) => {
-                const slot = slotByPickNumber.get(p.pickNumber);
-                return (
-                  <tr key={p.id}>
-                    <td>
-                      {slot ? `Tier ${slot.tier} ${slot.role === "STARTER" ? "starter" : "bench"}` : p.pickNumber}
-                    </td>
-                    <td>{p.driver.name}</td>
-                    <td>{p.score?.qualifyingPosition ?? "—"}</td>
-                    <td>{p.score?.qualifyingBonus ?? "—"}</td>
-                    <td>{p.score?.finishPosition ?? "—"}</td>
-                    <td>{p.score?.baseScore ?? "—"}</td>
-                    <td>{p.score?.total ?? "—"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+        <Card title="Your lineup">
+          {myPicks.length === 0 ? (
+            <p>You didn&apos;t have a lineup set for this race.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Driver</th>
+                  <th>Qualified</th>
+                  <th>Qual. pts</th>
+                  <th>Finish</th>
+                  <th>Finish pts</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myPicks.map((p) => {
+                  const slot = slotByPickNumber.get(p.pickNumber);
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        {slot ? `Tier ${slot.tier} ${slot.role === "STARTER" ? "starter" : "bench"}` : p.pickNumber}
+                      </td>
+                      <td>{p.driver.name}</td>
+                      <td>{p.score?.qualifyingPosition ?? "—"}</td>
+                      <td>{p.score?.qualifyingBonus ?? "—"}</td>
+                      <td>{p.score?.finishPosition ?? "—"}</td>
+                      <td>{p.score?.baseScore ?? "—"}</td>
+                      <td>{p.score?.total ?? "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </Card>
 
-        <h2>Team totals this week</h2>
-        <ul>
-          {members
-            .map((m) => ({ name: m.user.name ?? m.user.email, total: totalByUserId.get(m.userId) ?? 0 }))
-            .sort((a, b) => b.total - a.total)
-            .map((m) => (
-              <li key={m.name}>
-                {m.name} — {m.total}
-              </li>
-            ))}
-        </ul>
+        <Card title="Team totals this week">
+          <ul className="rowList">
+            {members
+              .map((m) => ({ name: m.user.name ?? m.user.email, total: totalByUserId.get(m.userId) ?? 0 }))
+              .sort((a, b) => b.total - a.total)
+              .map((m) => (
+                <li key={m.name}>
+                  {m.name}
+                  <strong>{m.total}</strong>
+                </li>
+              ))}
+          </ul>
+        </Card>
       </main>
     );
   }
@@ -382,25 +394,30 @@ async function renderTieredLineup({
         {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
       </p>
 
-      <h2>Your lineup</h2>
-      <TieredLineupForm
-        leagueId={leagueId}
-        raceId={raceId}
-        lockPhase={phase}
-        maxStartsPerDriverPerSeason={config.maxStartsPerDriverPerSeason}
-        driversByTier={driversByTier}
-        currentDriverIdByPickNumber={currentDriverIdByPickNumber}
-        usingCarriedOverPreview={usingCarriedOverPreview}
-      />
+      <Card title="Your lineup">
+        <TieredLineupForm
+          leagueId={leagueId}
+          raceId={raceId}
+          lockPhase={phase}
+          maxStartsPerDriverPerSeason={config.maxStartsPerDriverPerSeason}
+          driversByTier={driversByTier}
+          currentDriverIdByPickNumber={currentDriverIdByPickNumber}
+          usingCarriedOverPreview={usingCarriedOverPreview}
+        />
+      </Card>
 
-      <h2>Who&apos;s set a lineup</h2>
-      <ul>
-        {members.map((m) => (
-          <li key={m.userId}>
-            {m.user.name ?? m.user.email} — {lineupSetUserIds.has(m.userId) ? "set" : "not yet"}
-          </li>
-        ))}
-      </ul>
+      <Card title="Who's set a lineup">
+        <ul className="rowList">
+          {members.map((m) => (
+            <li key={m.userId}>
+              {m.user.name ?? m.user.email}
+              <Badge tone={lineupSetUserIds.has(m.userId) ? "success" : "neutral"}>
+                {lineupSetUserIds.has(m.userId) ? "Set" : "Not yet"}
+              </Badge>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </main>
   );
 }

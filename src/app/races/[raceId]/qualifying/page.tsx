@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
+import Card from "@/components/ui/Card";
 import QualifyingForm from "./QualifyingForm";
 
 export const dynamic = "force-dynamic";
@@ -52,14 +53,16 @@ export default async function EnterQualifyingPage(props: PageProps<"/races/[race
       <h1>
         Enter qualifying results — Week {race.week}, {race.trackName}
       </h1>
-      {drivers.length === 0 ? (
-        <p>
-          No drivers have been tier-assigned for this race yet —{" "}
-          <Link href={`/races/${raceId}/tiers`}>assign tiers</Link> first.
-        </p>
-      ) : (
-        <QualifyingForm raceId={raceId} drivers={drivers} />
-      )}
+      <Card>
+        {drivers.length === 0 ? (
+          <p>
+            No drivers have been tier-assigned for this race yet —{" "}
+            <Link href={`/races/${raceId}/tiers`}>assign tiers</Link> first.
+          </p>
+        ) : (
+          <QualifyingForm raceId={raceId} drivers={drivers} />
+        )}
+      </Card>
     </main>
   );
 }

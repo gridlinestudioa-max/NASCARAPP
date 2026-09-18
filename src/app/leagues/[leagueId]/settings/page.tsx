@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
+import Card from "@/components/ui/Card";
 import TransferCommissionerForm from "./TransferCommissionerForm";
 
 export const dynamic = "force-dynamic";
@@ -54,15 +55,16 @@ export default async function LeagueSettingsPage(props: PageProps<"/leagues/[lea
       </p>
       <h1>League settings — {league.name}</h1>
 
-      <h2>Commissioner</h2>
-      <TransferCommissionerForm
-        leagueId={leagueId}
-        members={members.map((m) => ({
-          userId: m.userId,
-          name: m.user.name ?? m.user.email,
-          isCurrentOwner: m.userId === league.ownerId,
-        }))}
-      />
+      <Card title="Commissioner">
+        <TransferCommissionerForm
+          leagueId={leagueId}
+          members={members.map((m) => ({
+            userId: m.userId,
+            name: m.user.name ?? m.user.email,
+            isCurrentOwner: m.userId === league.ownerId,
+          }))}
+        />
+      </Card>
 
       <h2>Rules</h2>
       {leagueSeason ? (
@@ -71,7 +73,9 @@ export default async function LeagueSettingsPage(props: PageProps<"/leagues/[lea
           editingLeague={{ id: league.id, type: league.type, pickemConfig, tieredConfig }}
         />
       ) : (
-        <p>This league isn&apos;t part of a season yet, so there are no rules to edit.</p>
+        <Card>
+          <p>This league isn&apos;t part of a season yet, so there are no rules to edit.</p>
+        </Card>
       )}
     </main>
   );

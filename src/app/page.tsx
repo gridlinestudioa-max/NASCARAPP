@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { signOutAction } from "./actions";
-import styles from "./page.module.css";
+import Card from "@/components/ui/Card";
 
 // This queries live data (league/driver counts) — statically prerendering
 // it would freeze those numbers at build time instead of reflecting the
@@ -27,41 +26,43 @@ async function getStatus() {
 export default async function Home() {
   const [status, session] = await Promise.all([getStatus(), auth()]);
 
+  if (session?.user?.id) {
+    return (
+      <main>
+        <h1>Welcome back{session.user.name ? `, ${session.user.name}` : ""}</h1>
+        <Card>
+          <p>
+            Jump back into <Link href="/my-leagues">My Leagues</Link>, check the{" "}
+            <Link href="/races">schedule</Link>, or browse <Link href="/stats">driver stats</Link>.
+          </p>
+        </Card>
+      </main>
+    );
+  }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <h1>Fantasy NASCAR HQ</h1>
-        <p>Pick&apos;em and Tiered Draft leagues, built on Next.js + Prisma.</p>
-
-        {session?.user ? (
-          <p>
-            Signed in as {session.user.name ?? session.user.email}.{" "}
-            <Link href="/my-leagues">My Leagues</Link>{" "}
-            <form action={signOutAction} style={{ display: "inline" }}>
-              <button type="submit">Sign out</button>
-            </form>
-          </p>
-        ) : (
-          <p>
-            <Link href="/login">Sign in</Link> or <Link href="/signup">create an account</Link>.
-          </p>
-        )}
-
+    <main>
+      <h1>Fantasy NASCAR HQ</h1>
+      <Card>
+        <p>Pick&apos;em and Tiered Draft leagues, built for a full field of players.</p>
+        <p style={{ marginTop: "var(--space-3)" }}>
+          <Link href="/login">Sign in</Link> or <Link href="/signup">create an account</Link>.
+        </p>
+      </Card>
+      <Card title="Status">
         {status.connected ? (
           <p>
-            Database connected — {status.leagueCount} league(s),{" "}
-            {status.playerCount} player(s) on record.
+            Database connected — {status.leagueCount} league(s), {status.playerCount} player(s) on record.
           </p>
         ) : (
           <div>
             <p>Database not connected yet.</p>
             <p>
-              Set <code>DATABASE_URL</code> and run{" "}
-              <code>npm run db:migrate</code> to apply the schema.
+              Set <code>DATABASE_URL</code> and run <code>npm run db:migrate</code> to apply the schema.
             </p>
           </div>
         )}
-      </main>
-    </div>
+      </Card>
+    </main>
   );
 }

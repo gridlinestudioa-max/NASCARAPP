@@ -11,6 +11,7 @@ import {
 import { buildTieredDraftDefaultConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { createLeague, previewRules, type PreviewRow } from "@/app/leagues/new/actions";
 import { updateLeagueRules } from "@/app/leagues/[leagueId]/settings/actions";
+import Card from "@/components/ui/Card";
 
 type RaceOption = { id: string; label: string };
 
@@ -123,6 +124,7 @@ export default function LeagueRulesForm({
 
   return (
     <form onSubmit={handleCreate}>
+      <Card>
       {!editingLeague && (
         <div>
           <label htmlFor="name">League name</label>
@@ -536,6 +538,7 @@ export default function LeagueRulesForm({
       </p>
         </>
       )}
+      </Card>
     </form>
   );
 }

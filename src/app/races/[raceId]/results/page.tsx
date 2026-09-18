@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownsALeagueInSeason } from "@/lib/authz";
 import { materializeCarriedOverLineups } from "@/lib/tieredDraft";
+import Card from "@/components/ui/Card";
 import ResultsForm from "./ResultsForm";
 
 export const dynamic = "force-dynamic";
@@ -69,11 +70,13 @@ export default async function EnterResultsPage(props: PageProps<"/races/[raceId]
       <h1>
         Enter results — Week {race.week}, {race.trackName}
       </h1>
-      {drivers.length === 0 ? (
-        <p>No picks were made for this race in any league — nothing to score.</p>
-      ) : (
-        <ResultsForm raceId={raceId} drivers={drivers} />
-      )}
+      <Card>
+        {drivers.length === 0 ? (
+          <p>No picks were made for this race in any league — nothing to score.</p>
+        ) : (
+          <ResultsForm raceId={raceId} drivers={drivers} />
+        )}
+      </Card>
     </main>
   );
 }

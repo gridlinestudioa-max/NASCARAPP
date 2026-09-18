@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { auth } from "@/lib/auth";
+import AppShell from "@/components/shell/AppShell";
+import styles from "@/components/shell/AppShell.module.css";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,10 +20,21 @@ export const metadata: Metadata = {
   description: "Pick'em and Tiered Draft fantasy NASCAR leagues.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await auth();
+  const user = session?.user;
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {user?.id ? (
+          <AppShell user={{ name: user.name, email: user.email ?? "" }}>{children}</AppShell>
+        ) : (
+          <div className={styles.authWrap}>
+            <div className={styles.authInner}>{children}</div>
+          </div>
+        )}
+      </body>
     </html>
   );
 }

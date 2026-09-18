@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Card from "@/components/ui/Card";
 
 export const dynamic = "force-dynamic";
 
@@ -54,40 +54,39 @@ export default async function StatsPage() {
 
   return (
     <main>
-      <p>
-        <Link href="/my-leagues">&larr; My Leagues</Link>
-      </p>
       <h1>Driver Stats</h1>
       {season && <p>{season.year} season</p>}
 
-      {stats.length === 0 ? (
-        <p>No results have been entered yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Driver</th>
-              <th>Races</th>
-              <th>Wins</th>
-              <th>Top 5</th>
-              <th>Top 10</th>
-              <th>Avg finish</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.map((s) => (
-              <tr key={s.driverId}>
-                <td>{s.name}</td>
-                <td>{s.races}</td>
-                <td>{s.wins}</td>
-                <td>{s.top5}</td>
-                <td>{s.top10}</td>
-                <td>{(s.totalFinish / s.races).toFixed(1)}</td>
+      <Card>
+        {stats.length === 0 ? (
+          <p>No results have been entered yet.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Driver</th>
+                <th>Races</th>
+                <th>Wins</th>
+                <th>Top 5</th>
+                <th>Top 10</th>
+                <th>Avg finish</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {stats.map((s) => (
+                <tr key={s.driverId}>
+                  <td>{s.name}</td>
+                  <td>{s.races}</td>
+                  <td>{s.wins}</td>
+                  <td>{s.top5}</td>
+                  <td>{s.top10}</td>
+                  <td>{(s.totalFinish / s.races).toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
     </main>
   );
 }

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
 
 export const dynamic = "force-dynamic";
 
@@ -90,54 +92,55 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
       <p>
         <Link href="/my-leagues">&larr; My Leagues</Link>
       </p>
-      <h1>{league.name}</h1>
+      <h1 style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+        {league.name}
+        {membership.role === "OWNER" && <Badge tone="ink">Commissioner</Badge>}
+      </h1>
       {season && <p>{season.year} season</p>}
-      <p>
-        <Link href="/races">Schedule</Link> · <Link href="/stats">Driver Stats</Link>
-      </p>
       {membership.role === "OWNER" && (
         <p>
           Invite code: <code>{league.inviteCode}</code> — share it so others can{" "}
-          <Link href="/leagues/join">join this league</Link>. You&apos;re the commissioner —{" "}
+          <Link href="/leagues/join">join this league</Link>. Manage in{" "}
           <Link href={`/leagues/${league.id}/settings`}>league settings</Link>.
         </p>
       )}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Player</th>
-            <th>Total</th>
-            <th>Races picked</th>
-            <th>Flagged</th>
-          </tr>
-        </thead>
-        <tbody>
-          {standings.map((s, i) => (
-            <tr key={s.userId} style={s.userId === session.user.id ? { fontWeight: "bold" } : undefined}>
-              <td>{i + 1}</td>
-              <td>{s.name}</td>
-              <td>{s.total}</td>
-              <td>{s.picksCount}</td>
-              <td>{s.needsReviewCount > 0 ? s.needsReviewCount : ""}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
       {nextOpenRace && (
-        <p>
+        <Card title="Up next">
           <Link href={`/leagues/${league.id}/races/${nextOpenRace.id}`}>
             Make your pick for Week {nextOpenRace.week} — {nextOpenRace.trackName}
           </Link>
-        </p>
+        </Card>
       )}
 
+      <Card title="Standings">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>Total</th>
+              <th>Races picked</th>
+              <th>Flagged</th>
+            </tr>
+          </thead>
+          <tbody>
+            {standings.map((s, i) => (
+              <tr key={s.userId} style={s.userId === session.user.id ? { fontWeight: 700 } : undefined}>
+                <td>{i + 1}</td>
+                <td>{s.name}</td>
+                <td>{s.total}</td>
+                <td>{s.picksCount}</td>
+                <td>{s.needsReviewCount > 0 ? <Badge tone="warning">{s.needsReviewCount}</Badge> : ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
       {races.length > 0 && (
-        <>
-          <h2>Races</h2>
-          <ul>
+        <Card title="Races">
+          <ul className="rowList">
             {races.map((r) => (
               <li key={r.id}>
                 <Link href={`/leagues/${league.id}/races/${r.id}`}>
@@ -146,7 +149,7 @@ export default async function LeagueDashboardPage(props: PageProps<"/leagues/[le
               </li>
             ))}
           </ul>
-        </>
+        </Card>
       )}
     </main>
   );

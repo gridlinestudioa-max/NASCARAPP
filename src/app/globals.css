@@ -1,13 +1,43 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Brand triad */
+  --color-ink: #070707;
+  --color-cream: #fffef1;
+  --color-slate: #646e78;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Surfaces */
+  --bg-app: #f2f1e6;
+  --bg-sidebar: #fffef1;
+  --bg-surface: #fffef1;
+  --bg-surface-muted: #f5f4ea;
+  --border-color: #e6e4d4;
+  --shadow-card: 0 1px 2px rgba(7, 7, 7, 0.04), 0 8px 24px rgba(7, 7, 7, 0.05);
+
+  /* Text */
+  --text-primary: var(--color-ink);
+  --text-secondary: var(--color-slate);
+  --text-muted: #9aa1a8;
+  --text-on-ink: var(--color-cream);
+
+  /* Semantic accents (used sparingly, functional only) */
+  --success: #2f7d5b;
+  --success-bg: #e7f3ec;
+  --danger: #b3392e;
+  --danger-bg: #fbeae8;
+  --warning: #9c6b14;
+  --warning-bg: #fbf1de;
+
+  /* Scale */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-pill: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --sidebar-width: 240px;
 }
 
 html {
@@ -22,19 +52,46 @@ body {
 
 body {
   min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-app);
+  font-family: var(--font-geist-sans), "Inter", Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 * {
   box-sizing: border-box;
-  padding: 0;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+figure {
   margin: 0;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
 }
 
 a {
@@ -42,8 +99,219 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+a:not([class]) {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--border-color);
+  text-underline-offset: 3px;
 }
+
+a:not([class]):hover {
+  text-decoration-color: currentColor;
+}
+
+code {
+  font-family: var(--font-geist-mono), monospace;
+  background: var(--bg-surface-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.45em;
+  font-size: 0.9em;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+/* Consistent vertical rhythm between each page's top-level sections
+   (heading, cards, etc.) without needing a wrapper on every page. */
+main > * + * {
+  margin-top: var(--space-4);
+}
+
+p + p {
+  margin-top: var(--space-2);
+}
+
+/* A styled list of link rows — used for schedules, league lists, etc.
+   in place of a bare bulleted <ul>. */
+.rowList li + li {
+  border-top: 1px solid var(--border-color);
+}
+
+.rowList a,
+.rowList > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-1);
+}
+
+.rowList a:hover {
+  color: var(--text-secondary);
+}
+
+/* ---------- Forms ---------- */
+
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.5em 0.75em;
+  margin-top: var(--space-1);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 3px rgba(7, 7, 7, 0.08);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-ink);
+  width: 15px;
+  height: 15px;
+  vertical-align: middle;
+}
+
+/* ---------- Buttons ----------
+   The app's forms consistently use type="submit" for the primary action
+   and type="button" for secondary/inline actions (presets, previews,
+   auto-assign, sync) — themed off that split so buttons look right
+   without needing a wrapper component on every call site. */
+
+button {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+  padding: 0.55em 1.3em;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+button[type="submit"] {
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  border: 1px solid var(--color-ink);
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+button[type="button"] {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+button[type="button"]:hover:not(:disabled) {
+  border-color: var(--color-slate);
+}
+
+/* ---------- Inline status messages ----------
+   Forms across the app render errors/status as bare <p role="alert"> /
+   <p role="status"> — styled by role so every existing call site picks
+   this up with no JSX changes. */
+
+p[role="alert"],
+p[role="status"],
+span[role="status"] {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4em 0.85em;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-2);
+}
+
+p[role="alert"] {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+p[role="status"],
+span[role="status"] {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+/* ---------- Tables ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+table caption {
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding-bottom: var(--space-2);
+}
+
+th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+tbody tr:hover {
+  background: var(--bg-surface-muted);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table input[type="number"] {
+  width: 4.5em;
+  padding: 0.35em 0.5em;
+}
+
+/* Consistent vertical rhythm inside forms without touching every field's
+   markup — most forms are a flat list of label/input divs. */
+form > * + * {
+  margin-top: var(--space-3);
+}
+
