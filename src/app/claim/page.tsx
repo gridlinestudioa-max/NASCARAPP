@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import AuthBrand from "@/components/shell/AuthBrand";
 import ClaimForm from "./ClaimForm";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,8 @@ export default async function ClaimPage() {
 
   return (
     <main>
-      <h1>Claim your account</h1>
+      <AuthBrand />
+      <h1 style={{ textAlign: "center" }}>Claim your account</h1>
       <Card>
         <p style={{ marginBottom: "var(--space-3)" }}>
           Pick your name and set a username and password to log in going forward.

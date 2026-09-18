@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Card from "@/components/ui/Card";
+import AuthBrand from "@/components/shell/AuthBrand";
 import SignupForm from "./SignupForm";
 
 export default function SignupPage() {
   return (
     <main>
-      <h1>Create your account</h1>
+      <AuthBrand />
+      <h1 style={{ textAlign: "center" }}>Create your account</h1>
       <Card>
         <SignupForm />
         <p style={{ marginTop: "var(--space-4)" }}>

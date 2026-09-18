@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Card from "@/components/ui/Card";
+import AuthBrand from "@/components/shell/AuthBrand";
 import LoginForm from "./LoginForm";
 
 export default async function LoginPage(props: PageProps<"/login">) {
@@ -8,17 +9,16 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
   return (
     <main>
-      <h1>Sign in</h1>
+      <AuthBrand />
+      <h1 style={{ textAlign: "center" }}>Welcome back</h1>
       <Card>
         {claimed && <p style={{ marginBottom: "var(--space-3)" }}>Account claimed — sign in below.</p>}
         <LoginForm />
-        <p style={{ marginTop: "var(--space-4)" }}>
-          New here? <Link href="/signup">Create an account</Link>.
-        </p>
-        <p>
-          Have a pre-2026 account to claim instead? <Link href="/claim">Claim it here</Link>.
-        </p>
       </Card>
+      <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+        New here? <Link href="/signup">Create an account</Link> ·{" "}
+        <Link href="/claim">Claim a pre-2026 account</Link>
+      </p>
     </main>
   );
 }

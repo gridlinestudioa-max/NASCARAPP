@@ -1,0 +1,65 @@
+.field {
+  background: var(--bg-surface-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.5em 0.9em;
+  transition: border-color 0.15s ease;
+}
+
+.field + .field {
+  margin-top: var(--space-3);
+}
+
+.field:focus-within {
+  border-color: var(--color-ink);
+}
+
+.field label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 1px;
+}
+
+.field input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin-top: 0 !important;
+  width: 100%;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.field input:focus {
+  box-shadow: none !important;
+}
+
+.passwordRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.passwordRow input {
+  flex: 1;
+}
+
+.eyeButton {
+  background: none !important;
+  border: none !important;
+  padding: 2px !important;
+  color: var(--text-secondary);
+  display: flex;
+  border-radius: 4px;
+}
+
+.eyeButton:hover:not(:disabled) {
+  color: var(--text-primary);
+  opacity: 1 !important;
+}
+
+.submit {
+  width: 100%;
+}
