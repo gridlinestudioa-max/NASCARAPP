@@ -287,6 +287,25 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
 // start-time-relative pull windows) has an accurate name and start time
 // to work from. Once nascarRaceId is set for a race, its own sync skips
 // schedule matching entirely.
+//
+// Production turned up a case matchScheduleEntry's name/date matching
+// can't handle at all: the early part of a season can be seeded with
+// evenly-spaced placeholder dates (every Sunday from some guessed start)
+// rather than the real ones, which land more than 3 days from every real
+// candidate — no name or date signal is close enough to match on. week is
+// the one field the schema documents as authoritative regardless of how
+// rough the seeded date is ("dates may be estimated, week is not"), so
+// each series here also tries a positional match first: sort our races
+// by week and NASCAR's candidates by real date, and pair them up by
+// index. That's only trustworthy when both lists are exactly the same
+// length — a schedule change (rainout makeup race, etc.) could otherwise
+// pair everything after it with the wrong race — so it's used only per
+// series where the counts line up, falling back to matchScheduleEntry's
+// name/date heuristic otherwise. Position is tried first rather than
+// second: a placeholder date can coincidentally land within 3 days of a
+// real but *different* race's date (tight, evenly-spaced placeholders
+// next to a similarly-paced real schedule), which would otherwise win a
+// wrong match over the correct positional one.
 export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promise<SyncResult> {
   const season = await prisma.season.findUnique({ where: { id: seasonId }, include: { races: true } });
   if (!season) {
@@ -303,20 +322,38 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
   const matchedWeeks: number[] = [];
   const unmatchedWeeks: number[] = [];
 
+  const racesBySeriesId = new Map<number, typeof season.races>();
+  for (const race of season.races) {
+    const bucket = racesBySeriesId.get(race.nascarSeriesId);
+    if (bucket) bucket.push(race);
+    else racesBySeriesId.set(race.nascarSeriesId, [race]);
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
-      for (const race of season.races) {
-        const candidates = scheduleList.filter((r) => r.series_id === race.nascarSeriesId);
-        const match = matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
-        if (!match) {
-          unmatchedWeeks.push(race.week);
-          continue;
+      for (const [seriesId, seriesRaces] of racesBySeriesId) {
+        const candidates = scheduleList.filter((r) => r.series_id === seriesId);
+        const positionalCandidates = [...candidates].sort(
+          (a, b) => new Date(a.race_date).getTime() - new Date(b.race_date).getTime(),
+        );
+        const positionalRaces = [...seriesRaces].sort((a, b) => a.week - b.week);
+        const positionalFallbackSafe = positionalCandidates.length === positionalRaces.length;
+
+        for (let i = 0; i < positionalRaces.length; i++) {
+          const race = positionalRaces[i];
+          const match = positionalFallbackSafe
+            ? positionalCandidates[i]
+            : matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
+          if (!match) {
+            unmatchedWeeks.push(race.week);
+            continue;
+          }
+          matchedWeeks.push(race.week);
+          await tx.race.update({
+            where: { id: race.id },
+            data: { trackName: match.race_name, date: new Date(match.race_date), nascarRaceId: match.race_id },
+          });
         }
-        matchedWeeks.push(race.week);
-        await tx.race.update({
-          where: { id: race.id },
-          data: { trackName: match.race_name, date: new Date(match.race_date), nascarRaceId: match.race_id },
-        });
       }
     });
   } catch (cause) {

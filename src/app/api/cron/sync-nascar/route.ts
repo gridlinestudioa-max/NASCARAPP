@@ -103,8 +103,16 @@ export async function GET(request: Request) {
 
     // Cheap (one extra fetch) and keeps every race's trackName/date/
     // nascarRaceId accurate site-wide — gated to the entry-list window so it
-    // doesn't fire on every 15-minute tick all week for no reason.
-    const scheduleResult = dueForEntries ? await syncSeasonScheduleWithNascarFeed(race.seasonId) : null;
+    // doesn't fire on every 15-minute tick all week for no reason, except
+    // while any race in the season still isn't matched to NASCAR's
+    // schedule (nascarRaceId null): syncPastRacesWithNascarFeed's own
+    // per-race matching is weaker than this function's (no positional
+    // fallback), so it needs this to have run first to actually backfill
+    // history — worth the extra fetch until everything's caught up, after
+    // which this count is 0 and it settles back to the entry-list window.
+    const hasUnmatchedRaces = (await prisma.race.count({ where: { seasonId: race.seasonId, nascarRaceId: null } })) > 0;
+    const scheduleResult =
+      dueForEntries || hasUnmatchedRaces ? await syncSeasonScheduleWithNascarFeed(race.seasonId) : null;
 
     // Self-limiting (see syncPastRacesWithNascarFeed) — safe to attempt on
     // every tick.
