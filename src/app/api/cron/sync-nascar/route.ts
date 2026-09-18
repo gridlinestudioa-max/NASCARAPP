@@ -4,6 +4,7 @@ import {
   syncSeasonScheduleWithNascarFeed,
   syncPastRacesWithNascarFeed,
 } from "@/lib/raceSync";
+import { sendSyncFailureAlert } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,29 @@ function isEntryListWindow(now: Date): boolean {
   return (dayOfWeek === 2 || dayOfWeek === 5) && minutesSinceNoon >= 0 && minutesSinceNoon < ENTRY_WINDOW_MINUTES;
 }
 
+// At most one admin alert email per hour, regardless of how many ticks in
+// that hour keep failing — a persistent outage should say "something's
+// wrong" once, not resend every ~15 minutes until someone notices.
+const ALERT_THROTTLE_MS = 60 * 60 * 1000;
+
+async function maybeSendFailureAlert(failures: string[]): Promise<void> {
+  if (failures.length === 0) return;
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  const state = await prisma.syncAlertState.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton" },
+  });
+  if (state.lastAlertedAt && Date.now() - state.lastAlertedAt.getTime() < ALERT_THROTTLE_MS) {
+    return;
+  }
+
+  await prisma.syncAlertState.update({ where: { id: "singleton" }, data: { lastAlertedAt: new Date() } });
+  await sendSyncFailureAlert(adminEmail, failures.join("\n\n"));
+}
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -55,46 +79,59 @@ export async function GET(request: Request) {
 
   const now = new Date();
 
-  // The "focus" race: whichever race is soonest but not more than 5 hours
-  // in the past — covers both "next upcoming race" (for entries/qualifying)
-  // and "the race that just happened" (for the results window) with one
-  // query, since a race more than 5 hours past its start rolls over to the
-  // next one automatically.
-  const race = await prisma.race.findFirst({
-    where: { date: { gte: new Date(now.getTime() - 5 * HOUR_MS) } },
-    orderBy: { date: "asc" },
-    include: { season: true },
-  });
+  try {
+    // The "focus" race: whichever race is soonest but not more than 5 hours
+    // in the past — covers both "next upcoming race" (for entries/qualifying)
+    // and "the race that just happened" (for the results window) with one
+    // query, since a race more than 5 hours past its start rolls over to the
+    // next one automatically.
+    const race = await prisma.race.findFirst({
+      where: { date: { gte: new Date(now.getTime() - 5 * HOUR_MS) } },
+      orderBy: { date: "asc" },
+      include: { season: true },
+    });
 
-  if (!race) {
-    return Response.json({ ok: true, message: "No race in range to sync." });
+    if (!race) {
+      return Response.json({ ok: true, message: "No race in range to sync." });
+    }
+
+    const msUntilStart = race.date.getTime() - now.getTime();
+    const msSinceStart = now.getTime() - race.date.getTime();
+    const dueForEntries = isEntryListWindow(now);
+    const dueForQualifying = msUntilStart > 0 && msUntilStart <= 12 * HOUR_MS;
+    const dueForResults = msSinceStart >= 3 * HOUR_MS && msSinceStart <= 5 * HOUR_MS;
+
+    // Cheap (one extra fetch) and keeps every race's trackName/date/
+    // nascarRaceId accurate site-wide — gated to the entry-list window so it
+    // doesn't fire on every 15-minute tick all week for no reason.
+    const scheduleResult = dueForEntries ? await syncSeasonScheduleWithNascarFeed(race.seasonId) : null;
+
+    // Self-limiting (see syncPastRacesWithNascarFeed) — safe to attempt on
+    // every tick.
+    const backfillResult = await syncPastRacesWithNascarFeed(race.seasonId);
+
+    const raceResult =
+      dueForEntries || dueForQualifying || dueForResults ? await syncRaceWithNascarFeed(race.id) : null;
+
+    const failures: string[] = [];
+    if (scheduleResult && !scheduleResult.ok) failures.push(`Schedule sync: ${scheduleResult.error}`);
+    if (raceResult && !raceResult.ok) failures.push(`Race sync (week ${race.week}, ${race.trackName}): ${raceResult.error}`);
+    if (!backfillResult.ok) failures.push(`Past-race backfill: ${backfillResult.error}`);
+    else if (backfillResult.message.includes("Failed:")) failures.push(`Past-race backfill: ${backfillResult.message}`);
+    await maybeSendFailureAlert(failures);
+
+    return Response.json({
+      raceId: race.id,
+      week: race.week,
+      trackName: race.trackName,
+      windows: { dueForEntries, dueForQualifying, dueForResults },
+      schedule: scheduleResult,
+      backfill: backfillResult,
+      race: raceResult,
+    });
+  } catch (cause) {
+    const message = (cause as Error).message;
+    await maybeSendFailureAlert([`Unhandled error in the sync route: ${message}`]);
+    return Response.json({ ok: false, error: message }, { status: 500 });
   }
-
-  const msUntilStart = race.date.getTime() - now.getTime();
-  const msSinceStart = now.getTime() - race.date.getTime();
-  const dueForEntries = isEntryListWindow(now);
-  const dueForQualifying = msUntilStart > 0 && msUntilStart <= 12 * HOUR_MS;
-  const dueForResults = msSinceStart >= 3 * HOUR_MS && msSinceStart <= 5 * HOUR_MS;
-
-  // Cheap (one extra fetch) and keeps every race's trackName/date/
-  // nascarRaceId accurate site-wide — gated to the entry-list window so it
-  // doesn't fire on every 15-minute tick all week for no reason.
-  const scheduleResult = dueForEntries ? await syncSeasonScheduleWithNascarFeed(race.seasonId) : null;
-
-  // Self-limiting (see syncPastRacesWithNascarFeed) — safe to attempt on
-  // every tick.
-  const backfillResult = await syncPastRacesWithNascarFeed(race.seasonId);
-
-  const raceResult =
-    dueForEntries || dueForQualifying || dueForResults ? await syncRaceWithNascarFeed(race.id) : null;
-
-  return Response.json({
-    raceId: race.id,
-    week: race.week,
-    trackName: race.trackName,
-    windows: { dueForEntries, dueForQualifying, dueForResults },
-    schedule: scheduleResult,
-    backfill: backfillResult,
-    race: raceResult,
-  });
 }
