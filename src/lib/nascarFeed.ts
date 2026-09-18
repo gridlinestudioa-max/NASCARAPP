@@ -76,10 +76,24 @@ type NascarWeekendInfo = {
 
 class NascarFeedError extends Error {}
 
+// cf.nascar.com sits behind Cloudflare and 403s a bare server-side fetch
+// with no User-Agent/Referer — the same request a browser makes (which is
+// how NASCAR.com's own site and every third-party fantasy tool reads this
+// feed) goes through fine. These headers just make the request look like
+// what a browser on nascar.com actually sends; the feed itself is public,
+// unauthenticated JSON with no login or paywall behind it.
+const BROWSER_LIKE_HEADERS = {
+  accept: "application/json",
+  "user-agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  referer: "https://www.nascar.com/",
+  origin: "https://www.nascar.com",
+};
+
 async function fetchJson<T>(url: string): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(url, { headers: { accept: "application/json" }, cache: "no-store" });
+    res = await fetch(url, { headers: BROWSER_LIKE_HEADERS, cache: "no-store" });
   } catch (cause) {
     throw new NascarFeedError(`Could not reach the NASCAR feed (${url}): ${(cause as Error).message}`);
   }
