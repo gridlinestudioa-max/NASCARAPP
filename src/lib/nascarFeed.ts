@@ -262,31 +262,45 @@ function withinDateWindow(candidate: NascarRaceListEntry, ourDate: Date): boolea
   return Math.abs(candidateDate - ourDate.getTime()) <= THREE_DAYS_MS;
 }
 
-// Finds the one NASCAR schedule entry that plausibly corresponds to one of
-// our races. Tries same normalized name + date within 3 days first — our
-// trackName field is displayed (and, since the season-schedule sync, kept
-// in sync) as NASCAR's own race_name ("Bass Pro Shops Night Race"), but
-// some races are still seeded under a shorthand nickname ("Vegas") or
-// haven't been through a sync yet, so this also tries the venue's
-// track_name before falling back to date alone within the same window:
-// `candidates` is always pre-filtered to one series (Cup) by the caller,
-// and that series runs at most one points race per weekend, so "the one
-// Cup race within 3 days of ours" is unambiguous even without the name
-// lining up. Either way, more than one candidate on a given pass is
-// treated the same as no match at all — left for a human to confirm
-// rather than guessed at.
-export function matchScheduleEntry(
+// The strict half of matchScheduleEntry, split out because
+// syncSeasonScheduleWithNascarFeed's positional-offset inference needs
+// this specific signal on its own: a name match is high-precision (a
+// coincidence would need both the right name AND the right date window),
+// unlike the date-only fallback below, which two same-cadence weekly
+// schedules (even a totally wrong placeholder one) can collide on by pure
+// chance. Our trackName field is displayed (and, since the season-schedule
+// sync, kept in sync) as NASCAR's own race_name ("Bass Pro Shops Night
+// Race"), but some races are still seeded under a shorthand nickname
+// ("Vegas") or haven't been through a sync yet, so this also tries the
+// venue's track_name. More than one candidate matching is treated the
+// same as none at all — ambiguous, left for a human rather than guessed.
+export function matchByNameAndDate(
   ourRace: { trackName: string; date: Date },
   candidates: NascarRaceListEntry[],
 ): NascarRaceListEntry | null {
   const normalized = normalizeTrackName(ourRace.trackName);
-  const byNameAndDate = candidates.filter(
+  const matches = candidates.filter(
     (c) =>
       (normalizeTrackName(c.race_name) === normalized || normalizeTrackName(c.track_name) === normalized) &&
       withinDateWindow(c, ourRace.date),
   );
-  if (byNameAndDate.length === 1) return byNameAndDate[0];
-  if (byNameAndDate.length > 1) return null;
+  return matches.length === 1 ? matches[0] : null;
+}
+
+// Finds the one NASCAR schedule entry that plausibly corresponds to one of
+// our races: a strict name+date match first (see matchByNameAndDate),
+// falling back to date alone within the same 3-day window when no name
+// matched — `candidates` is always pre-filtered to one series (Cup) by the
+// caller, and that series runs at most one points race per weekend, so
+// "the one Cup race within 3 days of ours" is usually unambiguous even
+// without the name lining up. More than one candidate is treated the same
+// as no match either way.
+export function matchScheduleEntry(
+  ourRace: { trackName: string; date: Date },
+  candidates: NascarRaceListEntry[],
+): NascarRaceListEntry | null {
+  const byNameAndDate = matchByNameAndDate(ourRace, candidates);
+  if (byNameAndDate) return byNameAndDate;
 
   const byDateOnly = candidates.filter((c) => withinDateWindow(c, ourRace.date));
   return byDateOnly.length === 1 ? byDateOnly[0] : null;

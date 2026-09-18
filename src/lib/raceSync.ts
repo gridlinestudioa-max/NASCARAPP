@@ -12,7 +12,13 @@ import {
   scoreTieredFinish,
   scoreTieredQualifying,
 } from "@/lib/tieredDraft";
-import { fetchSeasonRaceList, fetchWeekendFeed, matchScheduleEntry, parseWeekendData } from "@/lib/nascarFeed";
+import {
+  fetchSeasonRaceList,
+  fetchWeekendFeed,
+  matchByNameAndDate,
+  matchScheduleEntry,
+  parseWeekendData,
+} from "@/lib/nascarFeed";
 
 type RaceForScoring = { id: string; seasonId: string; fieldSize: number; isNonPoints: boolean };
 
@@ -295,17 +301,22 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
 // candidate — no name or date signal is close enough to match on. week is
 // the one field the schema documents as authoritative regardless of how
 // rough the seeded date is ("dates may be estimated, week is not"), so
-// each series here also tries a positional match first: sort our races
-// by week and NASCAR's candidates by real date, and pair them up by
-// index. That's only trustworthy when both lists are exactly the same
-// length — a schedule change (rainout makeup race, etc.) could otherwise
-// pair everything after it with the wrong race — so it's used only per
-// series where the counts line up, falling back to matchScheduleEntry's
-// name/date heuristic otherwise. Position is tried first rather than
-// second: a placeholder date can coincidentally land within 3 days of a
-// real but *different* race's date (tight, evenly-spaced placeholders
-// next to a similarly-paced real schedule), which would otherwise win a
-// wrong match over the correct positional one.
+// each series here also tries a positional match: sort our races by week
+// and NASCAR's candidates by real date, and pair them up by index plus a
+// fixed offset.
+//
+// That offset isn't assumed to be 0 (our race count and NASCAR's real
+// schedule length for a series don't have to match exactly — an event
+// either side tracks that the other doesn't shifts everything after it by
+// a fixed amount rather than breaking alignment). Instead it's inferred
+// from whichever races already have a confident name+date match via
+// matchScheduleEntry: each contributes candidateIndex - raceIndex, and
+// the offset is trusted only when every one of them agrees on the same
+// value. Zero confident matches, or two that disagree, means no positional
+// fallback for that series at all — a coincidental date collision (an
+// evenly-spaced placeholder landing within 3 days of a real but
+// *different* race) would rather silently disable the fallback than let
+// one bad offset misalign every race that relies on it.
 export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promise<SyncResult> {
   const season = await prisma.season.findUnique({ where: { id: seasonId }, include: { races: true } });
   if (!season) {
@@ -337,13 +348,28 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
           (a, b) => new Date(a.race_date).getTime() - new Date(b.race_date).getTime(),
         );
         const positionalRaces = [...seriesRaces].sort((a, b) => a.week - b.week);
-        const positionalFallbackSafe = positionalCandidates.length === positionalRaces.length;
+
+        // Anchors: races with a strict name+date match, trusted enough to
+        // infer an offset from (see matchByNameAndDate's own reasoning for
+        // why the weaker date-only fallback isn't trustworthy here).
+        const nameMatchByIndex = new Map<number, (typeof positionalCandidates)[number]>();
+        const offsets = new Set<number>();
+        for (let i = 0; i < positionalRaces.length; i++) {
+          const race = positionalRaces[i];
+          const match = matchByNameAndDate({ trackName: race.trackName, date: race.date }, candidates);
+          if (match) {
+            nameMatchByIndex.set(i, match);
+            offsets.add(positionalCandidates.indexOf(match) - i);
+          }
+        }
+        const inferredOffset = offsets.size === 1 ? [...offsets][0] : null;
 
         for (let i = 0; i < positionalRaces.length; i++) {
           const race = positionalRaces[i];
-          const match = positionalFallbackSafe
-            ? positionalCandidates[i]
-            : matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
+          const match =
+            nameMatchByIndex.get(i) ??
+            (inferredOffset != null ? positionalCandidates[i + inferredOffset] : undefined) ??
+            matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
           if (!match) {
             unmatchedWeeks.push(race.week);
             continue;
