@@ -13,20 +13,33 @@ export default function LeagueHero({
   total,
   rank,
   memberCount,
+  racesCompleted,
+  racesTotal,
 }: {
   leagueName: string;
   seasonYear?: number;
   total: number;
   rank: number | null;
   memberCount: number;
+  racesCompleted?: number;
+  racesTotal?: number;
 }) {
+  const remaining = racesTotal != null && racesCompleted != null ? Math.max(racesTotal - racesCompleted, 0) : null;
+
   return (
     <Card>
       <div className={styles.identity}>
         <div className={styles.avatar}>{leagueName.charAt(0).toUpperCase()}</div>
         <div>
           <h1 className={styles.name}>{leagueName}</h1>
-          {seasonYear && <div className={styles.sub}>{seasonYear} season</div>}
+          {seasonYear && (
+            <div className={styles.sub}>
+              {seasonYear} season
+              {racesTotal != null && racesTotal > 0 && (
+                <> · Race {racesCompleted} of {racesTotal} · {remaining} remaining</>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

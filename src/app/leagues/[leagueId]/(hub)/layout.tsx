@@ -31,7 +31,8 @@ export default async function LeagueHubLayout({
     notFound();
   }
 
-  const { league, membership, season, standings, myRank, myStanding, nextOpenRace } = data;
+  const { league, membership, season, standings, myRank, myStanding, nextOpenRace, races } = data;
+  const racesCompleted = races.filter((r) => r.status === "COMPLETE").length;
 
   return (
     <main>
@@ -45,6 +46,8 @@ export default async function LeagueHubLayout({
         total={myStanding?.total ?? 0}
         rank={myRank}
         memberCount={standings.length}
+        racesCompleted={racesCompleted}
+        racesTotal={races.length}
       />
 
       {membership.role === "OWNER" && (
