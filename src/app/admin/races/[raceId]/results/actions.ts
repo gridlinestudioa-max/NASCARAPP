@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ownsALeagueInSeason } from "@/lib/authz";
+import { isSiteAdmin } from "@/lib/authz";
 import { applyRaceResults } from "@/lib/raceSync";
 
 function parseOptionalStagePosition(formData: FormData, key: string): number | null {
@@ -26,18 +26,13 @@ export async function submitResults(
   }
 
   const session = await auth();
-  if (!session?.user?.id) {
-    return "You need to be signed in to enter results.";
+  if (!session?.user?.id || !isSiteAdmin(session.user.email)) {
+    return "Not authorized.";
   }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     return "Race not found.";
-  }
-
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    return "Only an owner of a league in this season can enter results.";
   }
 
   // Only finishing positions for drivers someone actually picked are
@@ -72,6 +67,7 @@ export async function submitResults(
   await prisma.$transaction((tx) => applyRaceResults(tx, race, finishPositions, stage1Positions, stage2Positions));
 
   revalidatePath(`/races/${raceId}`);
+  revalidatePath(`/admin/races/${raceId}`);
   revalidatePath(`/stats`);
-  redirect(`/races/${raceId}`);
+  redirect(`/admin/races/${raceId}`);
 }

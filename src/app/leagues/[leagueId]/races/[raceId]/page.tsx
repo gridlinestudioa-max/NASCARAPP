@@ -50,14 +50,7 @@ export default async function RaceDetailPage(
   }
 
   if (leagueSeason.league.type === "TIERED_DRAFT") {
-    return renderTieredLineup({
-      leagueId,
-      raceId,
-      userId,
-      race,
-      leagueSeason,
-      isOwner: membership.role === "OWNER",
-    });
+    return renderTieredLineup({ leagueId, raceId, userId, race, leagueSeason });
   }
   return renderPickem({ leagueId, raceId, userId, race, leagueSeason });
 }
@@ -202,14 +195,12 @@ async function renderTieredLineup({
   userId,
   race,
   leagueSeason,
-  isOwner,
 }: {
   leagueId: string;
   raceId: string;
   userId: string;
   race: { week: number; trackName: string; date: Date; qualifyingAt: Date | null; seasonId: string; status: string };
   leagueSeason: { ruleSet: { config: unknown } };
-  isOwner: boolean;
 }) {
   const config = parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config);
   const now = Date.now();
@@ -312,15 +303,7 @@ async function renderTieredLineup({
         <h1>
           Week {race.week} — {race.trackName}
         </h1>
-        <p>
-          Tiers haven&apos;t been assigned for this race yet.
-          {isOwner && (
-            <>
-              {" "}
-              <Link href={`/races/${raceId}/tiers`}>Assign tiers</Link>.
-            </>
-          )}
-        </p>
+        <p>Tiers haven&apos;t been assigned for this race yet — check back soon.</p>
       </main>
     );
   }

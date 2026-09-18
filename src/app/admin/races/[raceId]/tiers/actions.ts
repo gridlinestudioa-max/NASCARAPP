@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ownsALeagueInSeason } from "@/lib/authz";
+import { isSiteAdmin } from "@/lib/authz";
 import type { DriverTier } from "@/lib/tieredDraft";
 import { applyAutoTiers } from "@/lib/tierRanking";
 
@@ -19,18 +19,13 @@ export async function submitTiers(_prevState: string | undefined, formData: Form
   }
 
   const session = await auth();
-  if (!session?.user?.id) {
-    return "You need to be signed in to assign tiers.";
+  if (!session?.user?.id || !isSiteAdmin(session.user.email)) {
+    return "Not authorized.";
   }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     return "Race not found.";
-  }
-
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    return "Only a league owner in this season can assign tiers.";
   }
 
   const drivers = await prisma.driver.findMany({ where: { isActive: true }, select: { id: true } });
@@ -50,9 +45,9 @@ export async function submitTiers(_prevState: string | undefined, formData: Form
     }
   });
 
-  revalidatePath(`/races/${raceId}/tiers`);
-  revalidatePath(`/races/${raceId}/qualifying`);
-  redirect(`/races/${raceId}`);
+  revalidatePath(`/admin/races/${raceId}/tiers`);
+  revalidatePath(`/admin/races/${raceId}/qualifying`);
+  redirect(`/admin/races/${raceId}`);
 }
 
 // Computes tiers from season points/recent form/team prestige and
@@ -61,8 +56,8 @@ export async function submitTiers(_prevState: string | undefined, formData: Form
 // before saving, exactly as if they'd been entered by hand.
 export async function autoAssignTiers(raceId: string): Promise<string> {
   const session = await auth();
-  if (!session?.user?.id) {
-    return "You need to be signed in.";
+  if (!session?.user?.id || !isSiteAdmin(session.user.email)) {
+    return "Not authorized.";
   }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
@@ -70,13 +65,8 @@ export async function autoAssignTiers(raceId: string): Promise<string> {
     return "Race not found.";
   }
 
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    return "Only a league owner in this season can assign tiers.";
-  }
-
   const outcome = await applyAutoTiers(raceId);
-  revalidatePath(`/races/${raceId}/tiers`);
+  revalidatePath(`/admin/races/${raceId}/tiers`);
   if (!outcome.ok) {
     return outcome.error;
   }

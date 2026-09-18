@@ -1,30 +1,18 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ownsALeagueInSeason } from "@/lib/authz";
 import { materializeCarriedOverLineups } from "@/lib/tieredDraft";
 import Card from "@/components/ui/Card";
 import ResultsForm from "./ResultsForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function EnterResultsPage(props: PageProps<"/races/[raceId]/results">) {
+export default async function EnterResultsPage(props: PageProps<"/admin/races/[raceId]/results">) {
   const { raceId } = await props.params;
-
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     notFound();
-  }
-
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    redirect(`/races/${raceId}`);
   }
 
   // Materialize any Tiered Lineup members' carried-over lineups first, so
@@ -65,7 +53,7 @@ export default async function EnterResultsPage(props: PageProps<"/races/[raceId]
   return (
     <main>
       <p>
-        <Link href={`/races/${raceId}`}>&larr; Week {race.week}</Link>
+        <Link href={`/admin/races/${raceId}`}>&larr; Week {race.week}</Link>
       </p>
       <h1>
         Enter results — Week {race.week}, {race.trackName}

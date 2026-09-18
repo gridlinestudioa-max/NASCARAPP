@@ -42,6 +42,20 @@ const NAV_ITEMS = [
   },
 ];
 
+const ADMIN_NAV_ITEM = {
+  href: "/admin",
+  label: "Admin",
+  icon: (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M12 2l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V5l7-3z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+};
+
 function Brand() {
   return (
     <Link href="/my-leagues" className={styles.brand}>
@@ -61,19 +75,22 @@ function Brand() {
 
 export default function AppShell({
   user,
+  isAdmin,
   children,
 }: {
   user: { name?: string | null; email: string };
+  isAdmin: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const navItems = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
 
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
         <Brand />
         <nav className={styles.nav}>
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link

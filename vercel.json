@@ -1,8 +1,20 @@
 {
   "crons": [
     {
-      "path": "/api/cron/sync-entries",
+      "path": "/api/cron/sync-nascar",
       "schedule": "0 16 * * 2"
+    },
+    {
+      "path": "/api/cron/sync-nascar",
+      "schedule": "0 16 * * 5"
+    },
+    {
+      "path": "/api/cron/sync-nascar",
+      "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/cron/sync-nascar",
+      "schedule": "0 2 * * 1"
     }
   ]
 }

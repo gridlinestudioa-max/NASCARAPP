@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ownsALeagueInSeason } from "@/lib/authz";
+import { isSiteAdmin } from "@/lib/authz";
 import { applyRaceEntries } from "@/lib/raceSync";
 import { parseEntryListText } from "@/lib/entryListParser";
 
@@ -20,18 +20,13 @@ export async function submitEntryList(
   }
 
   const session = await auth();
-  if (!session?.user?.id) {
-    return "You need to be signed in to enter the entry list.";
+  if (!session?.user?.id || !isSiteAdmin(session.user.email)) {
+    return "Not authorized.";
   }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     return "Race not found.";
-  }
-
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    return "Only an owner of a league in this season can enter the field.";
   }
 
   const entries = parseEntryListText(entryListText);
@@ -53,6 +48,7 @@ export async function submitEntryList(
   });
 
   revalidatePath(`/races/${raceId}`);
-  revalidatePath(`/races/${raceId}/entries`);
-  redirect(`/races/${raceId}`);
+  revalidatePath(`/admin/races/${raceId}`);
+  revalidatePath(`/admin/races/${raceId}/entries`);
+  redirect(`/admin/races/${raceId}`);
 }

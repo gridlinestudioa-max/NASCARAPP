@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ownsALeagueInSeason } from "@/lib/authz";
+import { isSiteAdmin } from "@/lib/authz";
 import { applyQualifyingResults } from "@/lib/raceSync";
 
 export async function submitQualifying(
@@ -17,18 +17,13 @@ export async function submitQualifying(
   }
 
   const session = await auth();
-  if (!session?.user?.id) {
-    return "You need to be signed in to enter qualifying results.";
+  if (!session?.user?.id || !isSiteAdmin(session.user.email)) {
+    return "Not authorized.";
   }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     return "Race not found.";
-  }
-
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    return "Only a league owner in this season can enter qualifying results.";
   }
 
   const tierAssignments = await prisma.driverTierAssignment.findMany({ where: { raceId } });
@@ -50,5 +45,6 @@ export async function submitQualifying(
   await prisma.$transaction((tx) => applyQualifyingResults(tx, race, positions));
 
   revalidatePath(`/races/${raceId}`);
-  redirect(`/races/${raceId}`);
+  revalidatePath(`/admin/races/${raceId}`);
+  redirect(`/admin/races/${raceId}`);
 }

@@ -1,18 +1,13 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import ScheduleEditForm from "./ScheduleEditForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function RacePage(props: PageProps<"/races/[raceId]">) {
+export default async function AdminRacePage(props: PageProps<"/admin/races/[raceId]">) {
   const { raceId } = await props.params;
-
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
 
   const race = await prisma.race.findUnique({
     where: { id: raceId },
@@ -25,15 +20,31 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
   return (
     <main>
       <p>
-        <Link href="/races">&larr; Schedule</Link>
+        <Link href="/admin">&larr; Admin</Link>
       </p>
       <h1>
         Week {race.week} — {race.trackName}
       </h1>
       <p>
-        {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} ·{" "}
-        {race.season.year} season · Field size {race.fieldSize}
+        {race.season.year} season · Field size {race.fieldSize} · {race.status}
+        {race.lastSyncedAt &&
+          ` · last synced ${race.lastSyncedAt.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}`}
       </p>
+
+      <Card title="Schedule">
+        <ScheduleEditForm raceId={raceId} trackName={race.trackName} date={race.date.toISOString().slice(0, 10)} />
+      </Card>
+
+      <Card title="Race data">
+        <p>
+          <Link href={`/admin/races/${raceId}/entries`}>Enter entry list</Link> ·{" "}
+          <Link href={`/admin/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
+          <Link href={`/admin/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
+          <Link href={`/admin/races/${raceId}/results`}>
+            {race.results.length > 0 ? "Edit results" : "Enter results"}
+          </Link>
+        </p>
+      </Card>
 
       <Card title="Results">
         {race.results.length === 0 ? (

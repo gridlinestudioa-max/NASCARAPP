@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { auth } from "@/lib/auth";
+import { isSiteAdmin } from "@/lib/authz";
 import AppShell from "@/components/shell/AppShell";
 import styles from "@/components/shell/AppShell.module.css";
 import "./globals.css";
@@ -28,7 +29,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         {user?.id ? (
-          <AppShell user={{ name: user.name, email: user.email ?? "" }}>{children}</AppShell>
+          <AppShell user={{ name: user.name, email: user.email ?? "" }} isAdmin={isSiteAdmin(user.email)}>
+            {children}
+          </AppShell>
         ) : (
           <div className={styles.authWrap}>
             <div className={styles.authInner}>{children}</div>

@@ -1,29 +1,17 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ownsALeagueInSeason } from "@/lib/authz";
 import Card from "@/components/ui/Card";
 import TiersForm from "./TiersForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function AssignTiersPage(props: PageProps<"/races/[raceId]/tiers">) {
+export default async function AssignTiersPage(props: PageProps<"/admin/races/[raceId]/tiers">) {
   const { raceId } = await props.params;
-
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     notFound();
-  }
-
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    redirect(`/races/${raceId}`);
   }
 
   const [entries, allActiveDrivers, assignments] = await Promise.all([
@@ -42,7 +30,7 @@ export default async function AssignTiersPage(props: PageProps<"/races/[raceId]/
   return (
     <main>
       <p>
-        <Link href={`/races/${raceId}`}>&larr; Week {race.week}</Link>
+        <Link href={`/admin/races/${raceId}`}>&larr; Week {race.week}</Link>
       </p>
       <h1>
         Assign weekly tiers — Week {race.week}, {race.trackName}

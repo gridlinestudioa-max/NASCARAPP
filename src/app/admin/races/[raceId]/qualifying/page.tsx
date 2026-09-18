@@ -1,29 +1,17 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ownsALeagueInSeason } from "@/lib/authz";
 import Card from "@/components/ui/Card";
 import QualifyingForm from "./QualifyingForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function EnterQualifyingPage(props: PageProps<"/races/[raceId]/qualifying">) {
+export default async function EnterQualifyingPage(props: PageProps<"/admin/races/[raceId]/qualifying">) {
   const { raceId } = await props.params;
-
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
 
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) {
     notFound();
-  }
-
-  const authorized = await ownsALeagueInSeason(session.user.id, race.seasonId);
-  if (!authorized) {
-    redirect(`/races/${raceId}`);
   }
 
   // The full weekly tier pool needs a qualifying position — every rostered
@@ -48,7 +36,7 @@ export default async function EnterQualifyingPage(props: PageProps<"/races/[race
   return (
     <main>
       <p>
-        <Link href={`/races/${raceId}`}>&larr; Week {race.week}</Link>
+        <Link href={`/admin/races/${raceId}`}>&larr; Week {race.week}</Link>
       </p>
       <h1>
         Enter qualifying results — Week {race.week}, {race.trackName}
@@ -57,7 +45,7 @@ export default async function EnterQualifyingPage(props: PageProps<"/races/[race
         {drivers.length === 0 ? (
           <p>
             No drivers have been tier-assigned for this race yet —{" "}
-            <Link href={`/races/${raceId}/tiers`}>assign tiers</Link> first.
+            <Link href={`/admin/races/${raceId}/tiers`}>assign tiers</Link> first.
           </p>
         ) : (
           <QualifyingForm raceId={raceId} drivers={drivers} />
