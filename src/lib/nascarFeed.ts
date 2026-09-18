@@ -255,20 +255,36 @@ export function normalizeTrackName(name: string): string {
     .trim();
 }
 
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
+function withinDateWindow(candidate: NascarRaceListEntry, ourDate: Date): boolean {
+  const candidateDate = new Date(candidate.race_date).getTime();
+  return Math.abs(candidateDate - ourDate.getTime()) <= THREE_DAYS_MS;
+}
+
 // Finds the one NASCAR schedule entry that plausibly corresponds to one of
-// our races: same normalized track name, race date within 3 days. An
-// ambiguous match (more than one candidate) is treated the same as no
-// match at all — left for a human to confirm rather than guessed at.
+// our races. Tries same normalized track name + date within 3 days first —
+// the precise match, when our trackName field actually holds a track
+// name. Our own seed data is inconsistent about that, though (some races
+// are stored under the race's sponsor/event name — "Bass Pro Shops Night
+// Race" — or a shorthand nickname — "Vegas" — rather than NASCAR's own
+// track name), so this falls back to date alone within the same window:
+// `candidates` is always pre-filtered to one series (Cup) by the caller,
+// and that series runs at most one points race per weekend, so "the one
+// Cup race within 3 days of ours" is unambiguous even without the track
+// name lining up. Either way, more than one candidate is treated the same
+// as no match at all — left for a human to confirm rather than guessed at.
 export function matchScheduleEntry(
   ourRace: { trackName: string; date: Date },
   candidates: NascarRaceListEntry[],
 ): NascarRaceListEntry | null {
   const normalized = normalizeTrackName(ourRace.trackName);
-  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-  const matches = candidates.filter((c) => {
-    if (normalizeTrackName(c.track_name) !== normalized) return false;
-    const candidateDate = new Date(c.race_date).getTime();
-    return Math.abs(candidateDate - ourRace.date.getTime()) <= THREE_DAYS_MS;
-  });
-  return matches.length === 1 ? matches[0] : null;
+  const byTrackAndDate = candidates.filter(
+    (c) => normalizeTrackName(c.track_name) === normalized && withinDateWindow(c, ourRace.date),
+  );
+  if (byTrackAndDate.length === 1) return byTrackAndDate[0];
+  if (byTrackAndDate.length > 1) return null;
+
+  const byDateOnly = candidates.filter((c) => withinDateWindow(c, ourRace.date));
+  return byDateOnly.length === 1 ? byDateOnly[0] : null;
 }
