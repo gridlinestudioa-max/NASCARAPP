@@ -42,6 +42,7 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
       {canEnterResults && (
         <Card title="Commissioner tools">
           <p>
+            <Link href={`/races/${raceId}/entries`}>Enter entry list</Link> ·{" "}
             <Link href={`/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
             <Link href={`/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
             <Link href={`/races/${raceId}/results`}>
@@ -49,6 +50,12 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
             </Link>
           </p>
           <SyncFromNascarButton raceId={raceId} lastSyncedAt={race.lastSyncedAt?.toISOString() ?? null} />
+          <p>
+            <small>
+              If the automatic sync above fails (NASCAR&apos;s feed can block automated requests), use &quot;Enter
+              entry list&quot; to paste it in by hand instead.
+            </small>
+          </p>
         </Card>
       )}
 
