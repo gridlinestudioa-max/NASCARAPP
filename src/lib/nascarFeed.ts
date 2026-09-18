@@ -3,18 +3,21 @@
 // from. There is no official support or SLA for it, and no authentication;
 // it can change or disappear without notice.
 //
-// The field names below come from TannerYohe/nascar-api (a maintained,
-// typed Python client built against real traffic), not from guesswork —
-// but this file's own fetch calls have not themselves been exercised
-// against live traffic (the sandbox this was written in blocks outbound
-// requests to cf.nascar.com), so treat the parsing logic as reviewed-not-
-// proven until it's run against a real upcoming race.
+// The URL paths and field names below are cross-checked directly against
+// TannerYohe/nascar-api (a maintained, typed Python client built against
+// real traffic) — cloned and read line-by-line, not just skimmed from its
+// README. An earlier version of this file guessed at the historic paths
+// without the "/cacher" prefix that client actually uses and got a 403
+// from production as a result; that 403 had nothing to do with bot
+// detection (the reference client sends no special headers at all, just
+// plain `requests.get()`) — it was simply the wrong URL.
 //
 // This module only fetches and parses — it never touches the database.
 // Turning parsed data into DB writes (and resolving driver names to our
 // own Driver rows) is the caller's job, in src/lib/raceSync.ts.
 
 const NASCAR_CF_DOMAIN = "https://cf.nascar.com";
+const NASCAR_CF_CACHER_DOMAIN = `${NASCAR_CF_DOMAIN}/cacher`;
 export const CUP_SERIES_ID = 1;
 
 // ---------- Raw wire shapes (cf.nascar.com's own field names) ----------
@@ -76,24 +79,10 @@ type NascarWeekendInfo = {
 
 class NascarFeedError extends Error {}
 
-// cf.nascar.com sits behind Cloudflare and 403s a bare server-side fetch
-// with no User-Agent/Referer — the same request a browser makes (which is
-// how NASCAR.com's own site and every third-party fantasy tool reads this
-// feed) goes through fine. These headers just make the request look like
-// what a browser on nascar.com actually sends; the feed itself is public,
-// unauthenticated JSON with no login or paywall behind it.
-const BROWSER_LIKE_HEADERS = {
-  accept: "application/json",
-  "user-agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  referer: "https://www.nascar.com/",
-  origin: "https://www.nascar.com",
-};
-
 async function fetchJson<T>(url: string): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(url, { headers: BROWSER_LIKE_HEADERS, cache: "no-store" });
+    res = await fetch(url, { headers: { accept: "application/json" }, cache: "no-store" });
   } catch (cause) {
     throw new NascarFeedError(`Could not reach the NASCAR feed (${url}): ${(cause as Error).message}`);
   }
@@ -108,13 +97,19 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 // The full season's schedule, with each race's own numeric id — used to
-// auto-link our Race rows to NASCAR's without manual entry.
+// auto-link our Race rows to NASCAR's without manual entry. The response
+// is an object keyed by "series_1"/"series_2"/"series_3" (Cup/Xfinity/
+// Truck), each holding that series' races — not a flat array — so every
+// series gets flattened into one list here; each race already carries its
+// own series_id for downstream filtering.
 export async function fetchSeasonRaceList(year: number): Promise<NascarRaceListEntry[]> {
-  const data = await fetchJson<NascarRaceListEntry[]>(`${NASCAR_CF_DOMAIN}/${year}/race_list_basic.json`);
-  if (!Array.isArray(data)) {
+  const data = await fetchJson<Record<string, NascarRaceListEntry[]>>(
+    `${NASCAR_CF_CACHER_DOMAIN}/${year}/race_list_basic.json`,
+  );
+  if (data == null || typeof data !== "object" || Array.isArray(data)) {
     throw new NascarFeedError(`Unexpected season race list shape for ${year}`);
   }
-  return data;
+  return Object.values(data).flat();
 }
 
 // One race weekend's entry list, qualifying grid, results, and stage
@@ -125,7 +120,7 @@ export async function fetchWeekendFeed(
   nascarRaceId: number,
 ): Promise<NascarWeekendInfo> {
   return fetchJson<NascarWeekendInfo>(
-    `${NASCAR_CF_DOMAIN}/${year}/${seriesId}/${nascarRaceId}/weekend-feed.json`,
+    `${NASCAR_CF_CACHER_DOMAIN}/${year}/${seriesId}/${nascarRaceId}/weekend-feed.json`,
   );
 }
 
