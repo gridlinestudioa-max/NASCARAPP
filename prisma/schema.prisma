@@ -142,12 +142,36 @@ model Driver {
   name     String  @unique
   isActive Boolean @default(true)
 
-  raceResults       RaceResult[]
-  stageResults      StageResult[]
-  qualifyingResults QualifyingResult[]
-  tierAssignments   DriverTierAssignment[]
-  raceEntries       RaceEntry[]
-  picks             Pick[]
+  raceResults           RaceResult[]
+  stageResults          StageResult[]
+  qualifyingResults     QualifyingResult[]
+  tierAssignments       DriverTierAssignment[]
+  raceEntries           RaceEntry[]
+  picks                 Pick[]
+  historicalRaceResults HistoricalRaceResult[]
+}
+
+// Archival, pre-app-history results — imported once from NASCAR's feed to
+// give the auto-tier formula's "track history" component real signal from
+// day one, rather than starting neutral for every driver. Deliberately
+// decoupled from Race/Season/RaceResult: this data never belongs to a
+// League, was never entered/scored through the app, and has no entry
+// list, qualifying, or stage data — reusing the live tables just to get
+// the trackName-matching logic for free would risk this archival data
+// leaking into schedule pages, league scoring, or the sync cron, none of
+// which scope by anything that would exclude it. trackName is matched the
+// same way (normalizeTrackName) as the live schedule sync.
+model HistoricalRaceResult {
+  id                String @id @default(cuid())
+  year              Int
+  trackName         String
+  finishingPosition Int
+  driverId          String
+
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  @@unique([year, trackName, driverId])
+  @@index([trackName])
 }
 
 enum RaceStatus {

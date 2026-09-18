@@ -18,6 +18,9 @@ export default async function AdminDashboardPage() {
         Schedule, entry lists, qualifying, and results sync automatically from NASCAR. Use a race below only when
         the automatic sync hasn&apos;t caught up yet.
       </p>
+      <p>
+        <Link href="/admin/historical-import">Historical results import &rarr;</Link>
+      </p>
 
       <Card>
         {races.length === 0 ? (

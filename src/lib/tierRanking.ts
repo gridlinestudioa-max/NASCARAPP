@@ -100,16 +100,27 @@ export async function computeAutoTiers(raceId: string): Promise<AutoTierOutcome>
     warnings.push("No synced results yet this season, so recent form couldn't be weighed — its share was neutral.");
   }
 
-  // ---------- Track history (this same race, any past season we have data for) ----------
+  // ---------- Track history (this same race, any past season we have data for —
+  // our own synced RaceResult rows plus the imported pre-app HistoricalRaceResult
+  // archive) ----------
   const normalizedTrack = normalizeTrackName(race.trackName);
-  const historicalResults = await prisma.raceResult.findMany({
-    where: { driverId: { in: entries.map((e) => e.driverId) }, raceId: { not: raceId } },
-    include: { race: { select: { trackName: true } } },
-  });
+  const driverIds = entries.map((e) => e.driverId);
+  const [liveResults, archivedResults] = await Promise.all([
+    prisma.raceResult.findMany({
+      where: { driverId: { in: driverIds }, raceId: { not: raceId } },
+      include: { race: { select: { trackName: true } } },
+    }),
+    prisma.historicalRaceResult.findMany({ where: { driverId: { in: driverIds } } }),
+  ]);
   const trackHistorySumByDriverId = new Map<string, number>();
   const trackHistoryCountByDriverId = new Map<string, number>();
-  for (const r of historicalResults) {
+  for (const r of liveResults) {
     if (normalizeTrackName(r.race.trackName) !== normalizedTrack) continue;
+    trackHistorySumByDriverId.set(r.driverId, (trackHistorySumByDriverId.get(r.driverId) ?? 0) + r.finishingPosition);
+    trackHistoryCountByDriverId.set(r.driverId, (trackHistoryCountByDriverId.get(r.driverId) ?? 0) + 1);
+  }
+  for (const r of archivedResults) {
+    if (normalizeTrackName(r.trackName) !== normalizedTrack) continue;
     trackHistorySumByDriverId.set(r.driverId, (trackHistorySumByDriverId.get(r.driverId) ?? 0) + r.finishingPosition);
     trackHistoryCountByDriverId.set(r.driverId, (trackHistoryCountByDriverId.get(r.driverId) ?? 0) + 1);
   }
