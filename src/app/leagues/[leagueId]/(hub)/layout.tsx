@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
 import LeagueHero from "@/components/league/LeagueHero";
 import LeagueTabs from "@/components/league/LeagueTabs";
+import LiveRefresh from "@/components/league/LiveRefresh";
 import { getLeagueHubData } from "./leagueData";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ export default async function LeagueHubLayout({
 
   return (
     <main>
+      <LiveRefresh />
       <p>
         <Link href="/my-leagues">&larr; My Leagues</Link>
       </p>

@@ -13,6 +13,7 @@ import {
 } from "@/lib/tieredDraft";
 import PickForm from "./PickForm";
 import TieredLineupForm from "./TieredLineupForm";
+import LiveRefresh from "@/components/league/LiveRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +108,7 @@ async function renderPickem({
 
     return (
       <main>
+        <LiveRefresh />
         <p>
           <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
         </p>
@@ -149,6 +151,7 @@ async function renderPickem({
 
   return (
     <main>
+      <LiveRefresh />
       <p>
         <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
       </p>
@@ -235,6 +238,7 @@ async function renderTieredLineup({
 
     return (
       <main>
+        <LiveRefresh />
         <p>
           <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
         </p>
@@ -301,6 +305,7 @@ async function renderTieredLineup({
   if (tierAssignments.length === 0) {
     return (
       <main>
+        <LiveRefresh />
         <p>
           <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
         </p>
@@ -384,6 +389,7 @@ async function renderTieredLineup({
 
   return (
     <main>
+      <LiveRefresh />
       <p>
         <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
       </p>
