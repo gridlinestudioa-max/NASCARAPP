@@ -400,15 +400,25 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
 // skipped on every later call — safe to run on every cron tick alongside
 // the current week's time-windowed sync without re-fetching old races
 // over and over.
+//
+// Capped per call: a freshly-seeded season can have dozens of unsynced
+// races at once, each needing its own external fetch, which risks running
+// long enough to hit Vercel's function timeout (60s even at the Hobby-plan
+// ceiling) and lose the whole batch's progress. Doing a handful per tick
+// means a large backfill spreads itself across several ~15-minute ticks
+// instead of gambling everything on one slow request.
+const PAST_RACE_BACKFILL_BATCH_SIZE = 8;
+
 export async function syncPastRacesWithNascarFeed(seasonId: string): Promise<SyncResult> {
-  const races = await prisma.race.findMany({
-    where: {
-      seasonId,
-      date: { lte: new Date() },
-      OR: [{ status: { not: "COMPLETE" } }, { lastSyncedAt: null }],
-    },
-    orderBy: { date: "asc" },
-  });
+  const where = {
+    seasonId,
+    date: { lte: new Date() },
+    OR: [{ status: { not: "COMPLETE" as const } }, { lastSyncedAt: null }],
+  };
+  const [races, totalRemaining] = await Promise.all([
+    prisma.race.findMany({ where, orderBy: { date: "asc" }, take: PAST_RACE_BACKFILL_BATCH_SIZE }),
+    prisma.race.count({ where }),
+  ]);
 
   const synced: number[] = [];
   const failed: { week: number; error: string }[] = [];
@@ -420,8 +430,9 @@ export async function syncPastRacesWithNascarFeed(seasonId: string): Promise<Syn
 
   const failedNote =
     failed.length > 0 ? ` Failed: ${failed.map((f) => `week ${f.week} (${f.error})`).join("; ")}.` : "";
+  const remainingNote = totalRemaining > races.length ? ` ${totalRemaining - synced.length} still remaining.` : "";
   return {
     ok: true,
-    message: `Backfilled ${synced.length} of ${races.length} past races.${failedNote}`,
+    message: `Backfilled ${synced.length} of ${totalRemaining} past races needing sync (batch of ${races.length}).${remainingNote}${failedNote}`,
   };
 }

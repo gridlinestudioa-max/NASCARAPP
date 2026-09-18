@@ -7,6 +7,12 @@ import {
 import { sendSyncFailureAlert } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
+// A full-season backfill makes one external fetch per unsynced race
+// (weeks worth, the first time this runs against a freshly seeded
+// season), well past Vercel's 10s default function timeout. 60s is the
+// Hobby-plan ceiling; once the season's fully caught up this route is
+// normally a single fetch and returns almost immediately regardless.
+export const maxDuration = 60;
 
 // This is the only path that writes schedule/entry/qualifying/result data —
 // there is deliberately no admin-facing "sync now" button, so this endpoint
