@@ -275,3 +275,55 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
     message: `Synced: ${parsed.entries.length} entries, ${parsed.qualifying.length} qualifying positions, ${parsed.results.length} results, ${parsed.stageResults.length} stage results.`,
   };
 }
+
+// One-time (or re-runnable) backfill: matches every race in a season to
+// NASCAR's own schedule and overwrites trackName with NASCAR's actual
+// track name, plus persists nascarRaceId. Our seeded trackName data is a
+// mix of shorthand nicknames ("Vegas") and race/sponsor names ("Bass Pro
+// Shops Night Race") rather than NASCAR's track name, which is both a
+// display inconsistency and the reason per-race sync had to fall back to
+// date-only matching. Fixing trackName here means every later per-race
+// sync matches precisely on name+date again, and once nascarRaceId is
+// set for a race, its own sync skips schedule matching entirely.
+export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promise<SyncResult> {
+  const season = await prisma.season.findUnique({ where: { id: seasonId }, include: { races: true } });
+  if (!season) {
+    return { ok: false, error: "Season not found." };
+  }
+
+  let scheduleList;
+  try {
+    scheduleList = await fetchSeasonRaceList(season.year);
+  } catch (cause) {
+    return { ok: false, error: `Couldn't reach NASCAR's schedule feed: ${(cause as Error).message}` };
+  }
+
+  const matchedWeeks: number[] = [];
+  const unmatchedWeeks: number[] = [];
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const race of season.races) {
+        const candidates = scheduleList.filter((r) => r.series_id === race.nascarSeriesId);
+        const match = matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
+        if (!match) {
+          unmatchedWeeks.push(race.week);
+          continue;
+        }
+        matchedWeeks.push(race.week);
+        await tx.race.update({
+          where: { id: race.id },
+          data: { trackName: match.track_name, nascarRaceId: match.race_id },
+        });
+      }
+    });
+  } catch (cause) {
+    return { ok: false, error: `Failed while saving matched races: ${(cause as Error).message}` };
+  }
+
+  const unmatchedNote = unmatchedWeeks.length > 0 ? ` Unmatched: week ${unmatchedWeeks.join(", ")}.` : "";
+  return {
+    ok: true,
+    message: `Matched ${matchedWeeks.length} of ${season.races.length} races to NASCAR's schedule.${unmatchedNote}`,
+  };
+}
