@@ -27,8 +27,34 @@ model User {
   username     String? @unique
   passwordHash String?
 
-  memberships LeagueMembership[]
-  picks       Pick[]
+  memberships          LeagueMembership[]
+  picks                Pick[]
+  passwordResetTokens  PasswordResetToken[]
+}
+
+// A single-use, expiring password reset link. tokenHash is the SHA-256 of
+// the random token actually emailed to the user — only the hash is stored,
+// same reasoning as a password hash, so a database leak alone can't be used
+// to take over an account.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// Singleton row (fixed id) tracking the last time the sync-failure admin
+// alert email went out, so a persistent outage sends one email an hour
+// instead of one every ~15-minute cron tick.
+model SyncAlertState {
+  id            String    @id @default("singleton")
+  lastAlertedAt DateTime?
 }
 
 enum LeagueType {
