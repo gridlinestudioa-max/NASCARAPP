@@ -1,0 +1,28 @@
+name: NASCAR data sync
+
+# Triggers /api/cron/sync-nascar on a tight cadence so the site can honor
+# NASCAR's real publish windows (entry list Tue/Fri noon, starting grid up
+# to 12h before green flag, finishing positions every ~20min for 2h after
+# green flag) — see src/app/api/cron/sync-nascar/route.ts for the gating
+# logic. This runs from GitHub Actions rather than Vercel Cron because the
+# project is on Vercel's Hobby plan, which only allows cron jobs to fire
+# once a day; vercel.json still carries a once-daily Vercel Cron entry as a
+# fallback in case this workflow is ever disabled.
+#
+# GitHub's schedule trigger is best-effort (can slip by several minutes,
+# especially at busy times) — the route's own windows are generous enough
+# to tolerate that.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call sync endpoint
+        run: |
+          curl -sS -f \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://nascarapp.vercel.app/api/cron/sync-nascar"

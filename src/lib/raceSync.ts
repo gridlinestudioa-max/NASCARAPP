@@ -277,14 +277,16 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
 }
 
 // One-time (or re-runnable) backfill: matches every race in a season to
-// NASCAR's own schedule and overwrites trackName with NASCAR's actual
-// track name, plus persists nascarRaceId. Our seeded trackName data is a
-// mix of shorthand nicknames ("Vegas") and race/sponsor names ("Bass Pro
-// Shops Night Race") rather than NASCAR's track name, which is both a
-// display inconsistency and the reason per-race sync had to fall back to
-// date-only matching. Fixing trackName here means every later per-race
-// sync matches precisely on name+date again, and once nascarRaceId is
-// set for a race, its own sync skips schedule matching entirely.
+// NASCAR's own schedule and overwrites trackName with NASCAR's own event
+// name (race_name — "Bass Pro Shops Night Race", not the venue's
+// track_name), plus the real scheduled start time and nascarRaceId. Our
+// seeded trackName data is a mix of shorthand nicknames ("Vegas") and
+// approximate race/sponsor names, and our seeded date is a calendar day
+// with no time-of-day — both get corrected here so the site displays
+// NASCAR's own naming and every later per-race sync (plus the cron's
+// start-time-relative pull windows) has an accurate name and start time
+// to work from. Once nascarRaceId is set for a race, its own sync skips
+// schedule matching entirely.
 export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promise<SyncResult> {
   const season = await prisma.season.findUnique({ where: { id: seasonId }, include: { races: true } });
   if (!season) {
@@ -313,7 +315,7 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
         matchedWeeks.push(race.week);
         await tx.race.update({
           where: { id: race.id },
-          data: { trackName: match.track_name, nascarRaceId: match.race_id },
+          data: { trackName: match.race_name, date: new Date(match.race_date), nascarRaceId: match.race_id },
         });
       }
     });
@@ -325,5 +327,38 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
   return {
     ok: true,
     message: `Matched ${matchedWeeks.length} of ${season.races.length} races to NASCAR's schedule.${unmatchedNote}`,
+  };
+}
+
+// Catches up any race whose date has already passed but that hasn't been
+// fully synced yet — entries, qualifying, finishing positions, stage
+// results, and every league's scores for it. Self-limiting: once a race
+// is synced its status flips to COMPLETE and lastSyncedAt is set, so it's
+// skipped on every later call — safe to run on every cron tick alongside
+// the current week's time-windowed sync without re-fetching old races
+// over and over.
+export async function syncPastRacesWithNascarFeed(seasonId: string): Promise<SyncResult> {
+  const races = await prisma.race.findMany({
+    where: {
+      seasonId,
+      date: { lte: new Date() },
+      OR: [{ status: { not: "COMPLETE" } }, { lastSyncedAt: null }],
+    },
+    orderBy: { date: "asc" },
+  });
+
+  const synced: number[] = [];
+  const failed: { week: number; error: string }[] = [];
+  for (const race of races) {
+    const result = await syncRaceWithNascarFeed(race.id);
+    if (result.ok) synced.push(race.week);
+    else failed.push({ week: race.week, error: result.error });
+  }
+
+  const failedNote =
+    failed.length > 0 ? ` Failed: ${failed.map((f) => `week ${f.week} (${f.error})`).join("; ")}.` : "";
+  return {
+    ok: true,
+    message: `Backfilled ${synced.length} of ${races.length} past races.${failedNote}`,
   };
 }
