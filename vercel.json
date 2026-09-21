@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/sync-nascar",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/sync-nascar",
+      "schedule": "0 17 * * 2,5"
     }
   ]
 }

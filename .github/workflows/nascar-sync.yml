@@ -9,9 +9,12 @@ name: NASCAR data sync
 # once a day; vercel.json still carries a once-daily Vercel Cron entry as a
 # fallback in case this workflow is ever disabled.
 #
-# GitHub's schedule trigger is best-effort (can slip by several minutes,
-# especially at busy times) — the route's own windows are generous enough
-# to tolerate that.
+# GitHub's schedule trigger is best-effort — in practice, observed gaps
+# between actual runs on this repo have been as wide as several hours, not
+# the requested 15 minutes. The route's 90-minute entry-list window can't
+# always absorb that, so vercel.json carries two Vercel Cron entries as a
+# backstop (reliable native infra): a general daily ping, plus one pinned to
+# Tuesday/Friday 17:00 UTC specifically for the entry-list window.
 on:
   schedule:
     - cron: "*/15 * * * *"

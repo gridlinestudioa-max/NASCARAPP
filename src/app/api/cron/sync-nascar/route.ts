@@ -19,9 +19,15 @@ export const maxDuration = 60;
 // (and the admin manual-entry fallback pages) are the only ways that data
 // changes. It's hit every ~15 minutes by a GitHub Actions workflow
 // (.github/workflows/nascar-sync.yml) rather than Vercel Cron, since Vercel
-// Cron on the Hobby plan can't run more than once a day; vercel.json still
-// carries one daily Vercel Cron entry hitting this same URL as a fallback in
-// case the GitHub Actions workflow is ever disabled or fails. Vercel signs
+// Cron on the Hobby plan can't run more than once a day *per cron entry*.
+// GitHub's schedule trigger is best-effort, though — observed gaps between
+// actual runs have been as wide as several hours on this repo, which can
+// blow past the 90-minute entry-list window below. So vercel.json carries
+// two Vercel Cron entries (reliable native infra, not best-effort) as a
+// backstop, each well within Hobby's "once a day per entry" limit: a
+// general daily ping, plus one pinned to 17:00 UTC (this route's own fixed
+// "noon UTC-5") on Tuesdays and Fridays specifically to catch the entry-list
+// window even if every GitHub Actions tick that day misses it. Vercel signs
 // its own request with `Authorization: Bearer ${CRON_SECRET}` automatically;
 // the GitHub Actions workflow sends the same header from a repo secret that
 // must be kept equal to this env var by hand. Anyone else calling this URL
