@@ -49,6 +49,35 @@ function median(values: number[]): number {
 export type AutoTierResult = { driverId: string; driverName: string; tier: DriverTier; score: number };
 export type AutoTierOutcome = { ok: true; tiers: AutoTierResult[]; warnings: string[] } | { ok: false; error: string };
 
+// Average finishing position over each driver's last RECENT_FORM_RACE_WINDOW
+// synced races before `beforeWeek` this season. Same "recent form" figure
+// computeAutoTiers weighs into a driver's tier — also shown as-is (no
+// normalizing/inverting) wherever a human just wants to see recent form,
+// e.g. the Tiered Lineup driver picker.
+export async function computeRecentFormAvgFinish(
+  driverIds: string[],
+  seasonId: string,
+  beforeWeek: number,
+): Promise<Map<string, number>> {
+  const recentResults = await prisma.raceResult.findMany({
+    where: { driverId: { in: driverIds }, race: { seasonId, week: { lt: beforeWeek } } },
+    orderBy: { race: { week: "desc" } },
+  });
+  const formSumByDriverId = new Map<string, number>();
+  const formCountByDriverId = new Map<string, number>();
+  for (const r of recentResults) {
+    const count = formCountByDriverId.get(r.driverId) ?? 0;
+    if (count >= RECENT_FORM_RACE_WINDOW) continue;
+    formSumByDriverId.set(r.driverId, (formSumByDriverId.get(r.driverId) ?? 0) + r.finishingPosition);
+    formCountByDriverId.set(r.driverId, count + 1);
+  }
+  const avgFinishByDriverId = new Map<string, number>();
+  for (const [driverId, sum] of formSumByDriverId) {
+    avgFinishByDriverId.set(driverId, sum / formCountByDriverId.get(driverId)!);
+  }
+  return avgFinishByDriverId;
+}
+
 export async function computeAutoTiers(raceId: string): Promise<AutoTierOutcome> {
   const race = await prisma.race.findUnique({ where: { id: raceId } });
   if (!race) return { ok: false, error: "Race not found." };
@@ -73,22 +102,11 @@ export async function computeAutoTiers(raceId: string): Promise<AutoTierOutcome>
   }
 
   // ---------- Recent form (from our own already-synced results) ----------
-  const recentResults = await prisma.raceResult.findMany({
-    where: { driverId: { in: entries.map((e) => e.driverId) }, race: { seasonId: race.seasonId, week: { lt: race.week } } },
-    orderBy: { race: { week: "desc" } },
-  });
-  const formSumByDriverId = new Map<string, number>();
-  const formCountByDriverId = new Map<string, number>();
-  for (const r of recentResults) {
-    const count = formCountByDriverId.get(r.driverId) ?? 0;
-    if (count >= RECENT_FORM_RACE_WINDOW) continue;
-    formSumByDriverId.set(r.driverId, (formSumByDriverId.get(r.driverId) ?? 0) + r.finishingPosition);
-    formCountByDriverId.set(r.driverId, count + 1);
-  }
-  const avgFinishByDriverId = new Map<string, number>();
-  for (const [driverId, sum] of formSumByDriverId) {
-    avgFinishByDriverId.set(driverId, sum / formCountByDriverId.get(driverId)!);
-  }
+  const avgFinishByDriverId = await computeRecentFormAvgFinish(
+    entries.map((e) => e.driverId),
+    race.seasonId,
+    race.week,
+  );
   if (avgFinishByDriverId.size === 0) {
     warnings.push("No synced results yet this season, so recent form couldn't be weighed — its share was neutral.");
   }

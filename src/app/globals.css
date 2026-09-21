@@ -26,6 +26,16 @@
   --warning: #9c6b14;
   --warning-bg: #fbf1de;
 
+  /* Driver tiers (Tiered Lineup leagues) — a class system distinct from
+     the semantic accents above, so a Tier A badge never reads as an
+     error/warning/success state. */
+  --tier-a: #2c4a7a;
+  --tier-a-bg: #e8edf5;
+  --tier-b: #6b4a8a;
+  --tier-b-bg: #efe9f4;
+  --tier-c: #2f6b73;
+  --tier-c-bg: #e6f0f1;
+
   /* Scale */
   --radius-sm: 8px;
   --radius-md: 14px;

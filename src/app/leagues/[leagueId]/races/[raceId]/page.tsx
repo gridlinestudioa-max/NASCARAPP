@@ -18,6 +18,7 @@ import {
   sanitizePickOrder,
   type PickOrderMode,
 } from "@/lib/pickOrder";
+import { computeRecentFormAvgFinish } from "@/lib/tierRanking";
 import PickForm from "./PickForm";
 import TieredLineupForm from "./TieredLineupForm";
 import LiveRefresh from "@/components/league/LiveRefresh";
@@ -379,10 +380,11 @@ async function renderTieredLineup({
     driverNamesByTier[tier].sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  const [myPicks, seasonRaces, members] = await Promise.all([
+  const [myPicks, seasonRaces, members, avgFinishByDriverId] = await Promise.all([
     prisma.pick.findMany({ where: { leagueId, userId, raceId } }),
     prisma.race.findMany({ where: { seasonId: race.seasonId, id: { not: raceId } }, select: { id: true } }),
     prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
+    computeRecentFormAvgFinish(tierAssignments.map((a) => a.driverId), race.seasonId, race.week),
   ]);
 
   const starterSlotNumbers = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER").map((s) => s.pickNumber);
@@ -393,10 +395,10 @@ async function renderTieredLineup({
   for (const p of priorStarterPicks) {
     startsUsedByDriverId.set(p.driverId, (startsUsedByDriverId.get(p.driverId) ?? 0) + 1);
   }
-  const driversByTier: Record<DriverTier, { id: string; name: string; startsUsed: number }[]> = {
-    A: driverNamesByTier.A.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0 })),
-    B: driverNamesByTier.B.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0 })),
-    C: driverNamesByTier.C.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0 })),
+  const driversByTier: Record<DriverTier, { id: string; name: string; startsUsed: number; avgFinish: number | null }[]> = {
+    A: driverNamesByTier.A.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0, avgFinish: avgFinishByDriverId.get(d.id) ?? null })),
+    B: driverNamesByTier.B.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0, avgFinish: avgFinishByDriverId.get(d.id) ?? null })),
+    C: driverNamesByTier.C.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0, avgFinish: avgFinishByDriverId.get(d.id) ?? null })),
   };
 
   let currentDriverIdByPickNumber: (string | null)[] = Array.from(

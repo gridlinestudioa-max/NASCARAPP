@@ -1,0 +1,327 @@
+.roleLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.roleGroup {
+  margin-top: var(--space-4);
+}
+
+.slotRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .slotRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.slot {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1.5px dashed var(--border-color);
+  background: var(--bg-surface-muted);
+  padding: var(--space-3);
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.slot:hover {
+  border-color: var(--text-muted);
+}
+
+.slot:focus-visible {
+  outline: 2px solid var(--tier-b);
+  outline-offset: 2px;
+}
+
+.tierTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  width: fit-content;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+}
+
+.slotA .tierTag {
+  background: var(--tier-a-bg);
+  color: var(--tier-a);
+}
+.slotB .tierTag {
+  background: var(--tier-b-bg);
+  color: var(--tier-b);
+}
+.slotC .tierTag {
+  background: var(--tier-c-bg);
+  color: var(--tier-c);
+}
+
+.slotFilled {
+  border-style: solid;
+  background: var(--bg-surface);
+}
+
+.driverName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.tapHint {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+.saveBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+.status {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.status strong {
+  color: var(--text-primary);
+}
+
+/* ---------- Driver picker modal ---------- */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 7, 7, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 40;
+}
+
+@media (min-width: 640px) {
+  .backdrop {
+    align-items: center;
+    padding: var(--space-4);
+  }
+}
+
+.modal {
+  background: var(--bg-surface);
+  width: 100%;
+  max-width: 460px;
+  max-height: 82vh;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-shadow: 0 20px 60px rgba(7, 7, 7, 0.28), 0 4px 16px rgba(7, 7, 7, 0.14);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .modal {
+    border-radius: var(--radius-md);
+    max-height: 74vh;
+  }
+}
+
+.modalHead {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex: none;
+}
+
+.modalTitleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modalHead h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.closeBtn {
+  all: unset;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.1rem;
+  flex: none;
+}
+
+.closeBtn:hover {
+  background: var(--bg-surface-muted);
+}
+
+.modalActions {
+  padding: var(--space-3) var(--space-4) 0;
+  flex: none;
+}
+
+.removeBtn {
+  all: unset;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.removeBtn:hover {
+  text-decoration: underline;
+}
+
+.modalNote {
+  padding: var(--space-3) var(--space-4) 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex: none;
+}
+
+.modalListHead {
+  display: grid;
+  grid-template-columns: 1fr 84px 96px;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  flex: none;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.modalListHead span:nth-child(2),
+.modalListHead span:nth-child(3) {
+  text-align: right;
+}
+
+.modalList {
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.driverRow {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 84px 96px;
+  gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.driverRow:first-child {
+  border-top: none;
+}
+
+.driverRow:hover:not(:disabled) {
+  background: var(--bg-surface-muted);
+}
+
+.driverRow:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.driverRowCurrent {
+  background: var(--success-bg);
+}
+
+.dName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.curTag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--success);
+}
+
+.avgFinish {
+  text-align: right;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.capWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.capBar {
+  width: 64px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--border-color);
+  overflow: hidden;
+}
+
+.capBar > span {
+  display: block;
+  height: 100%;
+  background: var(--tier-c);
+}
+
+.capBarWarn > span {
+  background: var(--warning);
+}
+
+.capBarFull > span {
+  background: var(--danger);
+}
+
+.capLabel {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
