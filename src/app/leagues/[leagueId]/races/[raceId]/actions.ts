@@ -10,6 +10,7 @@ import {
   lineupLockPhase,
   parseTieredDraftRuleSetConfig,
 } from "@/lib/tieredDraft";
+import { computeWeekPickOrder, onTheClockUserId, sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 
 export async function submitPick(
   _prevState: string | undefined,
@@ -33,6 +34,11 @@ export async function submitPick(
   });
   if (!membership) {
     return "You're not a member of this league.";
+  }
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId } });
+  if (!league || league.type !== "PICKEM") {
+    return "This league doesn't use pick'em picks.";
   }
 
   const race = await prisma.race.findUnique({
@@ -101,6 +107,45 @@ export async function submitPick(
       if (count + 1 > config.maxPicksPerDriverPerSeason) {
         return `You've already picked ${driverNameById.get(driverId)} the maximum ${config.maxPicksPerDriverPerSeason} time(s) this season.`;
       }
+    }
+  }
+
+  // Pick order: players can't pick the same driver, so they take turns —
+  // one user's whole slate of picks for the week counts as their turn.
+  const [joinOrderMemberships, picksThisWeek, allMembers] = await Promise.all([
+    prisma.leagueMembership.findMany({ where: { leagueId }, orderBy: { createdAt: "asc" }, select: { userId: true } }),
+    prisma.pick.findMany({ where: { leagueId, raceId } }),
+    prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
+  ]);
+  const userNameById = new Map(allMembers.map((m) => [m.userId, m.user.name ?? m.user.email]));
+  const baseOrder = sanitizePickOrder(league.pickOrder, joinOrderMemberships.map((m) => m.userId));
+
+  let pointsBeforeWeek: Map<string, number> | undefined;
+  if (league.pickOrderMode === "STANDINGS_FIRST_TO_LAST" || league.pickOrderMode === "STANDINGS_LAST_TO_FIRST") {
+    const priorWeekPicks = await prisma.pick.findMany({
+      where: { leagueId, race: { seasonId: race.seasonId, week: { lt: race.week } } },
+      include: { score: true },
+    });
+    pointsBeforeWeek = new Map();
+    for (const p of priorWeekPicks) {
+      pointsBeforeWeek.set(p.userId, (pointsBeforeWeek.get(p.userId) ?? 0) + (p.score?.total ?? 0));
+    }
+  }
+  const weekOrder = computeWeekPickOrder(league.pickOrderMode as PickOrderMode, baseOrder, race.week, pointsBeforeWeek);
+
+  const pickedUserIds = new Set(picksThisWeek.map((p) => p.userId));
+  if (!pickedUserIds.has(userId)) {
+    const clockUserId = onTheClockUserId(weekOrder, pickedUserIds);
+    if (clockUserId !== userId) {
+      const clockName = clockUserId ? (userNameById.get(clockUserId) ?? "another player") : "another player";
+      return `It's not your turn yet — ${clockName} is on the clock.`;
+    }
+  }
+
+  const takenByOthers = new Set(picksThisWeek.filter((p) => p.userId !== userId).map((p) => p.driverId));
+  for (const driverId of driverIds) {
+    if (takenByOthers.has(driverId)) {
+      return `${driverNameById.get(driverId)} has already been picked by another player this week.`;
     }
   }
 

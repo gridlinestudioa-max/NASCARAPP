@@ -4,9 +4,11 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
+import { sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 import Card from "@/components/ui/Card";
 import TransferCommissionerForm from "./TransferCommissionerForm";
+import PickOrderForm from "./PickOrderForm";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,7 @@ export default async function LeagueSettingsPage(props: PageProps<"/leagues/[lea
       include: { ruleSet: true, season: true },
       orderBy: { season: { year: "desc" } },
     }),
-    prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
+    prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true }, orderBy: { createdAt: "asc" } }),
     prisma.race.findMany({ where: { results: { some: {} } }, orderBy: { week: "asc" } }),
   ]);
   const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${r.trackName}` }));
@@ -65,6 +67,20 @@ export default async function LeagueSettingsPage(props: PageProps<"/leagues/[lea
           }))}
         />
       </Card>
+
+      {league.type === "PICKEM" && (() => {
+        const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
+        const order = sanitizePickOrder(league.pickOrder, members.map((m) => m.userId));
+        return (
+          <Card title="Pick order">
+            <PickOrderForm
+              leagueId={leagueId}
+              mode={league.pickOrderMode as PickOrderMode}
+              members={order.map((userId) => ({ userId, name: nameByUserId.get(userId) ?? "—" }))}
+            />
+          </Card>
+        );
+      })()}
 
       <h2>Rules</h2>
       {leagueSeason ? (

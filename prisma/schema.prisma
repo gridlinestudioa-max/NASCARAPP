@@ -62,6 +62,18 @@ enum LeagueType {
   TIERED_DRAFT
 }
 
+// Only meaningful for PICKEM leagues — TIERED_DRAFT has no cross-player
+// pick restrictions, so no order to compute. SNAKE/ROTATE both start from
+// the commissioner's base order (League.pickOrder); the STANDINGS modes
+// recompute the order fresh each week from cumulative points entering
+// that week, falling back to the base order for ties (week 1, all at 0).
+enum PickOrderMode {
+  SNAKE
+  ROTATE
+  STANDINGS_FIRST_TO_LAST
+  STANDINGS_LAST_TO_FIRST
+}
+
 model League {
   id         String     @id @default(cuid())
   name       String
@@ -70,6 +82,16 @@ model League {
   // Share link for joining — regenerable, so it's not derived from name/id.
   inviteCode String     @unique @default(cuid())
   createdAt  DateTime   @default(now())
+
+  // Weekly pick order for PICKEM leagues (see src/lib/pickOrder.ts). Unset
+  // until the commissioner configures it from league settings; until then,
+  // pick order falls back to membership join order.
+  pickOrderMode PickOrderMode @default(SNAKE)
+  // Ordered array of member userIds (JSON string[]) — the commissioner's
+  // base draft order. Sanitized against current membership on every read,
+  // so a departed member never blocks the list and a new member is always
+  // appended automatically.
+  pickOrder     Json?
 
   memberships   LeagueMembership[]
   ruleSets      RuleSet[]
@@ -83,10 +105,13 @@ enum MembershipRole {
 }
 
 model LeagueMembership {
-  id       String         @id @default(cuid())
-  leagueId String
-  userId   String
-  role     MembershipRole @default(MEMBER)
+  id        String         @id @default(cuid())
+  leagueId  String
+  userId    String
+  role      MembershipRole @default(MEMBER)
+  // Used as the join-order fallback for pick order (see
+  // src/lib/pickOrder.ts) when a league hasn't set a base order yet.
+  createdAt DateTime       @default(now())
 
   league League @relation(fields: [leagueId], references: [id])
   user   User   @relation(fields: [userId], references: [id])

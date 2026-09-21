@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseRuleSetConfig, type PickemRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
+import { PICK_ORDER_MODES, sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 
 // Rules are versioned, never edited in place (see RuleSet's schema
 // comment) — changing them creates a new RuleSet row and repoints the
@@ -59,6 +60,57 @@ export async function updateLeagueRules(
 
   revalidatePath(`/leagues/${leagueId}`);
   redirect(`/leagues/${leagueId}`);
+}
+
+// Pick order isn't versioned like RuleSet — it's a live setting, so
+// changing it takes effect on whatever week is currently open for picks.
+export async function updatePickOrder(
+  _prevState: string | undefined,
+  formData: FormData,
+): Promise<string | undefined> {
+  const leagueId = formData.get("leagueId");
+  const mode = formData.get("mode");
+  const orderRaw = formData.get("order");
+
+  if (typeof leagueId !== "string" || typeof mode !== "string" || typeof orderRaw !== "string") {
+    return "Missing pick order settings.";
+  }
+  if (!PICK_ORDER_MODES.includes(mode as PickOrderMode)) {
+    return "Unknown pick order mode.";
+  }
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    return "You need to be signed in.";
+  }
+  const userId = session.user.id;
+
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { leagueId_userId: { leagueId, userId } },
+  });
+  if (!membership || membership.role !== "OWNER") {
+    return "Only the league commissioner can change the pick order.";
+  }
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId } });
+  if (!league || league.type !== "PICKEM") {
+    return "This league doesn't use a pick order.";
+  }
+
+  const members = await prisma.leagueMembership.findMany({ where: { leagueId }, select: { userId: true } });
+  const submittedOrder = orderRaw.split(",").filter(Boolean);
+  // Sanitize against actual membership rather than trusting the client's
+  // hidden field outright — drops anyone no longer a member, keeps
+  // anyone missing appended at the end.
+  const order = sanitizePickOrder(submittedOrder, members.map((m) => m.userId));
+
+  await prisma.league.update({
+    where: { id: leagueId },
+    data: { pickOrderMode: mode as PickOrderMode, pickOrder: order },
+  });
+
+  revalidatePath(`/leagues/${leagueId}/settings`);
+  return undefined;
 }
 
 export async function transferCommissioner(

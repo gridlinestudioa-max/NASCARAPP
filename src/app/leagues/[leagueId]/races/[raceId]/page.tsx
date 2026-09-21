@@ -11,6 +11,13 @@ import {
   parseTieredDraftRuleSetConfig,
   type DriverTier,
 } from "@/lib/tieredDraft";
+import {
+  PICK_ORDER_MODE_INFO,
+  computePickOrderSeats,
+  computeWeekPickOrder,
+  sanitizePickOrder,
+  type PickOrderMode,
+} from "@/lib/pickOrder";
 import PickForm from "./PickForm";
 import TieredLineupForm from "./TieredLineupForm";
 import LiveRefresh from "@/components/league/LiveRefresh";
@@ -65,8 +72,11 @@ async function renderPickem({
   leagueId: string;
   raceId: string;
   userId: string;
-  race: { week: number; trackName: string; date: Date; qualifyingAt: Date | null; fieldSize: number };
-  leagueSeason: { ruleSet: { config: unknown } };
+  race: { week: number; trackName: string; date: Date; qualifyingAt: Date | null; fieldSize: number; seasonId: string };
+  leagueSeason: {
+    ruleSet: { config: unknown };
+    league: { pickOrderMode: string; pickOrder: unknown };
+  };
 }) {
   const config = parseRuleSetConfig(leagueSeason.ruleSet.config);
 
@@ -84,20 +94,51 @@ async function renderPickem({
   const isOpenForPicks = !hasResults && pickemLockAt(race, config.lockTiming).getTime() > now;
 
   if (isOpenForPicks) {
-    const [members, entries, allActiveDrivers] = await Promise.all([
+    const [members, entries, allActiveDrivers, joinOrderMemberships] = await Promise.all([
       prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
       prisma.raceEntry.findMany({ where: { raceId }, include: { driver: true }, orderBy: { driver: { name: "asc" } } }),
       prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+      prisma.leagueMembership.findMany({ where: { leagueId }, orderBy: { createdAt: "asc" }, select: { userId: true } }),
     ]);
     // Once this week's entry list is known (from a NASCAR sync), scope
     // picks to who's actually racing instead of every driver ever seen.
-    const drivers = entries.length > 0 ? entries.map((e) => e.driver) : allActiveDrivers;
+    const allDrivers = entries.length > 0 ? entries.map((e) => e.driver) : allActiveDrivers;
     const myPicks = picks.filter((p) => p.userId === userId).sort((a, b) => a.pickNumber - b.pickNumber);
     const currentDriverIdBySlot = Array.from(
       { length: config.picksPerWeek },
       (_, i) => myPicks.find((p) => p.pickNumber === i + 1)?.driverId ?? null,
     );
+
+    // Pick order: everyone takes a turn (their whole slate of picks at
+    // once), and no two players in the league can hold the same driver in
+    // the same week — see src/lib/pickOrder.ts.
+    const pickOrderMode = leagueSeason.league.pickOrderMode as PickOrderMode;
+    const baseOrder = sanitizePickOrder(leagueSeason.league.pickOrder, joinOrderMemberships.map((m) => m.userId));
+
+    let pointsBeforeWeek: Map<string, number> | undefined;
+    if (pickOrderMode === "STANDINGS_FIRST_TO_LAST" || pickOrderMode === "STANDINGS_LAST_TO_FIRST") {
+      const priorPicks = await prisma.pick.findMany({
+        where: { leagueId, race: { seasonId: race.seasonId, week: { lt: race.week } } },
+        include: { score: true },
+      });
+      pointsBeforeWeek = new Map();
+      for (const p of priorPicks) {
+        pointsBeforeWeek.set(p.userId, (pointsBeforeWeek.get(p.userId) ?? 0) + (p.score?.total ?? 0));
+      }
+    }
+    const weekOrder = computeWeekPickOrder(pickOrderMode, baseOrder, race.week, pointsBeforeWeek);
     const pickedUserIds = new Set(picks.map((p) => p.userId));
+    const seats = computePickOrderSeats(weekOrder, pickedUserIds);
+    const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
+
+    const myTurn = seats.find((s) => s.userId === userId);
+    const onTheClockSeat = seats.find((s) => s.status === "onTheClock");
+    const canPick = myTurn?.status === "picked" || myTurn?.status === "onTheClock";
+    // Drivers already claimed by someone else this week aren't offered —
+    // whose pick is still visibly hidden until lock, just not the name.
+    const takenByOthersIds = new Set(picks.filter((p) => p.userId !== userId).map((p) => p.driverId));
+    const drivers = allDrivers.filter((d) => !takenByOthersIds.has(d.id));
+    const takenDriverNames = allDrivers.filter((d) => takenByOthersIds.has(d.id)).map((d) => d.name);
 
     return (
       <main>
@@ -116,23 +157,45 @@ async function renderPickem({
           })}
         </p>
 
-        <Card title={myPicks.length > 0 ? "Your pick" : "Make your pick"}>
-          <PickForm
-            leagueId={leagueId}
-            raceId={raceId}
-            drivers={drivers}
-            picksPerWeek={config.picksPerWeek}
-            currentDriverIdBySlot={currentDriverIdBySlot}
-          />
-        </Card>
+        {canPick ? (
+          <Card title={myPicks.length > 0 ? "Your pick" : "Make your pick"}>
+            <PickForm
+              leagueId={leagueId}
+              raceId={raceId}
+              drivers={drivers}
+              picksPerWeek={config.picksPerWeek}
+              currentDriverIdBySlot={currentDriverIdBySlot}
+            />
+          </Card>
+        ) : (
+          <Card title="Waiting for your turn">
+            <p>
+              {onTheClockSeat
+                ? `${nameByUserId.get(onTheClockSeat.userId) ?? "Another player"} is on the clock. You're up at position ${myTurn?.position}.`
+                : "Waiting for the pick order to open up."}
+            </p>
+          </Card>
+        )}
 
-        <Card title="Who's picked">
+        {takenDriverNames.length > 0 && (
+          <Card title="Drivers taken this week">
+            <ul className="rowList">
+              {takenDriverNames.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        <Card title={`Pick order — ${PICK_ORDER_MODE_INFO[pickOrderMode].label}`}>
           <ul className="rowList">
-            {members.map((m) => (
-              <li key={m.userId}>
-                {m.user.name ?? m.user.email}
-                <Badge tone={pickedUserIds.has(m.userId) ? "success" : "neutral"}>
-                  {pickedUserIds.has(m.userId) ? "Picked" : "Not yet"}
+            {seats.map((seat) => (
+              <li key={seat.userId} style={seat.userId === userId ? { fontWeight: 700 } : undefined}>
+                {seat.position}. {nameByUserId.get(seat.userId) ?? "—"}
+                <Badge
+                  tone={seat.status === "picked" ? "success" : seat.status === "onTheClock" ? "warning" : "neutral"}
+                >
+                  {seat.status === "picked" ? "Picked" : seat.status === "onTheClock" ? "On the clock" : "Waiting"}
                 </Badge>
               </li>
             ))}

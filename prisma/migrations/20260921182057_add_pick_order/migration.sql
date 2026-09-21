@@ -1,0 +1,9 @@
+-- CreateEnum
+CREATE TYPE "PickOrderMode" AS ENUM ('SNAKE', 'ROTATE', 'STANDINGS_FIRST_TO_LAST', 'STANDINGS_LAST_TO_FIRST');
+
+-- AlterTable
+ALTER TABLE "League" ADD COLUMN     "pickOrder" JSONB,
+ADD COLUMN     "pickOrderMode" "PickOrderMode" NOT NULL DEFAULT 'SNAKE';
+
+-- AlterTable
+ALTER TABLE "LeagueMembership" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
