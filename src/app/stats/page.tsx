@@ -2,8 +2,32 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import { fetchLivePoints, type NascarPointsEntry } from "@/lib/nascarFeed";
 
 export const dynamic = "force-dynamic";
+
+async function getPointsStandings(seasonId: string): Promise<
+  { ok: true; entries: NascarPointsEntry[] } | { ok: false; error: string }
+> {
+  // Any race in the season NASCAR's schedule has already been matched to
+  // (nascarRaceId set) works as the anchor — the feed returns the current
+  // season standings regardless of which race id it's requested under, so
+  // this doesn't need to be "the next race" the way the auto-tier formula's
+  // per-race call does.
+  const anchorRace = await prisma.race.findFirst({
+    where: { seasonId, nascarRaceId: { not: null } },
+    orderBy: { date: "desc" },
+  });
+  if (!anchorRace || !anchorRace.nascarRaceId) {
+    return { ok: false, error: "No race is linked to NASCAR's schedule yet." };
+  }
+  try {
+    const entries = await fetchLivePoints(anchorRace.nascarSeriesId, anchorRace.nascarRaceId);
+    return { ok: true, entries: [...entries].sort((a, b) => a.points_position - b.points_position) };
+  } catch (cause) {
+    return { ok: false, error: `Couldn't reach NASCAR's points feed: ${(cause as Error).message}` };
+  }
+}
 
 type DriverStats = {
   driverId: string;
@@ -30,6 +54,7 @@ export default async function StatsPage() {
         include: { driver: true },
       })
     : [];
+  const pointsStandings = season ? await getPointsStandings(season.id) : null;
 
   const statsByDriverId = new Map<string, DriverStats>();
   for (const r of results) {
@@ -57,6 +82,43 @@ export default async function StatsPage() {
       <h1>Driver Stats</h1>
       {season && <p>{season.year} season</p>}
 
+      <h2>NASCAR points standings</h2>
+      <Card>
+        {!pointsStandings ? (
+          <p>No season set up yet.</p>
+        ) : !pointsStandings.ok ? (
+          <p>{pointsStandings.error}</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Driver</th>
+                <th>Points</th>
+                <th>Wins</th>
+                <th>Top 5</th>
+                <th>Top 10</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pointsStandings.entries.map((e) => (
+                <tr key={e.driver_id}>
+                  <td>{e.points_position}</td>
+                  <td>
+                    {e.first_name} {e.last_name}
+                  </td>
+                  <td>{e.points}</td>
+                  <td>{e.wins}</td>
+                  <td>{e.top_5}</td>
+                  <td>{e.top_10}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
+
+      <h2>Stats from your leagues&apos; picks</h2>
       <Card>
         {stats.length === 0 ? (
           <p>No results have been entered yet.</p>
