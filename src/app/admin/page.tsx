@@ -8,7 +8,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminDashboardPage() {
   const season = await prisma.season.findFirst({ orderBy: { year: "desc" } });
   const races = season
-    ? await prisma.race.findMany({ where: { seasonId: season.id }, orderBy: { week: "asc" } })
+    ? await prisma.race.findMany({
+        where: { seasonId: season.id },
+        orderBy: { week: "asc" },
+        include: { _count: { select: { results: true, stageResults: true } } },
+      })
     : [];
 
   return (
@@ -34,6 +38,10 @@ export default async function AdminDashboardPage() {
                 </Link>
                 <span style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
                   {new Date(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  <small>
+                    {r._count.results} results, {r._count.stageResults} stage
+                  </small>
+                  {r.isNonPoints && <Badge tone="warning">Non-points</Badge>}
                   {r.status === "COMPLETE" && <Badge tone="success">Final</Badge>}
                   {r.lastSyncedAt && <Badge tone="neutral">Synced</Badge>}
                 </span>
