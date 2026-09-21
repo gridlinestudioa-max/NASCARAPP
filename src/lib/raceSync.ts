@@ -4,6 +4,7 @@
 // league semantics either way.
 
 import type { Prisma } from "@prisma/client";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { computeScore, parseRuleSetConfig } from "@/lib/scoring";
 import {
@@ -20,8 +21,71 @@ import {
   parseWeekendData,
 } from "@/lib/nascarFeed";
 import { refreshAutoTiersIfDue } from "@/lib/tierRanking";
+import { sendResultsPostedEmail } from "@/lib/email";
 
 type RaceForScoring = { id: string; seasonId: string; fieldSize: number; isNonPoints: boolean };
+
+const HOUR_MS = 60 * 60 * 1000;
+
+// Emails every opted-in player who has a pick on this race that results
+// were posted — once per race, however many times it later gets re-synced
+// or corrected, via the resultsNotifiedAt claim below. Called after
+// applyRaceResults' transaction commits (not from inside it — sending
+// email shouldn't hold a DB transaction open), from both call sites:
+// the manual admin results form and the NASCAR feed sync.
+//
+// Guarded to races that finished recently: syncPastRacesWithNascarFeed's
+// backfill re-syncs any past race with lastSyncedAt still null (true of
+// every race scored by hand before this feature shipped, regardless of
+// how long ago), and without this guard that backfill would blast a
+// "results are posted" email for the entire season's history the first
+// time it runs after deploy.
+const NOTIFY_ELIGIBLE_WINDOW_MS = 48 * HOUR_MS;
+
+export async function notifyResultsPostedIfDue(raceId: string): Promise<void> {
+  const race = await prisma.race.findUnique({ where: { id: raceId } });
+  if (!race || race.status !== "COMPLETE" || race.resultsNotifiedAt) return;
+  if (Date.now() - race.date.getTime() > NOTIFY_ELIGIBLE_WINDOW_MS) return;
+
+  // Atomic claim: only the caller that flips this from null actually
+  // sends, so two near-simultaneous callers (e.g. a manual correction
+  // racing a cron tick) can't double-send.
+  const claimed = await prisma.race.updateMany({
+    where: { id: raceId, resultsNotifiedAt: null },
+    data: { resultsNotifiedAt: new Date() },
+  });
+  if (claimed.count === 0) return;
+
+  const pickers = await prisma.pick.findMany({
+    where: { raceId, score: { isNot: null } },
+    select: { user: { select: { id: true, email: true, notifyResultsEmail: true } } },
+    distinct: ["userId"],
+  });
+
+  const recipients = pickers
+    .map((p) => p.user)
+    .filter((u) => u.notifyResultsEmail);
+  if (recipients.length === 0) return;
+
+  let raceUrl = `/races/${raceId}`;
+  try {
+    const requestHeaders = await headers();
+    const host = requestHeaders.get("host");
+    if (host) {
+      const proto = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+      raceUrl = `${proto}://${host}/races/${raceId}`;
+    }
+  } catch {
+    // No request context (e.g. called from a script) — relative URL is
+    // still a reasonable fallback in the email.
+  }
+
+  await Promise.all(
+    recipients.map((u) =>
+      sendResultsPostedEmail(u.email, { trackName: race.trackName, week: race.week, raceUrl }),
+    ),
+  );
+}
 
 export async function applyQualifyingResults(
   tx: Prisma.TransactionClient,
@@ -287,6 +351,14 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
     await refreshAutoTiersIfDue(raceId);
   } catch {
     // Swallowed — tiers just won't be current until the next sync tick.
+  }
+
+  try {
+    await notifyResultsPostedIfDue(raceId);
+  } catch {
+    // Swallowed — the sync itself succeeded; a missed notification isn't
+    // worth failing it over, and the next tick will just no-op (results
+    // are already there either way).
   }
 
   return {

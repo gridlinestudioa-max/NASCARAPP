@@ -27,6 +27,12 @@ model User {
   username     String? @unique
   passwordHash String?
 
+  // Email me when a race I've picked in gets results posted (see
+  // notifyResultsPostedIfDue in src/lib/raceSync.ts). The only
+  // notification preference wired to an actual send today — more can be
+  // added here as more triggers exist to opt into.
+  notifyResultsEmail Boolean @default(true)
+
   memberships         LeagueMembership[]
   picks               Pick[]
   passwordResetTokens PasswordResetToken[]
@@ -244,6 +250,11 @@ model Race {
   nascarRaceId   Int?      @unique
   nascarSeriesId Int       @default(1)
   lastSyncedAt   DateTime?
+
+  // Set the first time notifyResultsPostedIfDue actually sends the
+  // "results are posted" email for this race, so a later re-sync or a
+  // commissioner's correction never re-sends it.
+  resultsNotifiedAt DateTime?
 
   season            Season                 @relation(fields: [seasonId], references: [id])
   results           RaceResult[]

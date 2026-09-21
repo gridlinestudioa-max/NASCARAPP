@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isSiteAdmin } from "@/lib/authz";
-import { applyRaceResults } from "@/lib/raceSync";
+import { applyRaceResults, notifyResultsPostedIfDue } from "@/lib/raceSync";
 
 function parseOptionalStagePosition(formData: FormData, key: string): number | null {
   const raw = formData.get(key);
@@ -65,6 +65,13 @@ export async function submitResults(
   }
 
   await prisma.$transaction((tx) => applyRaceResults(tx, race, finishPositions, stage1Positions, stage2Positions));
+
+  try {
+    await notifyResultsPostedIfDue(raceId);
+  } catch {
+    // Swallowed — the results themselves saved fine; a missed
+    // notification isn't worth failing this admin action over.
+  }
 
   revalidatePath(`/races/${raceId}`);
   revalidatePath(`/admin/races/${raceId}`);
