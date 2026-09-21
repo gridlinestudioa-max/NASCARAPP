@@ -12,14 +12,13 @@ const TABS = [
   { href: "/past-scores", label: "Past Scores" },
 ];
 
-export default function LeagueTabs({ leagueId, isOwner }: { leagueId: string; isOwner: boolean }) {
+export default function LeagueTabs({ leagueId }: { leagueId: string }) {
   const pathname = usePathname();
   const base = `/leagues/${leagueId}`;
-  const tabs = isOwner ? [...TABS, { href: "/commissioner", label: "Commissioner" }] : TABS;
 
   return (
     <nav className={styles.tabs}>
-      {tabs.map((tab) => {
+      {TABS.map((tab) => {
         const href = `${base}${tab.href}`;
         const active = pathname === href;
         return (

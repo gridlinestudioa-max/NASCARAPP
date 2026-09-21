@@ -7,6 +7,7 @@ import LeagueHero from "@/components/league/LeagueHero";
 import LeagueTabs from "@/components/league/LeagueTabs";
 import LiveRefresh from "@/components/league/LiveRefresh";
 import { getLeagueHubData } from "./leagueData";
+import styles from "./layout.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -38,9 +39,28 @@ export default async function LeagueHubLayout({
   return (
     <main>
       <LiveRefresh />
-      <p>
-        <Link href="/my-leagues">&larr; My Leagues</Link>
-      </p>
+      <div className={styles.topRow}>
+        <p>
+          <Link href="/my-leagues">&larr; My Leagues</Link>
+        </p>
+        {membership.role === "OWNER" && (
+          <Link
+            href={`/leagues/${leagueId}/commissioner`}
+            className={styles.settingsLink}
+            aria-label="Commissioner settings"
+            title="Commissioner settings"
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
+        )}
+      </div>
 
       <LeagueHero
         leagueName={league.name}
@@ -60,7 +80,7 @@ export default async function LeagueHubLayout({
         </Card>
       )}
 
-      <LeagueTabs leagueId={leagueId} isOwner={membership.role === "OWNER"} />
+      <LeagueTabs leagueId={leagueId} />
 
       {children}
     </main>
