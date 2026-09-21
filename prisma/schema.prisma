@@ -187,7 +187,16 @@ model Race {
   week Int
 
   seasonId     String
+  // NASCAR's own event name ("Bass Pro Shops Night Race"), despite the
+  // field name — see venueName for the physical track ("Bristol Motor
+  // Speedway"). Kept as-is rather than renamed; too many call sites treat
+  // this as the race's display name already.
   trackName    String
+  // The physical venue, separate from trackName above. Nullable: only
+  // populated once a schedule sync captures it (see
+  // syncSeasonScheduleWithNascarFeed/syncRaceWithNascarFeed) — older or
+  // not-yet-synced races won't have it until their next sync.
+  venueName    String?
   date         DateTime
   // When qualifying happens for this race — nullable since older/seeded
   // races have no real qualifying data. Drives both the Tiered Lineup

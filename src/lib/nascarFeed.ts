@@ -154,6 +154,10 @@ export type ParsedWeekendData = {
   stage1Laps: number | null;
   stage2Laps: number | null;
   qualifyingAt: Date | null;
+  // The physical venue ("Bristol Motor Speedway") — distinct from the
+  // race's own event name, which lives in Race.trackName despite the
+  // confusing overlap in naming. See Race.venueName.
+  venueName: string | null;
 };
 
 // finishing_status values seen in the wild include things like "Running",
@@ -223,6 +227,7 @@ export function parseWeekendData(weekend: NascarWeekendInfo): ParsedWeekendData 
     stage1Laps: race.stage_1_laps ?? null,
     stage2Laps: race.stage_2_laps ?? null,
     qualifyingAt: race.qualifying_date ? new Date(race.qualifying_date) : null,
+    venueName: race.track_name?.trim() || null,
   };
 }
 

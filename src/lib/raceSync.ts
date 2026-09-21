@@ -230,6 +230,7 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
         ...(parsed.fieldSize ? { fieldSize: parsed.fieldSize } : {}),
         ...(parsed.stage1Laps ? { stage1Length: parsed.stage1Laps } : {}),
         ...(parsed.stage2Laps ? { stage2Length: parsed.stage2Laps } : {}),
+        ...(parsed.venueName ? { venueName: parsed.venueName } : {}),
       },
     });
     // Scoring (fieldSizeRelative Pick'em mode) needs the just-synced field
@@ -389,7 +390,12 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
           matchedWeeks.push(race.week);
           await tx.race.update({
             where: { id: race.id },
-            data: { trackName: match.race_name, date: new Date(match.race_date), nascarRaceId: match.race_id },
+            data: {
+              trackName: match.race_name,
+              venueName: match.track_name,
+              date: new Date(match.race_date),
+              nascarRaceId: match.race_id,
+            },
           });
         }
       }
