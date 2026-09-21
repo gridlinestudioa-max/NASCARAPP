@@ -22,7 +22,14 @@ import { computeRecentFormAvgFinish } from "@/lib/tierRanking";
 import { nextEntryListWindowAt } from "@/lib/nascarSyncSchedule";
 import PickForm from "./PickForm";
 import TieredLineupForm from "./TieredLineupForm";
+import lineupFormStyles from "./TieredLineupForm.module.css";
 import LiveRefresh from "@/components/league/LiveRefresh";
+
+const TIER_SLOT_CLASS: Record<DriverTier, string> = {
+  A: lineupFormStyles.slotA,
+  B: lineupFormStyles.slotB,
+  C: lineupFormStyles.slotC,
+};
 
 export const dynamic = "force-dynamic";
 
@@ -368,6 +375,21 @@ async function renderTieredLineup({
 
   if (tierAssignments.length === 0) {
     const nextCheck = nextEntryListWindowAt(new Date());
+    const unlockLabel = nextCheck.toLocaleString(undefined, {
+      weekday: "long",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    const starterSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER");
+    const benchSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "BENCH");
+    const renderLockedSlot = (tier: DriverTier) => (
+      <div className={`${lineupFormStyles.slot} ${TIER_SLOT_CLASS[tier]} ${lineupFormStyles.slotLocked}`}>
+        <span className={lineupFormStyles.tierTag}>Tier {tier}</span>
+        <span className={lineupFormStyles.placeholder}>Locked</span>
+        <span className={lineupFormStyles.tapHint}>Unlocks {unlockLabel}</span>
+      </div>
+    );
+
     return (
       <main>
         <LiveRefresh />
@@ -381,23 +403,25 @@ async function renderTieredLineup({
           {race.venueName && <>{race.venueName} · </>}
           {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
         </p>
-        <Card title="Picks open once entries are confirmed">
+
+        <Card title="Your lineup">
           <p>
-            NASCAR hasn&apos;t published the entry list for this race yet. We check automatically every Tuesday and
-            Friday around midday — once it&apos;s in, tiers get assigned from it and your lineup opens up here.
+            <em>Lineups unlock {unlockLabel}.</em>
           </p>
-          <p>
-            <small>
-              Next check:{" "}
-              {nextCheck.toLocaleString(undefined, {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-            </small>
-          </p>
+          <span className={lineupFormStyles.roleLabel}>Starters</span>
+          <div className={lineupFormStyles.slotRow}>
+            {starterSlots.map((s) => (
+              <div key={s.pickNumber}>{renderLockedSlot(s.tier)}</div>
+            ))}
+          </div>
+          <div className={lineupFormStyles.roleGroup}>
+            <span className={lineupFormStyles.roleLabel}>Bench</span>
+            <div className={lineupFormStyles.slotRow}>
+              {benchSlots.map((s) => (
+                <div key={s.pickNumber}>{renderLockedSlot(s.tier)}</div>
+              ))}
+            </div>
+          </div>
         </Card>
       </main>
     );

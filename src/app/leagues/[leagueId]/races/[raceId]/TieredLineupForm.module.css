@@ -78,6 +78,15 @@
   background: var(--bg-surface);
 }
 
+.slotLocked {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.slotLocked:hover {
+  border-color: var(--border-color);
+}
+
 .driverName {
   font-weight: 600;
   font-size: 0.95rem;
