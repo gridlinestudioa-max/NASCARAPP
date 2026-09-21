@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,17 +7,18 @@ import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 import Card from "@/components/ui/Card";
-import { getLeagueHubData } from "../leagueData";
+import { getLeagueHubData } from "../(hub)/leagueData";
 import TransferCommissionerForm from "./TransferCommissionerForm";
 import PickOrderForm from "./PickOrderForm";
 
 export const dynamic = "force-dynamic";
 
-// Commissioner-only tab — every other tab under (hub) is readable by any
-// league member, but this one changes shared league state (rules, pick
-// order, who's commissioner), so it's gated the same way the old
-// standalone /settings page was: redirect a non-owner straight back to
-// standings rather than exposing a "you're not allowed" page.
+// Deliberately outside the (hub) route group — this page is a focused
+// tool, not another view of the league, so it skips the hub layout's
+// hero/up-next/tabs chrome entirely and gets just a back link back to it.
+// Gated the same way the old standalone /settings page was: redirect a
+// non-owner straight back to standings rather than exposing a "you're not
+// allowed" page.
 export default async function CommissionerPage(props: { params: Promise<{ leagueId: string }> }) {
   const { leagueId } = await props.params;
 
@@ -42,7 +44,13 @@ export default async function CommissionerPage(props: { params: Promise<{ league
     league.type === "TIERED_DRAFT" && leagueSeason ? parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config) : undefined;
 
   return (
-    <>
+    <main>
+      <p>
+        <Link href={`/leagues/${leagueId}`}>&larr; Back to league</Link>
+      </p>
+
+      <h1>Commissioner tools</h1>
+
       <p>
         Invite code: <code>{league.inviteCode}</code> — share it so others can join this league.
       </p>
@@ -83,6 +91,6 @@ export default async function CommissionerPage(props: { params: Promise<{ league
           <p>This league isn&apos;t part of a season yet, so there are no rules to edit.</p>
         </Card>
       )}
-    </>
+    </main>
   );
 }

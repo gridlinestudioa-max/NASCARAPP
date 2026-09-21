@@ -10,7 +10,7 @@ import {
 } from "@/lib/scoring";
 import { buildTieredDraftDefaultConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { createLeague, previewRules, type PreviewRow } from "@/app/leagues/new/actions";
-import { updateLeagueRules } from "@/app/leagues/[leagueId]/(hub)/commissioner/actions";
+import { updateLeagueRules } from "@/app/leagues/[leagueId]/commissioner/actions";
 import Card from "@/components/ui/Card";
 
 type RaceOption = { id: string; label: string };
