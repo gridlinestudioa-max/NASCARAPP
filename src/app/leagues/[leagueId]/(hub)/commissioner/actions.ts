@@ -109,7 +109,7 @@ export async function updatePickOrder(
     data: { pickOrderMode: mode as PickOrderMode, pickOrder: order },
   });
 
-  revalidatePath(`/leagues/${leagueId}/settings`);
+  revalidatePath(`/leagues/${leagueId}/commissioner`);
   return undefined;
 }
 
@@ -153,6 +153,6 @@ export async function transferCommissioner(
   ]);
 
   revalidatePath(`/leagues/${leagueId}`);
-  revalidatePath(`/leagues/${leagueId}/settings`);
-  redirect(`/leagues/${leagueId}/settings`);
+  revalidatePath(`/leagues/${leagueId}/commissioner`);
+  redirect(`/leagues/${leagueId}/commissioner`);
 }

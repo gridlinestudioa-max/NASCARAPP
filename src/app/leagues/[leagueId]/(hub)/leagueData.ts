@@ -27,7 +27,10 @@ export const getLeagueHubData = cache(async (leagueId: string, userId: string) =
     season
       ? prisma.race.findMany({ where: { seasonId: season.id }, orderBy: { week: "asc" } })
       : Promise.resolve([]),
-    prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
+    // Ordered by join time — used as the pick-order join-order fallback
+    // (src/lib/pickOrder.ts) on the Commissioner tab, harmless everywhere
+    // else this list is consumed.
+    prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true }, orderBy: { createdAt: "asc" } }),
   ]);
 
   // Scoped to this season's races only — standings/stats shouldn't blend

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,12 +6,18 @@ import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 import Card from "@/components/ui/Card";
+import { getLeagueHubData } from "../leagueData";
 import TransferCommissionerForm from "./TransferCommissionerForm";
 import PickOrderForm from "./PickOrderForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeagueSettingsPage(props: PageProps<"/leagues/[leagueId]/settings">) {
+// Commissioner-only tab — every other tab under (hub) is readable by any
+// league member, but this one changes shared league state (rules, pick
+// order, who's commissioner), so it's gated the same way the old
+// standalone /settings page was: redirect a non-owner straight back to
+// standings rather than exposing a "you're not allowed" page.
+export default async function CommissionerPage(props: { params: Promise<{ leagueId: string }> }) {
   const { leagueId } = await props.params;
 
   const session = await auth();
@@ -20,30 +25,16 @@ export default async function LeagueSettingsPage(props: PageProps<"/leagues/[lea
     redirect("/login");
   }
 
-  const membership = await prisma.leagueMembership.findUnique({
-    where: { leagueId_userId: { leagueId, userId: session.user.id } },
-  });
-  if (!membership) {
+  const data = await getLeagueHubData(leagueId, session.user.id);
+  if (!data) {
     notFound();
   }
+  const { league, membership, leagueSeason, members } = data;
   if (membership.role !== "OWNER") {
     redirect(`/leagues/${leagueId}`);
   }
 
-  const league = await prisma.league.findUnique({ where: { id: leagueId } });
-  if (!league) {
-    notFound();
-  }
-
-  const [leagueSeason, members, racesWithResults] = await Promise.all([
-    prisma.leagueSeason.findFirst({
-      where: { leagueId },
-      include: { ruleSet: true, season: true },
-      orderBy: { season: { year: "desc" } },
-    }),
-    prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true }, orderBy: { createdAt: "asc" } }),
-    prisma.race.findMany({ where: { results: { some: {} } }, orderBy: { week: "asc" } }),
-  ]);
+  const racesWithResults = await prisma.race.findMany({ where: { results: { some: {} } }, orderBy: { week: "asc" } });
   const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${r.trackName}` }));
 
   const pickemConfig = league.type === "PICKEM" && leagueSeason ? parseRuleSetConfig(leagueSeason.ruleSet.config) : undefined;
@@ -51,11 +42,10 @@ export default async function LeagueSettingsPage(props: PageProps<"/leagues/[lea
     league.type === "TIERED_DRAFT" && leagueSeason ? parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config) : undefined;
 
   return (
-    <main>
+    <>
       <p>
-        <Link href={`/leagues/${leagueId}`}>&larr; {league.name}</Link>
+        Invite code: <code>{league.inviteCode}</code> — share it so others can join this league.
       </p>
-      <h1>League settings — {league.name}</h1>
 
       <Card title="Commissioner">
         <TransferCommissionerForm
@@ -93,6 +83,6 @@ export default async function LeagueSettingsPage(props: PageProps<"/leagues/[lea
           <p>This league isn&apos;t part of a season yet, so there are no rules to edit.</p>
         </Card>
       )}
-    </main>
+    </>
   );
 }

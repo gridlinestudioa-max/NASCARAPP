@@ -52,16 +52,6 @@ export default async function LeagueHubLayout({
         racesTotal={races.length}
       />
 
-      {membership.role === "OWNER" && (
-        <Card>
-          <p>
-            Invite code: <code>{league.inviteCode}</code> — share it so others can{" "}
-            <Link href="/leagues/join">join this league</Link>. Manage in{" "}
-            <Link href={`/leagues/${league.id}/settings`}>league settings</Link>.
-          </p>
-        </Card>
-      )}
-
       {nextOpenRace && (
         <Card title="Up next">
           <Link href={`/leagues/${league.id}/races/${nextOpenRace.id}`}>
@@ -70,7 +60,7 @@ export default async function LeagueHubLayout({
         </Card>
       )}
 
-      <LeagueTabs leagueId={leagueId} />
+      <LeagueTabs leagueId={leagueId} isOwner={membership.role === "OWNER"} />
 
       {children}
     </main>
