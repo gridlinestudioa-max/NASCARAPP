@@ -19,6 +19,7 @@ import {
   matchScheduleEntry,
   parseWeekendData,
 } from "@/lib/nascarFeed";
+import { refreshAutoTiersIfDue } from "@/lib/tierRanking";
 
 type RaceForScoring = { id: string; seasonId: string; fieldSize: number; isNonPoints: boolean };
 
@@ -275,6 +276,17 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
       }
     }
   });
+
+  // Best-effort: refreshes the auto-computed tiers now that this sync may
+  // have brought in new entries/results. Needs its own fetches/queries
+  // (season points, prior results) so it runs outside the transaction
+  // above; a failure here shouldn't fail the sync itself, since the
+  // entries/qualifying/results data just written is what actually matters.
+  try {
+    await refreshAutoTiersIfDue(raceId);
+  } catch {
+    // Swallowed — tiers just won't be current until the next sync tick.
+  }
 
   return {
     ok: true,

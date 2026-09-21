@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { isSiteAdmin } from "@/lib/authz";
 import { applyRaceEntries } from "@/lib/raceSync";
 import { parseEntryListText } from "@/lib/entryListParser";
+import { refreshAutoTiersIfDue } from "@/lib/tierRanking";
 
 export async function submitEntryList(
   _prevState: string | undefined,
@@ -47,8 +48,15 @@ export async function submitEntryList(
     });
   });
 
+  try {
+    await refreshAutoTiersIfDue(raceId);
+  } catch {
+    // Swallowed — a manual admin can still hit "Recompute now" on the tiers page.
+  }
+
   revalidatePath(`/races/${raceId}`);
   revalidatePath(`/admin/races/${raceId}`);
   revalidatePath(`/admin/races/${raceId}/entries`);
+  revalidatePath(`/admin/races/${raceId}/tiers`);
   redirect(`/admin/races/${raceId}`);
 }

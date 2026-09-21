@@ -10,6 +10,7 @@
 import type { DriverTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { fetchLivePoints, normalizeTrackName } from "@/lib/nascarFeed";
+import { initialLockAt } from "@/lib/tieredDraft";
 
 export const AUTO_TIER_WEIGHTS = { seasonPoints: 0.65, recentForm: 0.25, trackHistory: 0.1 };
 
@@ -163,9 +164,12 @@ export async function computeAutoTiers(raceId: string): Promise<AutoTierOutcome>
 }
 
 // Computes tiers and writes them as the current DriverTierAssignment for
-// this race — the same rows the manual tiers page reads and edits, so a
-// commissioner always reviews (and can override) the computed result
-// there before it's used for anything.
+// this race — the same rows the manual tiers page reads and edits. This is
+// the explicit "Auto-assign tiers" button: it always (re)computes every
+// driver, including ones a commissioner had previously hand-set, since a
+// human asked for it here specifically. Marks every row AUTO so the
+// background refresh (see below) is free to keep updating them until
+// someone hand-edits again.
 export async function applyAutoTiers(raceId: string): Promise<AutoTierOutcome> {
   const outcome = await computeAutoTiers(raceId);
   if (!outcome.ok) return outcome;
@@ -174,11 +178,52 @@ export async function applyAutoTiers(raceId: string): Promise<AutoTierOutcome> {
     outcome.tiers.map((t) =>
       prisma.driverTierAssignment.upsert({
         where: { raceId_driverId: { raceId, driverId: t.driverId } },
-        update: { tier: t.tier },
-        create: { raceId, driverId: t.driverId, tier: t.tier },
+        update: { tier: t.tier, source: "AUTO" },
+        create: { raceId, driverId: t.driverId, tier: t.tier, source: "AUTO" },
       }),
     ),
   );
+
+  return outcome;
+}
+
+// Background counterpart, called after every entry-list/qualifying/results
+// sync (see raceSync.ts) so tiers stay current as the week's field fills in
+// and results accumulate, with no commissioner click required. Unlike
+// applyAutoTiers, this never touches a row a commissioner has hand-edited
+// (source MANUAL) — those stand until the commissioner clears them by
+// hitting "Auto-assign tiers" again or editing them back. It's also a
+// no-op once lineups have locked (2am Pacific on qualifying day): tiers a
+// league has already drafted from must not move underneath them.
+export async function refreshAutoTiersIfDue(raceId: string): Promise<AutoTierOutcome> {
+  const race = await prisma.race.findUnique({ where: { id: raceId } });
+  if (!race) return { ok: false, error: "Race not found." };
+
+  if (Date.now() >= initialLockAt(race).getTime()) {
+    return { ok: true, tiers: [], warnings: ["Lineups have locked for this race — tiers are frozen."] };
+  }
+
+  const outcome = await computeAutoTiers(raceId);
+  if (!outcome.ok) return outcome;
+
+  const existing = await prisma.driverTierAssignment.findMany({
+    where: { raceId },
+    select: { driverId: true, source: true },
+  });
+  const manualDriverIds = new Set(existing.filter((a) => a.source === "MANUAL").map((a) => a.driverId));
+  const toWrite = outcome.tiers.filter((t) => !manualDriverIds.has(t.driverId));
+
+  if (toWrite.length > 0) {
+    await prisma.$transaction(
+      toWrite.map((t) =>
+        prisma.driverTierAssignment.upsert({
+          where: { raceId_driverId: { raceId, driverId: t.driverId } },
+          update: { tier: t.tier, source: "AUTO" },
+          create: { raceId, driverId: t.driverId, tier: t.tier, source: "AUTO" },
+        }),
+      ),
+    );
+  }
 
   return outcome;
 }

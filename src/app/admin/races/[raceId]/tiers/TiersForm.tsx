@@ -4,7 +4,12 @@ import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { autoAssignTiers, submitTiers } from "./actions";
 
-type DriverRow = { driverId: string; name: string; tier: "A" | "B" | "C" | null };
+type DriverRow = {
+  driverId: string;
+  name: string;
+  tier: "A" | "B" | "C" | null;
+  source: "AUTO" | "MANUAL" | null;
+};
 
 export default function TiersForm({ raceId, drivers }: { raceId: string; drivers: DriverRow[] }) {
   const [error, formAction, pending] = useActionState(submitTiers, undefined);
@@ -31,9 +36,12 @@ export default function TiersForm({ raceId, drivers }: { raceId: string; drivers
     <>
       <p>
         <button type="button" onClick={handleAutoAssign} disabled={autoAssigning}>
-          {autoAssigning ? "Computing..." : "Auto-assign tiers"}
+          {autoAssigning ? "Computing..." : "Recompute now"}
         </button>{" "}
-        <small>weighted 65% season points / 25% recent form / 10% track history — review before saving</small>
+        <small>
+          weighted 65% season points / 25% recent form / 10% track history — also clears any hand-edits below back
+          to automatic
+        </small>
       </p>
       {autoMessage && <p role="status">{autoMessage}</p>}
 
@@ -50,7 +58,9 @@ export default function TiersForm({ raceId, drivers }: { raceId: string; drivers
           <tbody>
             {drivers.map((d) => (
               <tr key={d.driverId}>
-                <td>{d.name}</td>
+                <td>
+                  {d.name} {d.source === "MANUAL" && <small>(pinned)</small>}
+                </td>
                 <td>
                   <select name={`tier-${d.driverId}`} defaultValue={d.tier ?? ""}>
                     <option value="">&mdash;</option>

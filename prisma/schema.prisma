@@ -27,9 +27,9 @@ model User {
   username     String? @unique
   passwordHash String?
 
-  memberships          LeagueMembership[]
-  picks                Pick[]
-  passwordResetTokens  PasswordResetToken[]
+  memberships         LeagueMembership[]
+  picks               Pick[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 // A single-use, expiring password reset link. tokenHash is the SHA-256 of
@@ -99,7 +99,7 @@ model LeagueMembership {
 model RuleSet {
   id        String   @id @default(cuid())
   leagueId  String
-  label     String   // e.g. "2026 Season Rules"
+  label     String // e.g. "2026 Season Rules"
   // Holds a PickemRuleSetConfig or TieredDraftRuleSetConfig (see
   // src/lib/scoring.ts / src/lib/tieredDraft.ts), depending on the parent
   // League's type.
@@ -186,9 +186,9 @@ model Race {
   // within its season — dates may be estimated, week is not.
   week Int
 
-  seasonId String
-  trackName String
-  date      DateTime
+  seasonId     String
+  trackName    String
+  date         DateTime
   // When qualifying happens for this race — nullable since older/seeded
   // races have no real qualifying data. Drives both the Tiered Lineup
   // league's initial lock (2am Pacific on this date) and a Pick'em league's
@@ -301,14 +301,25 @@ enum DriverTier {
   C
 }
 
+// AUTO rows are free for the background auto-tier refresh (see
+// tierRanking.ts) to recompute and overwrite as new entries/results come
+// in; MANUAL marks a commissioner's deliberate hand-edit via the tiers
+// form, which the refresh leaves alone until it's cleared by another
+// auto-assign or by the race locking.
+enum TierAssignmentSource {
+  AUTO
+  MANUAL
+}
+
 // Which tier a driver sits in for one specific race week — shared, site-wide
 // (every Tiered Lineup league drafts from the same weekly tiers), re-set
 // every week.
 model DriverTierAssignment {
-  id       String     @id @default(cuid())
+  id       String               @id @default(cuid())
   raceId   String
   driverId String
   tier     DriverTier
+  source   TierAssignmentSource @default(AUTO)
 
   race   Race   @relation(fields: [raceId], references: [id])
   driver Driver @relation(fields: [driverId], references: [id])
@@ -324,11 +335,11 @@ model DriverTierAssignment {
 // Tier B x2, Tier C), 5-8 are the matching bench slots (see
 // TIERED_LINEUP_SLOTS in src/lib/tieredDraft.ts for the fixed mapping).
 model Pick {
-  id         String  @id @default(cuid())
+  id         String @id @default(cuid())
   leagueId   String
   userId     String
   raceId     String
-  pickNumber Int     @default(1)
+  pickNumber Int    @default(1)
   driverId   String
 
   league League @relation(fields: [leagueId], references: [id])
@@ -352,12 +363,12 @@ model Score {
   // Finish position and its derived components are only known once results
   // are resolved and reconciled; null (with needsReview set) means the
   // source data for this pick couldn't be fully resolved yet.
-  finishPosition Int?
-  baseScore      Int?
-  winBonus       Int?
+  finishPosition     Int?
+  baseScore          Int?
+  winBonus           Int?
   // Trusted regardless of needsReview: recorded directly from the league's
   // historical records rather than derived from finishPosition.
-  stageBonus Int
+  stageBonus         Int
   // Tiered Lineup leagues only: this driver's qualifying result and the
   // points it earned (every rostered driver scores qualifying points,
   // starter or bench). Both stay null/0 for Pick'em picks.

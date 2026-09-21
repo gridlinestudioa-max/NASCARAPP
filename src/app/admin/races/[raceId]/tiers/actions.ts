@@ -30,14 +30,18 @@ export async function submitTiers(_prevState: string | undefined, formData: Form
 
   const drivers = await prisma.driver.findMany({ where: { isActive: true }, select: { id: true } });
 
+  // Saving here is a deliberate hand-edit, so every row it writes is
+  // pinned MANUAL — the background auto-tier refresh (tierRanking.ts)
+  // leaves those alone until "Auto-assign tiers" clears them or this page
+  // clears the driver back to unassigned.
   await prisma.$transaction(async (tx) => {
     for (const driver of drivers) {
       const tier = parseTier(formData.get(`tier-${driver.id}`));
       if (tier) {
         await tx.driverTierAssignment.upsert({
           where: { raceId_driverId: { raceId, driverId: driver.id } },
-          update: { tier },
-          create: { raceId, driverId: driver.id, tier },
+          update: { tier, source: "MANUAL" },
+          create: { raceId, driverId: driver.id, tier, source: "MANUAL" },
         });
       } else {
         await tx.driverTierAssignment.deleteMany({ where: { raceId, driverId: driver.id } });
