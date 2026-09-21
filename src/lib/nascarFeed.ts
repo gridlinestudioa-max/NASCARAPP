@@ -124,33 +124,14 @@ export async function fetchWeekendFeed(
   );
 }
 
-export type NascarPointsEntry = {
-  driver_id: number;
-  first_name: string;
-  last_name: string;
-  car_number: number | null;
-  points: number;
-  points_position: number;
-  wins: number;
-  top_5: number;
-  top_10: number;
-};
-
-// Current season points standings, as of the most recently completed
-// points race. Fetched under the UPCOMING race's id — this assumes the
-// feed reflects "latest standings" regardless of which race id it's
-// requested under, which matches how the endpoint is used elsewhere but,
-// like the rest of this adapter, hasn't been confirmed against live
-// traffic from this environment.
-export async function fetchLivePoints(seriesId: number, nascarRaceId: number): Promise<NascarPointsEntry[]> {
-  const data = await fetchJson<NascarPointsEntry[]>(
-    `${NASCAR_CF_DOMAIN}/live/feeds/series_${seriesId}/${nascarRaceId}/live_points.json`,
-  );
-  if (!Array.isArray(data)) {
-    throw new NascarFeedError(`Unexpected points feed shape for race ${nascarRaceId}`);
-  }
-  return data;
-}
+// There used to be a fetchLivePoints() here, pulling
+// /live/feeds/series_{id}/{raceId}/live_points.json for season points
+// standings. Confirmed in production (a real 403, not this sandbox's
+// egress restrictions) that path is scoped to the live in-race leaderboard
+// — it only serves data for the few hours a given race is actually
+// green-flag live, not a persistent standings resource, so it 403s any
+// other time. Season points are now computed from our own synced results
+// instead — see seasonPoints.ts.
 
 // ---------- Parsing (pure — no I/O, easy to test against a fixture) ----------
 

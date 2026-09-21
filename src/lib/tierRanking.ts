@@ -9,8 +9,9 @@
 
 import type { DriverTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { fetchLivePoints, normalizeTrackName } from "@/lib/nascarFeed";
+import { normalizeTrackName } from "@/lib/nascarFeed";
 import { initialLockAt } from "@/lib/tieredDraft";
+import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 
 export const AUTO_TIER_WEIGHTS = { seasonPoints: 0.65, recentForm: 0.25, trackHistory: 0.1 };
 
@@ -59,25 +60,16 @@ export async function computeAutoTiers(raceId: string): Promise<AutoTierOutcome>
 
   const warnings: string[] = [];
 
-  // ---------- Season points (from NASCAR's own live standings feed) ----------
+  // ---------- Season points (our own cumulative total from already-synced
+  // results — see seasonPoints.ts for why this isn't pulled from a NASCAR
+  // feed) ----------
   const seasonPointsByDriverId = new Map<string, number>();
-  if (race.nascarRaceId) {
-    try {
-      const points = await fetchLivePoints(race.nascarSeriesId, race.nascarRaceId);
-      const driverIdByName = new Map(entries.map((e) => [e.driver.name.trim().toLowerCase(), e.driverId]));
-      for (const p of points) {
-        const key = `${p.first_name} ${p.last_name}`.trim().toLowerCase();
-        const driverId = driverIdByName.get(key);
-        if (driverId) seasonPointsByDriverId.set(driverId, p.points);
-      }
-      if (seasonPointsByDriverId.size === 0) {
-        warnings.push("Season points feed returned no matching drivers — weighting it as neutral for everyone.");
-      }
-    } catch (cause) {
-      warnings.push(`Couldn't fetch season points, weighting it as neutral for everyone: ${(cause as Error).message}`);
-    }
-  } else {
-    warnings.push("This race isn't linked to a NASCAR race id yet, so season points couldn't be fetched.");
+  const standings = await computeSeasonPointsStandings(race.seasonId, race.week);
+  for (const s of standings) {
+    if (entries.some((e) => e.driverId === s.driverId)) seasonPointsByDriverId.set(s.driverId, s.points);
+  }
+  if (seasonPointsByDriverId.size === 0) {
+    warnings.push("No completed points races yet this season, so season points couldn't be weighed — its share was neutral.");
   }
 
   // ---------- Recent form (from our own already-synced results) ----------

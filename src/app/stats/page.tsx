@@ -2,32 +2,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
-import { fetchLivePoints, type NascarPointsEntry } from "@/lib/nascarFeed";
+import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 
 export const dynamic = "force-dynamic";
-
-async function getPointsStandings(seasonId: string): Promise<
-  { ok: true; entries: NascarPointsEntry[] } | { ok: false; error: string }
-> {
-  // Any race in the season NASCAR's schedule has already been matched to
-  // (nascarRaceId set) works as the anchor — the feed returns the current
-  // season standings regardless of which race id it's requested under, so
-  // this doesn't need to be "the next race" the way the auto-tier formula's
-  // per-race call does.
-  const anchorRace = await prisma.race.findFirst({
-    where: { seasonId, nascarRaceId: { not: null } },
-    orderBy: { date: "desc" },
-  });
-  if (!anchorRace || !anchorRace.nascarRaceId) {
-    return { ok: false, error: "No race is linked to NASCAR's schedule yet." };
-  }
-  try {
-    const entries = await fetchLivePoints(anchorRace.nascarSeriesId, anchorRace.nascarRaceId);
-    return { ok: true, entries: [...entries].sort((a, b) => a.points_position - b.points_position) };
-  } catch (cause) {
-    return { ok: false, error: `Couldn't reach NASCAR's points feed: ${(cause as Error).message}` };
-  }
-}
 
 type DriverStats = {
   driverId: string;
@@ -54,7 +31,7 @@ export default async function StatsPage() {
         include: { driver: true },
       })
     : [];
-  const pointsStandings = season ? await getPointsStandings(season.id) : null;
+  const pointsStandings = season ? await computeSeasonPointsStandings(season.id) : [];
 
   const statsByDriverId = new Map<string, DriverStats>();
   for (const r of results) {
@@ -82,12 +59,18 @@ export default async function StatsPage() {
       <h1>Driver Stats</h1>
       {season && <p>{season.year} season</p>}
 
-      <h2>NASCAR points standings</h2>
+      <h2>Season points standings</h2>
+      <p>
+        <small>
+          Our own cumulative total (finish-position points + stage points, every points race this season) — NASCAR
+          doesn&apos;t expose a persistent standings feed we can pull from, only a live leaderboard that only exists
+          while a race is actually green-flag live. This won&apos;t match NASCAR.com&apos;s own standings once the
+          playoffs start, since their bracket resets points and adds playoff bonuses this doesn&apos;t replicate.
+        </small>
+      </p>
       <Card>
-        {!pointsStandings ? (
-          <p>No season set up yet.</p>
-        ) : !pointsStandings.ok ? (
-          <p>{pointsStandings.error}</p>
+        {pointsStandings.length === 0 ? (
+          <p>No results have been entered yet.</p>
         ) : (
           <table>
             <thead>
@@ -101,16 +84,14 @@ export default async function StatsPage() {
               </tr>
             </thead>
             <tbody>
-              {pointsStandings.entries.map((e) => (
-                <tr key={e.driver_id}>
-                  <td>{e.points_position}</td>
-                  <td>
-                    {e.first_name} {e.last_name}
-                  </td>
+              {pointsStandings.map((e, i) => (
+                <tr key={e.driverId}>
+                  <td>{i + 1}</td>
+                  <td>{e.driverName}</td>
                   <td>{e.points}</td>
                   <td>{e.wins}</td>
-                  <td>{e.top_5}</td>
-                  <td>{e.top_10}</td>
+                  <td>{e.top5}</td>
+                  <td>{e.top10}</td>
                 </tr>
               ))}
             </tbody>
