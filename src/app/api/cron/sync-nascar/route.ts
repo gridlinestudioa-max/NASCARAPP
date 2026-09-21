@@ -5,6 +5,7 @@ import {
   syncPastRacesWithNascarFeed,
 } from "@/lib/raceSync";
 import { sendSyncFailureAlert } from "@/lib/email";
+import { isEntryListWindow } from "@/lib/nascarSyncSchedule";
 
 export const dynamic = "force-dynamic";
 // A full-season backfill makes one external fetch per unsynced race
@@ -36,29 +37,13 @@ export const maxDuration = 60;
 // NASCAR's real publish cadence isn't "whatever's available whenever we
 // ask" — pulling constantly would hammer an undocumented, unauthenticated
 // feed for no reason. Instead each tick checks real calendar/clock windows
-// (all times below are fixed UTC-5, not DST-aware, per how they were
-// specified) and only calls the feed when something is actually expected to
-// be freshly published:
+// (see src/lib/nascarSyncSchedule.ts for the entry-list window; times are
+// fixed UTC-5, not DST-aware, per how they were specified) and only calls
+// the feed when something is actually expected to be freshly published:
 //   - entry list: Tuesday and Friday, ~noon
 //   - starting grid (qualifying): the 12 hours before green flag
 //   - finishing positions: every tick from 3 to 5 hours after green flag
 const HOUR_MS = 60 * 60 * 1000;
-const UTC_MINUS_5_OFFSET_MS = 5 * HOUR_MS;
-// Generous relative to the ~15 minute tick interval, so a late-firing or
-// missed tick still lands inside the window instead of skipping it.
-const ENTRY_WINDOW_MINUTES = 90;
-
-function shiftToUtcMinus5(date: Date): Date {
-  return new Date(date.getTime() - UTC_MINUS_5_OFFSET_MS);
-}
-
-function isEntryListWindow(now: Date): boolean {
-  const shifted = shiftToUtcMinus5(now);
-  const dayOfWeek = shifted.getUTCDay(); // 2 = Tuesday, 5 = Friday
-  const minutesSinceMidnight = shifted.getUTCHours() * 60 + shifted.getUTCMinutes();
-  const minutesSinceNoon = minutesSinceMidnight - 12 * 60;
-  return (dayOfWeek === 2 || dayOfWeek === 5) && minutesSinceNoon >= 0 && minutesSinceNoon < ENTRY_WINDOW_MINUTES;
-}
 
 // At most one admin alert email per hour, regardless of how many ticks in
 // that hour keep failing — a persistent outage should say "something's

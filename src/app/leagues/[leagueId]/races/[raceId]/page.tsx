@@ -19,6 +19,7 @@ import {
   type PickOrderMode,
 } from "@/lib/pickOrder";
 import { computeRecentFormAvgFinish } from "@/lib/tierRanking";
+import { nextEntryListWindowAt } from "@/lib/nascarSyncSchedule";
 import PickForm from "./PickForm";
 import TieredLineupForm from "./TieredLineupForm";
 import LiveRefresh from "@/components/league/LiveRefresh";
@@ -263,7 +264,15 @@ async function renderTieredLineup({
   leagueId: string;
   raceId: string;
   userId: string;
-  race: { week: number; trackName: string; date: Date; qualifyingAt: Date | null; seasonId: string; status: string };
+  race: {
+    week: number;
+    trackName: string;
+    venueName: string | null;
+    date: Date;
+    qualifyingAt: Date | null;
+    seasonId: string;
+    status: string;
+  };
   leagueSeason: { ruleSet: { config: unknown } };
 }) {
   const config = parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config);
@@ -358,6 +367,7 @@ async function renderTieredLineup({
   }
 
   if (tierAssignments.length === 0) {
+    const nextCheck = nextEntryListWindowAt(new Date());
     return (
       <main>
         <LiveRefresh />
@@ -367,7 +377,28 @@ async function renderTieredLineup({
         <h1>
           Week {race.week} — {race.trackName}
         </h1>
-        <p>Tiers haven&apos;t been assigned for this race yet — check back soon.</p>
+        <p>
+          {race.venueName && <>{race.venueName} · </>}
+          {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+        </p>
+        <Card title="Picks open once entries are confirmed">
+          <p>
+            NASCAR hasn&apos;t published the entry list for this race yet. We check automatically every Tuesday and
+            Friday around midday — once it&apos;s in, tiers get assigned from it and your lineup opens up here.
+          </p>
+          <p>
+            <small>
+              Next check:{" "}
+              {nextCheck.toLocaleString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </small>
+          </p>
+        </Card>
       </main>
     );
   }
