@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 
 export const dynamic = "force-dynamic";
@@ -62,10 +63,11 @@ export default async function StatsPage() {
       <h2>Season points standings</h2>
       <p>
         <small>
-          Our own cumulative total (finish-position points + stage points, every points race this season) — NASCAR
-          doesn&apos;t expose a persistent standings feed we can pull from, only a live leaderboard that only exists
-          while a race is actually green-flag live. This won&apos;t match NASCAR.com&apos;s own standings once the
-          playoffs start, since their bracket resets points and adds playoff bonuses this doesn&apos;t replicate.
+          Computed from our own synced results using the 2026 Cup points system — NASCAR doesn&apos;t expose a
+          persistent standings feed we can pull from, only a live leaderboard that only exists while a race is
+          actually green-flag live. Finish points (55 for a win, then 37 minus position, floor of 1) plus stage
+          points, first 26 races. After that, the top 16 get reset to their Chase seed and the last 10 races add on
+          top of that — everyone else keeps accumulating normally.
         </small>
       </p>
       <Card>
@@ -87,7 +89,9 @@ export default async function StatsPage() {
               {pointsStandings.map((e, i) => (
                 <tr key={e.driverId}>
                   <td>{i + 1}</td>
-                  <td>{e.driverName}</td>
+                  <td>
+                    {e.driverName} {e.inChase && <Badge tone="success">Chase</Badge>}
+                  </td>
                   <td>{e.points}</td>
                   <td>{e.wins}</td>
                   <td>{e.top5}</td>
