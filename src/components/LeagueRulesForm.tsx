@@ -12,6 +12,7 @@ import { buildTieredDraftDefaultConfig, type TieredDraftRuleSetConfig } from "@/
 import { createLeague, previewRules, type PreviewRow } from "@/app/leagues/new/actions";
 import { updateLeagueRules } from "@/app/leagues/[leagueId]/commissioner/actions";
 import Card from "@/components/ui/Card";
+import styles from "./LeagueRulesForm.module.css";
 
 type RaceOption = { id: string; label: string };
 
@@ -31,6 +32,43 @@ function clonePreset(preset: PickemRuleSetConfig): PickemRuleSetConfig {
     positionPoints: [...preset.positionPoints],
     stagePositionPoints: [...preset.stagePositionPoints],
   };
+}
+
+// A compact grid of "position -> points" number inputs, chunked into a
+// wrapping grid instead of the old side-by-side raw <table>s — shared by
+// every points matrix in this form (Pick'em position/stage points, Tiered
+// Lineup qualifying/finish points).
+function PointsMatrix({
+  label,
+  helper,
+  values,
+  onChange,
+}: {
+  label: string;
+  helper?: string;
+  values: number[];
+  onChange: (index: number, value: number) => void;
+}) {
+  return (
+    <div>
+      <div className={styles.matrixLabel}>{label}</div>
+      {helper && <div className={styles.matrixHelper}>{helper}</div>}
+      <div className={styles.matrix}>
+        {values.map((pts, i) => (
+          <div key={i} className={styles.matrixCell}>
+            <span className={styles.matrixPos}>Pos {i + 1}</span>
+            <input
+              type="number"
+              aria-label={`Points for position ${i + 1}`}
+              value={pts}
+              onChange={(e) => onChange(i, parseInt(e.target.value, 10) || 0)}
+              className={styles.matrixInput}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function LeagueRulesForm({
@@ -123,422 +161,414 @@ export default function LeagueRulesForm({
   }
 
   return (
-    <form onSubmit={handleCreate}>
-      <Card>
+    <form onSubmit={handleCreate} className={styles.form}>
       {!editingLeague && (
-        <div>
-          <label htmlFor="name">League name</label>
-          <br />
-          <input id="name" value={name} onChange={(e) => setName(e.target.value)} required minLength={3} autoFocus />
-        </div>
+        <Card title="League details">
+          <div className={styles.fieldBlock}>
+            <label htmlFor="name" className={styles.fieldLabel}>
+              League name
+            </label>
+            <input
+              id="name"
+              className={styles.textInput}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              minLength={3}
+              autoFocus
+            />
+          </div>
+        </Card>
       )}
 
-      {!editingLeague && <h2>League type</h2>}
-      <div style={editingLeague ? { display: "none" } : undefined}>
-        <label>
-          <input
-            type="radio"
-            name="leagueType"
-            checked={leagueType === "PICKEM"}
-            onChange={() => setLeagueType("PICKEM")}
-          />{" "}
-          Pick&apos;em — pick a driver (or several) each week, fully customizable scoring
-        </label>
-        <br />
-        <label>
-          <input
-            type="radio"
-            name="leagueType"
-            checked={leagueType === "TIERED_DRAFT"}
-            onChange={() => setLeagueType("TIERED_DRAFT")}
-          />{" "}
-          Tiered Lineup — draft a weekly 8-driver roster from 3 performance tiers, old-Yahoo-style
-        </label>
-      </div>
+      {!editingLeague && (
+        <Card title="League type">
+          <div className={styles.typeGrid}>
+            <label className={`${styles.typeCard} ${leagueType === "PICKEM" ? styles.typeCardActive : ""}`}>
+              <input
+                type="radio"
+                name="leagueType"
+                className={styles.typeCardRadio}
+                checked={leagueType === "PICKEM"}
+                onChange={() => setLeagueType("PICKEM")}
+              />
+              <span>
+                <span className={styles.typeCardTitle}>Pick&apos;em</span>
+                <div className={styles.typeCardDesc}>
+                  Pick a driver (or several) each week, fully customizable scoring.
+                </div>
+              </span>
+            </label>
+            <label className={`${styles.typeCard} ${leagueType === "TIERED_DRAFT" ? styles.typeCardActive : ""}`}>
+              <input
+                type="radio"
+                name="leagueType"
+                className={styles.typeCardRadio}
+                checked={leagueType === "TIERED_DRAFT"}
+                onChange={() => setLeagueType("TIERED_DRAFT")}
+              />
+              <span>
+                <span className={styles.typeCardTitle}>Tiered Lineup</span>
+                <div className={styles.typeCardDesc}>
+                  Draft a weekly 8-driver roster from 3 performance tiers, old-Yahoo-style.
+                </div>
+              </span>
+            </label>
+          </div>
+        </Card>
+      )}
 
       {leagueType === "TIERED_DRAFT" ? (
         <>
-          <h2>How Tiered Lineup works</h2>
-          <p>
-            Every week, drivers are sorted into three tiers (A, B, C) based on that week&apos;s performance/ranking.
-            Each player drafts a lineup of 8 drivers: 1 starter + 1 bench from Tier A, 2 starters + 2 bench from
-            Tier B, and 1 starter + 1 bench from Tier C.
-          </p>
-          <p>
-            <strong>Lineup lock:</strong> your lineup locks at 2:00 AM Pacific on qualifying day. After that, you
-            can still swap a starter for its bench counterpart (no new drivers) right up until 5 minutes before the
-            race starts. If you never touch your lineup for a week, last week&apos;s carries over.
-          </p>
-          <p>
-            <strong>Scoring:</strong> every rostered driver, starter or bench, scores qualifying points (only the
-            top 4 qualifiers ever score). Starters additionally score finishing points; bench drivers never score
-            finishing points, win or lose. The tier structure and lock timing aren&apos;t editable, but every point
-            value below is — the defaults shown match the classic Yahoo Fantasy NASCAR payouts.
-          </p>
-          <div>
-            <label htmlFor="maxStarts">Max times a player can START the same driver per season</label>
-            <br />
-            <input
-              id="maxStarts"
-              type="number"
-              min={1}
-              value={tieredConfig.maxStartsPerDriverPerSeason}
-              onChange={(e) =>
-                setTieredConfig((c) => ({
-                  ...c,
-                  maxStartsPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1),
-                }))
-              }
-            />{" "}
-            (benching a driver doesn&apos;t count against this cap — only starting them does)
-          </div>
+          <Card title="How Tiered Lineup works">
+            <p className={styles.intro}>
+              Every week, drivers are sorted into three tiers (A, B, C) based on that week&apos;s performance/ranking.
+              Each player drafts a lineup of 8 drivers: 1 starter + 1 bench from Tier A, 2 starters + 2 bench from
+              Tier B, and 1 starter + 1 bench from Tier C.
+            </p>
+            <p className={styles.intro}>
+              <strong>Lineup lock:</strong> your lineup locks at 2:00 AM Pacific on qualifying day. After that, you
+              can still swap a starter for its bench counterpart (no new drivers) right up until 5 minutes before the
+              race starts. If you never touch your lineup for a week, last week&apos;s carries over.
+            </p>
+            <p className={styles.intro}>
+              <strong>Scoring:</strong> every rostered driver, starter or bench, scores qualifying points (only the
+              top 4 qualifiers ever score). Starters additionally score finishing points; bench drivers never score
+              finishing points, win or lose. The tier structure and lock timing aren&apos;t editable, but every point
+              value below is — the defaults shown match the classic Yahoo Fantasy NASCAR payouts.
+            </p>
+          </Card>
 
-          <h3>Qualifying points</h3>
-          <p>Every rostered driver earns these — only the top 4 qualifiers score anything.</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Qual. pos</th>
-                <th>Pts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tieredConfig.qualifyingPositionPoints.map((pts, i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  <td>
-                    <input
-                      type="number"
-                      aria-label={`Qualifying points for position ${i + 1}`}
-                      value={pts}
-                      onChange={(e) => updateTieredQualifyingPoint(i, parseInt(e.target.value, 10) || 0)}
-                      style={{ width: "4em" }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Card title="Rules">
+            <div className={styles.fieldBlock}>
+              <label htmlFor="maxStarts" className={styles.fieldLabel}>
+                Max times a player can START the same driver per season
+              </label>
+              <input
+                id="maxStarts"
+                type="number"
+                min={1}
+                className={styles.numberInputSmall}
+                value={tieredConfig.maxStartsPerDriverPerSeason}
+                onChange={(e) =>
+                  setTieredConfig((c) => ({
+                    ...c,
+                    maxStartsPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1),
+                  }))
+                }
+              />
+              <div className={styles.fieldHelper}>Benching a driver doesn&apos;t count against this cap — only starting them does.</div>
+            </div>
+          </Card>
 
-          <h3>Finishing points</h3>
-          <p>Starters only — bench drivers never score these.</p>
-          <div style={{ display: "flex", gap: "1em", flexWrap: "wrap" }}>
-            {[0, 10, 20, 30].map((start) => (
-              <table key={start}>
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: 10 }, (_, i) => start + i).map((i) => (
-                    <tr key={i}>
-                      <td>{i + 1}</td>
-                      <td>
-                        <input
-                          type="number"
-                          aria-label={`Finishing points for position ${i + 1}`}
-                          value={tieredConfig.finishPositionPoints[i]}
-                          onChange={(e) => updateTieredFinishPoint(i, parseInt(e.target.value, 10) || 0)}
-                          style={{ width: "4em" }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ))}
-          </div>
-          <p>(Positions 1 through {MAX_FIELD_SIZE}.)</p>
+          <Card title="Qualifying points">
+            <PointsMatrix
+              label="Every rostered driver earns these"
+              helper="Only the top 4 qualifiers score anything."
+              values={tieredConfig.qualifyingPositionPoints}
+              onChange={updateTieredQualifyingPoint}
+            />
+          </Card>
+
+          <Card title="Finishing points">
+            <PointsMatrix
+              label={`Positions 1 through ${MAX_FIELD_SIZE}`}
+              helper="Starters only — bench drivers never score these."
+              values={tieredConfig.finishPositionPoints}
+              onChange={updateTieredFinishPoint}
+            />
+          </Card>
 
           {createError && <p role="alert">{createError}</p>}
 
-          <p>
+          <div className={styles.submitRow}>
             <button type="submit" disabled={creating}>
               {creating ? "Saving..." : editingLeague ? "Save changes" : "Create league"}
             </button>
-          </p>
-        </>
-      ) : (
-        <>
-      <h2>Presets</h2>
-      <p>
-        <button type="button" onClick={() => applyPreset(PRESETS.nascarOfficial)}>
-          NASCAR official points
-        </button>{" "}
-        <button type="button" onClick={() => applyPreset(PRESETS.ourDefault)}>
-          Our default (1 pt/position, +10 win, +5 stage win)
-        </button>
-      </p>
-
-      <h2>Editable Rules</h2>
-      <div>
-        <label htmlFor="picksPerWeek">Drivers picked per player per week</label>
-        <br />
-        <input
-          id="picksPerWeek"
-          type="number"
-          min={1}
-          max={10}
-          value={config.picksPerWeek}
-          onChange={(e) => setConfig((c) => ({ ...c, picksPerWeek: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
-        />
-      </div>
-
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={unlimitedRepeats}
-            onChange={(e) => {
-              setUnlimitedRepeats(e.target.checked);
-              setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: e.target.checked ? null : 1 }));
-            }}
-          />{" "}
-          Unlimited repeat picks of the same driver
-        </label>
-        {!unlimitedRepeats && (
-          <>
-            <br />
-            <label htmlFor="maxRepeats">Max times a player can pick the same driver per season</label>
-            <br />
-            <input
-              id="maxRepeats"
-              type="number"
-              min={1}
-              value={config.maxPicksPerDriverPerSeason ?? 1}
-              onChange={(e) =>
-                setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1) }))
-              }
-            />
-          </>
-        )}
-      </div>
-
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={config.includeNonPointsRaces}
-            onChange={(e) => setConfig((c) => ({ ...c, includeNonPointsRaces: e.target.checked }))}
-          />{" "}
-          Include non-points races (e.g. the All-Star race)
-        </label>
-      </div>
-
-      <div>
-        <p>When do picks lock?</p>
-        <label>
-          <input
-            type="radio"
-            name="lockTiming"
-            checked={config.lockTiming === "afterQualifying"}
-            onChange={() => setConfig((c) => ({ ...c, lockTiming: "afterQualifying" }))}
-          />{" "}
-          After qualifying — picks lock 5 minutes before the race starts, informed by starting position
-        </label>
-        <br />
-        <label>
-          <input
-            type="radio"
-            name="lockTiming"
-            checked={config.lockTiming === "beforeQualifying"}
-            onChange={() => setConfig((c) => ({ ...c, lockTiming: "beforeQualifying" }))}
-          />{" "}
-          Before qualifying — picks lock blind, the moment qualifying begins
-        </label>
-      </div>
-
-      <h2>Points Rules</h2>
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={config.includeStagePoints}
-            onChange={(e) => setConfig((c) => ({ ...c, includeStagePoints: e.target.checked }))}
-          />{" "}
-          Include stage points
-        </label>
-      </div>
-
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={config.includeWinnerBonus}
-            onChange={(e) => setConfig((c) => ({ ...c, includeWinnerBonus: e.target.checked }))}
-          />{" "}
-          Winner bonus
-        </label>
-        {config.includeWinnerBonus && (
-          <>
-            {" "}
-            <input
-              type="number"
-              aria-label="Winner bonus value"
-              value={config.winnerBonus}
-              onChange={(e) => setConfig((c) => ({ ...c, winnerBonus: parseInt(e.target.value, 10) || 0 }))}
-              style={{ width: "5em" }}
-            />{" "}
-            points added on top of 1st place&apos;s position points
-          </>
-        )}
-      </div>
-
-      <h3>Position points</h3>
-      <div>
-        <label>
-          <input
-            type="radio"
-            name="pointsMode"
-            checked={config.pointsMode === "fixed"}
-            onChange={() => setConfig((c) => ({ ...c, pointsMode: "fixed" }))}
-          />{" "}
-          Fixed points matrix — each position is always worth the same, like real NASCAR points
-        </label>
-        <br />
-        <label>
-          <input
-            type="radio"
-            name="pointsMode"
-            checked={config.pointsMode === "fieldSizeRelative"}
-            onChange={() => setConfig((c) => ({ ...c, pointsMode: "fieldSizeRelative" }))}
-          />{" "}
-          Field-size relative — 1st place is worth however many cars started, scaling down each race
-        </label>
-      </div>
-
-      {config.pointsMode === "fixed" ? (
-        <>
-          <p>Points awarded for each finishing position.</p>
-          <div style={{ display: "flex", gap: "1em", flexWrap: "wrap" }}>
-            {[0, 10, 20, 30].map((start) => (
-              <table key={start}>
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: 10 }, (_, i) => start + i).map((i) => (
-                    <tr key={i}>
-                      <td>{i + 1}</td>
-                      <td>
-                        <input
-                          type="number"
-                          aria-label={`Points for position ${i + 1}`}
-                          value={config.positionPoints[i]}
-                          onChange={(e) => updatePositionPoint(i, parseInt(e.target.value, 10) || 0)}
-                          style={{ width: "4em" }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ))}
           </div>
-          <p>(Positions 1 through {MAX_FIELD_SIZE}.)</p>
         </>
       ) : (
-        <p>
-          A finisher scores (field size + 1 − finishing position) points — e.g. 1st in a 36-car field scores 36,
-          last scores 1.
-        </p>
-      )}
-
-      {config.includeStagePoints && (
         <>
-          <h3>Stage points</h3>
-          <p>Only the top {MAX_STAGE_POSITIONS} finishers of a stage score stage points.</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Stage pos</th>
-                <th>Pts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {config.stagePositionPoints.map((pts, i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  <td>
-                    <input
-                      type="number"
-                      aria-label={`Stage points for position ${i + 1}`}
-                      value={pts}
-                      onChange={(e) => updateStagePoint(i, parseInt(e.target.value, 10) || 0)}
-                      style={{ width: "4em" }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
+          <Card title="Presets">
+            <div className={styles.presetRow}>
+              <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.nascarOfficial)}>
+                NASCAR official points
+              </button>
+              <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.ourDefault)}>
+                Our default (1 pt/position, +10 win, +5 stage win)
+              </button>
+            </div>
+          </Card>
 
-      <h2>Test these rules against real results</h2>
-      {completedRaces.length === 0 ? (
-        <p>No race has results entered yet — nothing to test against.</p>
-      ) : (
-        <>
-          <label htmlFor="previewRace">Race</label>
-          <br />
-          <select id="previewRace" value={previewRaceId} onChange={(e) => setPreviewRaceId(e.target.value)}>
-            {completedRaces.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.label}
-              </option>
-            ))}
-          </select>{" "}
-          <button type="button" onClick={handlePreview} disabled={previewing}>
-            {previewing ? "Testing..." : "Test"}
-          </button>
+          <Card title="Editable rules">
+            <div className={styles.fieldBlock}>
+              <label htmlFor="picksPerWeek" className={styles.fieldLabel}>
+                Drivers picked per player per week
+              </label>
+              <input
+                id="picksPerWeek"
+                type="number"
+                min={1}
+                max={10}
+                className={styles.numberInputSmall}
+                value={config.picksPerWeek}
+                onChange={(e) => setConfig((c) => ({ ...c, picksPerWeek: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+              />
+            </div>
 
-          {previewError && <p role="alert">{previewError}</p>}
+            <div className={styles.fieldBlock}>
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={unlimitedRepeats}
+                  onChange={(e) => {
+                    setUnlimitedRepeats(e.target.checked);
+                    setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: e.target.checked ? null : 1 }));
+                  }}
+                />
+                Unlimited repeat picks of the same driver
+              </label>
+              {!unlimitedRepeats && (
+                <div style={{ marginTop: 10 }}>
+                  <label htmlFor="maxRepeats" className={styles.fieldLabel}>
+                    Max times a player can pick the same driver per season
+                  </label>
+                  <input
+                    id="maxRepeats"
+                    type="number"
+                    min={1}
+                    className={styles.numberInputSmall}
+                    value={config.maxPicksPerDriverPerSeason ?? 1}
+                    onChange={(e) =>
+                      setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1) }))
+                    }
+                  />
+                </div>
+              )}
+            </div>
 
-          {previewRows && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Driver</th>
-                  <th>Finish</th>
-                  <th>Base</th>
-                  <th>Win bonus</th>
-                  <th>Stage bonus</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {previewRows.map((r) => (
-                  <tr key={r.driverId}>
-                    <td>{r.driverName}</td>
-                    <td>{r.finishPosition}</td>
-                    <td>{r.baseScore}</td>
-                    <td>{r.winBonus}</td>
-                    <td>{r.stageBonus}</td>
-                    <td>{r.total}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className={styles.fieldBlock}>
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={config.includeNonPointsRaces}
+                  onChange={(e) => setConfig((c) => ({ ...c, includeNonPointsRaces: e.target.checked }))}
+                />
+                Include non-points races (e.g. the All-Star race)
+              </label>
+            </div>
+
+            <div className={styles.fieldBlock}>
+              <div className={styles.fieldLabel}>When do picks lock?</div>
+              <div className={styles.radioGroup}>
+                <label
+                  className={`${styles.radioOption} ${config.lockTiming === "afterQualifying" ? styles.radioOptionActive : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="lockTiming"
+                    className={styles.radioOptionRadio}
+                    checked={config.lockTiming === "afterQualifying"}
+                    onChange={() => setConfig((c) => ({ ...c, lockTiming: "afterQualifying" }))}
+                  />
+                  <span>
+                    <div className={styles.radioOptionTitle}>After qualifying</div>
+                    <div className={styles.radioOptionDesc}>
+                      Picks lock 5 minutes before the race starts, informed by starting position.
+                    </div>
+                  </span>
+                </label>
+                <label
+                  className={`${styles.radioOption} ${config.lockTiming === "beforeQualifying" ? styles.radioOptionActive : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="lockTiming"
+                    className={styles.radioOptionRadio}
+                    checked={config.lockTiming === "beforeQualifying"}
+                    onChange={() => setConfig((c) => ({ ...c, lockTiming: "beforeQualifying" }))}
+                  />
+                  <span>
+                    <div className={styles.radioOptionTitle}>Before qualifying</div>
+                    <div className={styles.radioOptionDesc}>Picks lock blind, the moment qualifying begins.</div>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Points rules">
+            <div className={styles.fieldBlock}>
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={config.includeStagePoints}
+                  onChange={(e) => setConfig((c) => ({ ...c, includeStagePoints: e.target.checked }))}
+                />
+                Include stage points
+              </label>
+            </div>
+
+            <div className={styles.fieldBlock}>
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={config.includeWinnerBonus}
+                  onChange={(e) => setConfig((c) => ({ ...c, includeWinnerBonus: e.target.checked }))}
+                />
+                Winner bonus
+              </label>
+              {config.includeWinnerBonus && (
+                <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="number"
+                    aria-label="Winner bonus value"
+                    className={styles.numberInputSmall}
+                    value={config.winnerBonus}
+                    onChange={(e) => setConfig((c) => ({ ...c, winnerBonus: parseInt(e.target.value, 10) || 0 }))}
+                  />
+                  <span className={styles.fieldHelper}>points added on top of 1st place&apos;s position points</span>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.fieldBlock}>
+              <div className={styles.fieldLabel}>Position points</div>
+              <div className={styles.radioGroup}>
+                <label className={`${styles.radioOption} ${config.pointsMode === "fixed" ? styles.radioOptionActive : ""}`}>
+                  <input
+                    type="radio"
+                    name="pointsMode"
+                    className={styles.radioOptionRadio}
+                    checked={config.pointsMode === "fixed"}
+                    onChange={() => setConfig((c) => ({ ...c, pointsMode: "fixed" }))}
+                  />
+                  <span>
+                    <div className={styles.radioOptionTitle}>Fixed points matrix</div>
+                    <div className={styles.radioOptionDesc}>Each position is always worth the same, like real NASCAR points.</div>
+                  </span>
+                </label>
+                <label
+                  className={`${styles.radioOption} ${config.pointsMode === "fieldSizeRelative" ? styles.radioOptionActive : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="pointsMode"
+                    className={styles.radioOptionRadio}
+                    checked={config.pointsMode === "fieldSizeRelative"}
+                    onChange={() => setConfig((c) => ({ ...c, pointsMode: "fieldSizeRelative" }))}
+                  />
+                  <span>
+                    <div className={styles.radioOptionTitle}>Field-size relative</div>
+                    <div className={styles.radioOptionDesc}>
+                      1st place is worth however many cars started, scaling down each race.
+                    </div>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </Card>
+
+          {config.pointsMode === "fixed" && (
+            <Card title="Position points">
+              <PointsMatrix
+                label="Points awarded for each finishing position"
+                helper={`Positions 1 through ${MAX_FIELD_SIZE}.`}
+                values={config.positionPoints}
+                onChange={updatePositionPoint}
+              />
+            </Card>
           )}
+          {config.pointsMode === "fieldSizeRelative" && (
+            <Card title="Position points">
+              <p className={styles.intro}>
+                A finisher scores (field size + 1 − finishing position) points — e.g. 1st in a 36-car field scores
+                36, last scores 1.
+              </p>
+            </Card>
+          )}
+
+          {config.includeStagePoints && (
+            <Card title="Stage points">
+              <PointsMatrix
+                label={`Only the top ${MAX_STAGE_POSITIONS} finishers of a stage score`}
+                values={config.stagePositionPoints}
+                onChange={updateStagePoint}
+              />
+            </Card>
+          )}
+
+          <Card title="Test these rules against real results">
+            {completedRaces.length === 0 ? (
+              <p className={styles.intro}>No race has results entered yet — nothing to test against.</p>
+            ) : (
+              <>
+                <div className={styles.previewRow}>
+                  <div className={styles.fieldBlock} style={{ padding: 0, border: "none" }}>
+                    <label htmlFor="previewRace" className={styles.fieldLabel}>
+                      Race
+                    </label>
+                    <select
+                      id="previewRace"
+                      className={styles.select}
+                      value={previewRaceId}
+                      onChange={(e) => setPreviewRaceId(e.target.value)}
+                    >
+                      {completedRaces.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button type="button" onClick={handlePreview} disabled={previewing}>
+                    {previewing ? "Testing..." : "Test"}
+                  </button>
+                </div>
+
+                {previewError && <p role="alert">{previewError}</p>}
+
+                {previewRows && (
+                  <div className={styles.previewTableWrap}>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Driver</th>
+                          <th>Finish</th>
+                          <th>Base</th>
+                          <th>Win bonus</th>
+                          <th>Stage bonus</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewRows.map((r) => (
+                          <tr key={r.driverId}>
+                            <td>{r.driverName}</td>
+                            <td>{r.finishPosition}</td>
+                            <td>{r.baseScore}</td>
+                            <td>{r.winBonus}</td>
+                            <td>{r.stageBonus}</td>
+                            <td>{r.total}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+          </Card>
+
+          {createError && <p role="alert">{createError}</p>}
+
+          <div className={styles.submitRow}>
+            <button type="submit" disabled={creating}>
+              {creating ? "Saving..." : editingLeague ? "Save changes" : "Create league"}
+            </button>
+          </div>
         </>
       )}
-
-      {createError && <p role="alert">{createError}</p>}
-
-      <p>
-        <button type="submit" disabled={creating}>
-          {creating ? "Saving..." : editingLeague ? "Save changes" : "Create league"}
-        </button>
-      </p>
-        </>
-      )}
-      </Card>
     </form>
   );
 }

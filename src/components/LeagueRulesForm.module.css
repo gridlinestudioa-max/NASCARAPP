@@ -1,0 +1,247 @@
+.form > * + * {
+  margin-top: var(--space-4);
+}
+
+.intro {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.intro + .intro {
+  margin-top: var(--space-2);
+}
+
+.fieldBlock {
+  padding: 14px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.fieldBlock:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.fieldLabel {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.fieldHelper {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.textInput,
+.numberInput,
+.select {
+  width: 100%;
+  max-width: 320px;
+}
+
+.numberInputSmall {
+  width: 6em;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* ---------- League type / choice cards ---------- */
+
+.typeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .typeGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.typeCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  cursor: pointer;
+  background: var(--bg-surface);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.typeCard:hover {
+  border-color: var(--text-muted);
+}
+
+.typeCardActive {
+  border-color: var(--accent);
+  background: var(--bg-surface-muted);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.typeCardRadio {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.typeCardTitle {
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-family: var(--font-heading);
+}
+
+.typeCardDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ---------- Radio option rows (lock timing, points mode) ---------- */
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radioOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.radioOption:hover {
+  border-color: var(--text-muted);
+}
+
+.radioOptionActive {
+  border-color: var(--accent);
+  background: var(--bg-surface-muted);
+}
+
+.radioOptionRadio {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.radioOptionTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.radioOptionDesc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.45;
+}
+
+/* ---------- Presets ---------- */
+
+.presetRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.presetButton {
+  border-radius: var(--radius-pill);
+  padding: 0.5em 1.1em;
+  font-size: 0.83rem;
+}
+
+/* ---------- Points matrices ---------- */
+
+.matrixLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.matrixHelper {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.matrixCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-surface-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+}
+
+.matrixPos {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.matrixInput {
+  width: 100%;
+  max-width: none;
+  text-align: center;
+  padding: 0.3em 0.2em;
+  font-size: 0.85rem;
+  margin-top: 0;
+}
+
+/* ---------- Preview / test section ---------- */
+
+.previewRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.previewTableWrap {
+  margin-top: var(--space-3);
+  overflow-x: auto;
+}
+
+/* ---------- Submit ---------- */
+
+.submitRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}

@@ -9,9 +9,15 @@
 
 const HOUR_MS = 60 * 60 * 1000;
 const UTC_MINUS_5_OFFSET_MS = 5 * HOUR_MS;
-// Generous relative to the sync tick interval, so a late-firing or missed
-// tick still lands inside the window instead of skipping it.
-export const ENTRY_WINDOW_MINUTES = 90;
+// Runs from noon through the rest of entry-list day (Tuesday/Friday) —
+// wide on purpose. A narrow window (this used to be 90 minutes) means a
+// single missed tick — GitHub Actions' schedule trigger is best-effort and
+// has been observed gapping several hours — pushes "next window" all the
+// way to the *next* entry-list day, which reads as "locked until Friday"
+// on a Tuesday afternoon even though the real entry list is still due any
+// time today. Keeping the window open the rest of the day means any tick
+// that lands before midnight still catches it.
+export const ENTRY_WINDOW_MINUTES = 12 * 60;
 
 function shiftToUtcMinus5(date: Date): Date {
   return new Date(date.getTime() - UTC_MINUS_5_OFFSET_MS);
@@ -27,8 +33,11 @@ export function isEntryListWindow(now: Date): boolean {
 
 // The next moment (at or after `now`) that the entry-list window opens —
 // purely for display ("we'll check again around ..."); the route above
-// doesn't need this, it just checks isEntryListWindow on every tick.
+// doesn't need this, it just checks isEntryListWindow on every tick. If
+// `now` already falls inside today's window, that *is* the answer — the
+// entry list is due any time today, not "next Tuesday/Friday at noon".
 export function nextEntryListWindowAt(now: Date): Date {
+  if (isEntryListWindow(now)) return now;
   const shiftedNow = shiftToUtcMinus5(now);
   for (let i = 0; i < 8; i++) {
     const candidateShifted = new Date(

@@ -132,12 +132,19 @@ export default async function TieredLineupPickPanel({
     // tiers aren't assigned yet even though Tuesday has passed, fall back
     // to explaining when the next sync window is, since that's the real
     // blocker at that point.
-    const unlockAt = phase === "notYetOpen" ? entryListUnlockAt(race) : nextEntryListWindowAt(new Date());
-    const unlockLabel = unlockAt.toLocaleString(undefined, {
-      weekday: "long",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    const now = new Date();
+    const nextWindowAt = phase === "notYetOpen" ? entryListUnlockAt(race) : nextEntryListWindowAt(now);
+    // We're already inside today's entry-list window (noon-midnight
+    // Tuesday/Friday) and just waiting on the next sync tick to actually
+    // pull it — a clock time here would print "now", which reads oddly.
+    const waitingOnSyncToday = phase !== "notYetOpen" && nextWindowAt.getTime() <= now.getTime();
+    const unlockLabel = waitingOnSyncToday
+      ? "later today, once this week's entry list syncs"
+      : nextWindowAt.toLocaleString(undefined, {
+          weekday: "long",
+          hour: "numeric",
+          minute: "2-digit",
+        });
     const starterSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER");
     const benchSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "BENCH");
     const renderLockedSlot = (tier: DriverTier) => (

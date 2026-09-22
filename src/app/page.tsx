@@ -5,23 +5,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
-import StatCard from "@/components/dashboard/StatCard";
-import SeasonScoreTrend from "@/components/dashboard/SeasonScoreTrend";
-import PointsDonut, { type DonutSlice } from "@/components/dashboard/PointsDonut";
 import { getLeagueHubData } from "@/app/leagues/[leagueId]/(hub)/leagueData";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
-import { computePlayerSeasonStats, computeTrendSeries, computeWeeklyTotals, ordinal, scoredRacesInOrder } from "@/lib/leagueStats";
+import { computePlayerSeasonStats, computeWeeklyTotals, ordinal, scoredRacesInOrder } from "@/lib/leagueStats";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
-
-function countdownLabel(date: Date): string {
-  const diffMs = Math.max(date.getTime() - Date.now(), 0);
-  const days = Math.floor(diffMs / 86_400_000);
-  if (days > 0) return `${days}d`;
-  const hours = Math.floor((diffMs % 86_400_000) / 3_600_000);
-  return `${hours}h`;
-}
 
 export default async function Home() {
   const session = await auth();
@@ -166,6 +155,7 @@ async function HomeDashboard({
         score: 0,
         rank: null as number | null,
         lockedDrivers: [] as string[],
+        nextRaceId: null as string | null,
       };
     }
     const weekly = computeWeeklyTotals(hub.races, hub.picks);
@@ -185,133 +175,57 @@ async function HomeDashboard({
       score: mine?.total ?? 0,
       rank: mine?.rank ?? null,
       lockedDrivers,
+      nextRaceId: nextRace?.id ?? null,
     };
   });
-
-  // The "primary" league driving the welcome header, stat cards, trend
-  // chart and points breakdown is simply the first league alphabetically —
-  // same deterministic ordering as the table below.
-  const primary = memberships[0];
-  const primaryHub = hubDataList[0];
-
-  const commissionerCount = memberships.filter((m) => m.role === "OWNER").length;
-  const bestRow = leagueRows.reduce<(typeof leagueRows)[number] | null>((best, row) => {
-    if (row.rank == null) return best;
-    if (!best || best.rank == null || row.rank < best.rank) return row;
-    return best;
-  }, null);
-
-  let myTrend: number[] = [];
-  let avgTrend: number[] = [];
-  let raceLabels: string[] = [];
-  let seasonScore = 0;
-  let momentumLabel = "No races scored yet";
-  const donutSlices: DonutSlice[] = [];
-  let nextRace: { trackName: string; venueName: string | null; date: Date } | null = null;
-
-  if (primaryHub) {
-    const weekly = computeWeeklyTotals(primaryHub.races, primaryHub.picks);
-    const scoredRaces = scoredRacesInOrder(primaryHub.races, weekly);
-    const stats = computePlayerSeasonStats(primaryHub.members, scoredRaces, weekly, primaryHub.picks);
-    const mine = stats.find((s) => s.userId === userId);
-    seasonScore = mine?.total ?? 0;
-    if (mine?.momentum != null) {
-      momentumLabel = `${mine.momentum >= 0 ? "+" : ""}${mine.momentum} last race`;
-    } else if (mine?.lastRacePts != null) {
-      momentumLabel = `${mine.lastRacePts} last race`;
-    }
-
-    const trend = computeTrendSeries(primaryHub.members, scoredRaces, weekly);
-    myTrend = trend.totals.find((t) => t.userId === userId)?.data ?? [];
-    avgTrend = scoredRaces.map((_, i) => {
-      const vals = trend.totals.map((t) => t.data[i] ?? 0);
-      return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-    });
-    raceLabels = trend.labels;
-
-    const myPicks = primaryHub.picks.filter((p) => p.userId === userId && p.score);
-    const raceFinish = myPicks.reduce((sum, p) => sum + (p.score?.baseScore ?? 0), 0);
-    const stagePoints = myPicks.reduce((sum, p) => sum + (p.score?.stageBonus ?? 0), 0);
-    const bonus = myPicks.reduce((sum, p) => sum + (p.score?.winBonus ?? 0) + (p.score?.qualifyingBonus ?? 0), 0);
-    const breakdownTotal = raceFinish + stagePoints + bonus;
-    if (breakdownTotal > 0) {
-      donutSlices.push(
-        { name: "Race Finish", pct: Math.round((raceFinish / breakdownTotal) * 100), color: "var(--ink)" },
-        { name: "Stage Points", pct: Math.round((stagePoints / breakdownTotal) * 100), color: "var(--muted)" },
-        { name: "Bonus Picks", pct: Math.max(0, 100 - Math.round((raceFinish / breakdownTotal) * 100) - Math.round((stagePoints / breakdownTotal) * 100)), color: "#dcdad0" },
-      );
-    }
-
-    nextRace = primaryHub.nextOpenRace;
-  }
 
   return (
     <>
       <div className={styles.header}>
         <div>
           <h1>Welcome back, {firstName}</h1>
-          <p className={styles.headerSub}>
-            {nextRace
-              ? `${nextRace.trackName} · ${nextRace.date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}`
-              : "No upcoming races scheduled."}
-          </p>
+          <p className={styles.headerSub}>Here&apos;s where things stand across your leagues.</p>
         </div>
-        {nextRace && primaryHub && (
-          <Link href={`/leagues/${primary.leagueId}/races/${primaryHub.nextOpenRace!.id}`} className="linkButton">
-            Set Lineup
-          </Link>
-        )}
       </div>
 
-      <div className={styles.statGrid}>
-        <StatCard label="Season Score" value={seasonScore.toLocaleString()} delta={momentumLabel} />
-        <StatCard
-          label="Overall Rank"
-          value={bestRow?.rank ? ordinal(bestRow.rank) : "—"}
-          delta={bestRow ? `Best in ${bestRow.name}` : "No scored races yet"}
-        />
-        <StatCard
-          label="Active Leagues"
-          value={String(memberships.length)}
-          delta={commissionerCount > 0 ? `${commissionerCount} as commissioner` : "0 as commissioner"}
-        />
-        <StatCard
-          label="Next Race Locks"
-          value={nextRace ? countdownLabel(nextRace.date) : "—"}
-          delta={nextRace?.trackName ?? "No race scheduled"}
-        />
-      </div>
-
-      <div className={styles.chartRow}>
-        <Card className={styles.trendCard}>
-          <div className={styles.trendHeader}>
-            <span className={styles.trendTitle}>Season Score Trend</span>
-            <span className={styles.trendLegend}>
-              <span className={styles.legendItem}>
-                <span className={`${styles.legendDot} ${styles.legendDotInk}`} /> Your score
-              </span>
-              <span className={styles.legendItem}>
-                <span className={`${styles.legendDot} ${styles.legendDotFaint}`} /> League avg
-              </span>
-            </span>
-          </div>
-          <div className={styles.trendScore}>{seasonScore.toLocaleString()} pts</div>
-          <SeasonScoreTrend labels={raceLabels} mine={myTrend} average={avgTrend} />
-        </Card>
-
-        <Card className={styles.donutCard}>
-          <div className={styles.trendTitle}>Points Breakdown</div>
-          <div className={styles.donutSub}>By scoring category</div>
-          {donutSlices.length > 0 ? (
-            <PointsDonut slices={donutSlices} centerValue={seasonScore.toLocaleString()} centerLabel="total pts" />
-          ) : (
-            <p className={styles.empty}>No scored picks yet this season.</p>
-          )}
-        </Card>
+      <div className={styles.leagueSnapshotRow}>
+        {leagueRows.map((row) => (
+          <Card key={row.id} className={styles.leagueSnapshotCard}>
+            <Link href={`/leagues/${row.id}`} className={styles.leagueSnapshotHeader}>
+              {row.iconUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- arbitrary commissioner-pasted URL, not a static/local asset
+                <img src={row.iconUrl} alt="" className={styles.avatarImg} />
+              ) : (
+                <span className={styles.avatar}>{row.name.charAt(0).toUpperCase()}</span>
+              )}
+              <span className={styles.leagueSnapshotName}>{row.name}</span>
+              {row.isCommissioner && <Badge tone="neutral">Commish</Badge>}
+            </Link>
+            <div className={styles.leagueSnapshotStats}>
+              <div className={styles.snapshotStat}>
+                <span className={styles.snapshotValue}>{row.score.toLocaleString()}</span>
+                <span className={styles.snapshotLabel}>Score</span>
+              </div>
+              <div className={styles.snapshotStat}>
+                <span className={styles.snapshotValue}>{row.rank ? ordinal(row.rank) : "—"}</span>
+                <span className={styles.snapshotLabel}>Rank</span>
+              </div>
+            </div>
+            {row.nextRaceId ? (
+              <Link href={`/leagues/${row.id}/races/${row.nextRaceId}`} className="linkButton">
+                Set Lineup
+              </Link>
+            ) : (
+              <Link href={`/leagues/${row.id}`} className="linkButtonOutline">
+                View league
+              </Link>
+            )}
+          </Card>
+        ))}
       </div>
 
       <Card
-        title="Your Leagues"
+        title="My Leagues"
         actions={
           <>
             <Link href="/leagues/new" className="linkButton">
