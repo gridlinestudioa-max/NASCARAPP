@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { signOutAction } from "@/app/actions";
 import styles from "./AppShell.module.css";
 
-const NAV_ITEMS = [
+const ESSENTIAL_NAV_ITEMS = [
   {
     href: "/my-leagues",
     label: "My Leagues",
     icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor" />
         <rect x="13" y="3" width="8" height="8" rx="2" fill="currentColor" opacity="0.4" />
         <rect x="3" y="13" width="8" height="8" rx="2" fill="currentColor" opacity="0.4" />
@@ -23,7 +23,7 @@ const NAV_ITEMS = [
     href: "/races",
     label: "Schedule",
     icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="4" width="18" height="17" rx="3" />
         <path d="M3 9h18M8 2v4M16 2v4" strokeLinecap="round" />
       </svg>
@@ -33,7 +33,7 @@ const NAV_ITEMS = [
     href: "/stats",
     label: "Driver Stats",
     icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <rect x="4" y="12" width="4" height="8" rx="1" fill="currentColor" opacity="0.5" />
         <rect x="10" y="7" width="4" height="13" rx="1" fill="currentColor" />
         <rect x="16" y="3" width="4" height="17" rx="1" fill="currentColor" opacity="0.75" />
@@ -41,6 +41,16 @@ const NAV_ITEMS = [
     ),
   },
 ];
+
+const ADMIN_NAV_ITEM = {
+  href: "/admin",
+  label: "Admin",
+  icon: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V5l7-3z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
 
 const SETTINGS_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -53,80 +63,225 @@ const SETTINGS_ICON = (
   </svg>
 );
 
-const ADMIN_NAV_ITEM = {
-  href: "/admin",
-  label: "Admin",
-  icon: (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path
-        d="M12 2l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V5l7-3z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-};
+const SIGN_OUT_ICON = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
-function Brand() {
-  return (
-    <Link href="/my-leagues" className={styles.brand}>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path
-          d="M4 3v18M4 4h12l-2.5 3L16 10H4"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      </svg>
-      Fantasy NASCAR HQ
-    </Link>
-  );
+const ADD_ICON = (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+  </svg>
+);
+
+const DOT_COLORS = ["#141414", "#6b6b6b", "#9a9a97", "#c7c6c0"];
+
+const SIDEBAR_THEME_KEY = "sidebarTheme";
+
+type SidebarTheme = "light" | "dark";
+
+function isActivePath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export default function AppShell({
   user,
   isAdmin,
+  leagues,
   children,
 }: {
   user: { name?: string | null; email: string };
   isAdmin: boolean;
+  leagues: { id: string; name: string }[];
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const navItems = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
+  const [hovered, setHovered] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Lazy initializer (not an effect) so the stored preference applies on the
+  // very first client render instead of flashing light-then-dark.
+  const [sidebarTheme, setSidebarTheme] = useState<SidebarTheme>(() => {
+    if (typeof window === "undefined") return "light";
+    const stored = window.localStorage.getItem(SIDEBAR_THEME_KEY);
+    return stored === "dark" ? "dark" : "light";
+  });
+
+  const chooseSidebarTheme = (mode: SidebarTheme) => {
+    setSidebarTheme(mode);
+    window.localStorage.setItem(SIDEBAR_THEME_KEY, mode);
+    setSettingsOpen(false);
+  };
+
+  const activeLeagueId = pathname.match(/^\/leagues\/([^/]+)/)?.[1];
+  const displayName = user.name ?? user.email;
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <Brand />
-        <nav className={styles.nav}>
-          {navItems.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
-              >
-                <span className={styles.navIcon}>{item.icon}</span>
-                <span>{item.label}</span>
+      <div className={styles.sidebarSlot}>
+        <aside
+          className={sidebarTheme === "dark" ? `${styles.sidebar} ${styles.sidebarDark}` : styles.sidebar}
+          suppressHydrationWarning
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => {
+            setHovered(false);
+            setSettingsOpen(false);
+          }}
+          style={{
+            width: hovered ? "240px" : "72px",
+            padding: hovered ? "20px 16px" : "20px 12px",
+            boxShadow: hovered
+              ? "0 24px 60px -12px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.15)"
+              : "0 20px 40px -14px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Link
+            href="/my-leagues"
+            className={styles.brandRow}
+            style={{ justifyContent: hovered ? "flex-start" : "center" }}
+          >
+            <span className={styles.brandMark}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4 3v18M4 4h12l-2.5 3L16 10H4"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            {hovered && (
+              <span className={styles.brandText}>
+                <span className={styles.brandName}>Fantasy NASCAR HQ</span>
+                <span className={styles.brandUser}>{displayName}</span>
+              </span>
+            )}
+          </Link>
+
+          {hovered && <div className={styles.sectionLabel}>Essentials</div>}
+          <nav className={styles.navGroup}>
+            {ESSENTIAL_NAV_ITEMS.map((item) => {
+              const active = isActivePath(pathname, item.href) && !activeLeagueId;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+                  style={{ justifyContent: hovered ? "flex-start" : "center" }}
+                >
+                  <span className={styles.navIcon}>{item.icon}</span>
+                  {hovered && <span className={styles.navLabel}>{item.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {hovered && (
+            <div className={styles.sectionRow}>
+              <span className={styles.sectionLabel}>Leagues</span>
+              <Link href="/leagues/new" className={styles.sectionAction} aria-label="Create a league" title="Create a league">
+                {ADD_ICON}
               </Link>
-            );
-          })}
-        </nav>
-        <div className={styles.footer}>
-          <div className={styles.footerRow}>
-            <span className={styles.footerName}>{user.name ?? user.email}</span>
-            <Link href="/settings" className={styles.settingsLink} aria-label="Settings" title="Settings">
-              {SETTINGS_ICON}
-            </Link>
+            </div>
+          )}
+          <nav className={styles.navGroup}>
+            {leagues.map((league, i) => {
+              const active = league.id === activeLeagueId;
+              return (
+                <Link
+                  key={league.id}
+                  href={`/leagues/${league.id}`}
+                  className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+                  style={{ justifyContent: hovered ? "flex-start" : "center" }}
+                >
+                  <span className={styles.leagueDot} style={{ background: DOT_COLORS[i % DOT_COLORS.length] }} />
+                  {hovered && <span className={styles.navLabel}>{league.name}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {hovered && <div className={styles.sectionLabel}>Support</div>}
+          <nav className={styles.navGroup}>
+            {isAdmin && (
+              <Link
+                href={ADMIN_NAV_ITEM.href}
+                className={
+                  isActivePath(pathname, ADMIN_NAV_ITEM.href)
+                    ? `${styles.navLink} ${styles.navLinkActive}`
+                    : styles.navLink
+                }
+                style={{ justifyContent: hovered ? "flex-start" : "center" }}
+              >
+                <span className={styles.navIcon}>{ADMIN_NAV_ITEM.icon}</span>
+                {hovered && <span className={styles.navLabel}>{ADMIN_NAV_ITEM.label}</span>}
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((open) => !open)}
+              className={settingsOpen ? `${styles.settingsToggle} ${styles.settingsToggleOpen}` : styles.settingsToggle}
+              style={{ justifyContent: hovered ? "flex-start" : "center" }}
+            >
+              <span className={styles.navIcon}>{SETTINGS_ICON}</span>
+              {hovered && <span className={styles.navLabel}>Settings</span>}
+            </button>
+            {settingsOpen && (
+              <div className={styles.settingsPanel}>
+                <div className={styles.themeToggleRow}>
+                  <button
+                    type="button"
+                    onClick={() => chooseSidebarTheme("light")}
+                    className={
+                      sidebarTheme === "light" ? `${styles.themeOption} ${styles.themeOptionActive}` : styles.themeOption
+                    }
+                  >
+                    Light
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => chooseSidebarTheme("dark")}
+                    className={
+                      sidebarTheme === "dark" ? `${styles.themeOption} ${styles.themeOptionActive}` : styles.themeOption
+                    }
+                  >
+                    Dark
+                  </button>
+                </div>
+                <Link href="/settings" className={styles.settingsPanelLink}>
+                  Account settings →
+                </Link>
+              </div>
+            )}
+          </nav>
+
+          <div className={styles.userRow} style={{ justifyContent: hovered ? "flex-start" : "center" }}>
+            <span className={styles.avatar}>{(displayName || "?").charAt(0).toUpperCase()}</span>
+            {hovered && (
+              <>
+                <span className={styles.userInfo}>
+                  <span className={styles.userName}>{displayName}</span>
+                  <span className={styles.userRole}>{isAdmin ? "Commissioner" : "Member"}</span>
+                </span>
+                <form action={signOutAction}>
+                  <button type="submit" className={styles.signOutButton} aria-label="Sign out" title="Sign out">
+                    {SIGN_OUT_ICON}
+                  </button>
+                </form>
+              </>
+            )}
+            {/* Always rendered (not gated on hover) so sign-out stays reachable on
+                touch devices, which never trigger the desktop hover-expand state. */}
+            <form action={signOutAction} className={styles.mobileSignOut}>
+              <button type="submit" aria-label="Sign out" title="Sign out">
+                {SIGN_OUT_ICON}
+              </button>
+            </form>
           </div>
-          <form action={signOutAction}>
-            <button type="submit">Sign out</button>
-          </form>
-        </div>
-      </aside>
+        </aside>
+      </div>
       <div className={styles.content}>
         <div className={styles.contentInner}>{children}</div>
       </div>

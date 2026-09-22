@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import type { LeagueType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -56,6 +57,9 @@ export async function createLeague(
     return league;
   });
 
+  // The sidebar's league quick-list is fetched by the root layout, which
+  // Next.js otherwise keeps cached across this redirect.
+  revalidatePath("/", "layout");
   redirect(`/leagues/${league.id}`);
 }
 
