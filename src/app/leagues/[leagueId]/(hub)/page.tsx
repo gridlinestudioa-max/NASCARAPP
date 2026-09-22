@@ -1,129 +1,69 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
-import TrendChart from "@/components/league/TrendChart";
-import {
-  computeWeeklyTotals,
-  scoredRacesInOrder,
-  computePlayerSeasonStats,
-  computeTrendSeries,
-} from "@/lib/leagueStats";
+import PickemPickPanel from "@/components/league/PickemPickPanel";
+import TieredLineupPickPanel from "@/components/league/TieredLineupPickPanel";
 import { getLeagueHubData } from "./leagueData";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeagueStandingsPage(props: { params: Promise<{ leagueId: string }> }) {
+// The hub's default "Pick" tab — always the next open race, so a member
+// lands straight on what they need to do instead of having to navigate to
+// a separate race page. Same underlying panels as the standalone
+// /leagues/[leagueId]/races/[raceId] route (which still works for any
+// other week, e.g. reviewing a past one).
+export default async function LeaguePickTabPage(props: { params: Promise<{ leagueId: string }> }) {
   const { leagueId } = await props.params;
 
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
+  const userId = session.user.id;
 
-  const data = await getLeagueHubData(leagueId, session.user.id);
+  const data = await getLeagueHubData(leagueId, userId);
   if (!data) {
     notFound();
   }
 
-  const { league, standings, races, members, picks } = data;
+  const { league, nextOpenRace } = data;
 
-  const weekly = computeWeeklyTotals(races, picks);
-  const scoredRaces = scoredRacesInOrder(races, weekly);
-  const playerStats = computePlayerSeasonStats(members, scoredRaces, weekly, picks);
-  const statsByUserId = new Map(playerStats.map((p) => [p.userId, p]));
-  const momentumSorted = playerStats
-    .filter((p) => p.momentum != null)
-    .sort((a, b) => (b.momentum ?? 0) - (a.momentum ?? 0));
-  const trend = computeTrendSeries(members, scoredRaces, weekly);
-
-  return (
-    <>
-      <Card title="Standings">
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Player</th>
-              <th>Total</th>
-              <th>Diff to leader</th>
-              <th>Last race</th>
-              <th>Flagged</th>
-            </tr>
-          </thead>
-          <tbody>
-            {standings.map((s, i) => {
-              const stats = statsByUserId.get(s.userId);
-              return (
-                <tr key={s.userId} style={s.userId === session.user.id ? { fontWeight: 700 } : undefined}>
-                  <td>{i + 1}</td>
-                  <td>{s.name}</td>
-                  <td>{s.total}</td>
-                  <td>{!stats || stats.diffToLeader === 0 ? "Leader" : `+${stats.diffToLeader}`}</td>
-                  <td>{stats?.lastRacePts != null ? `+${stats.lastRacePts}` : "—"}</td>
-                  <td>{s.needsReviewCount > 0 ? <Badge tone="warning">{s.needsReviewCount}</Badge> : ""}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+  if (!nextOpenRace) {
+    return (
+      <Card title="Pick">
+        <p>No upcoming races scheduled for this league&apos;s season.</p>
       </Card>
+    );
+  }
 
-      {momentumSorted.length > 0 && (
-        <Card title="Momentum">
-          <p style={{ marginBottom: "var(--space-3)" }}>
-            How each player&apos;s most recent race compared to the one before it.
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Momentum</th>
-              </tr>
-            </thead>
-            <tbody>
-              {momentumSorted.map((p) => (
-                <tr key={p.userId}>
-                  <td>{p.name}</td>
-                  <td>
-                    <Badge tone={(p.momentum ?? 0) >= 0 ? "success" : "danger"}>
-                      {(p.momentum ?? 0) >= 0 ? "+" : ""}
-                      {p.momentum}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      )}
+  const leagueSeason = await prisma.leagueSeason.findUnique({
+    where: { leagueId_seasonId: { leagueId, seasonId: nextOpenRace.seasonId } },
+    include: { ruleSet: true, league: true },
+  });
+  if (!leagueSeason) {
+    return (
+      <Card title="Pick">
+        <p>This league isn&apos;t part of a season yet.</p>
+      </Card>
+    );
+  }
 
-      {scoredRaces.length > 0 && (
-        <>
-          <Card title="Points by week">
-            <TrendChart labels={trend.labels} series={trend.totals} />
-          </Card>
-
-          <Card title="Point differential by week">
-            <TrendChart labels={trend.labels} series={trend.diffs} />
-          </Card>
-        </>
-      )}
-
-      {races.length > 0 && (
-        <Card title="Races">
-          <ul className="rowList">
-            {races.map((r) => (
-              <li key={r.id}>
-                <Link href={`/leagues/${league.id}/races/${r.id}`}>
-                  Week {r.week} — {r.trackName}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-    </>
+  return league.type === "TIERED_DRAFT" ? (
+    <TieredLineupPickPanel
+      leagueId={leagueId}
+      raceId={nextOpenRace.id}
+      userId={userId}
+      race={nextOpenRace}
+      leagueSeason={leagueSeason}
+    />
+  ) : (
+    <PickemPickPanel
+      leagueId={leagueId}
+      raceId={nextOpenRace.id}
+      userId={userId}
+      race={nextOpenRace}
+      leagueSeason={leagueSeason}
+    />
   );
 }

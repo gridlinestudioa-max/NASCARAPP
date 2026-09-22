@@ -5,11 +5,10 @@ import { usePathname } from "next/navigation";
 import styles from "./LeagueTabs.module.css";
 
 const TABS = [
-  { href: "", label: "Standings" },
-  { href: "/personal-stats", label: "Personal Stats" },
-  { href: "/league-stats", label: "League Stats" },
-  { href: "/driver-selection", label: "Driver Selection" },
-  { href: "/past-scores", label: "Past Scores" },
+  { href: "", label: "Pick" },
+  { href: "/standings", label: "Standings" },
+  { href: "/league", label: "League" },
+  { href: "/stats", label: "Stats" },
 ];
 
 export default function LeagueTabs({ leagueId }: { leagueId: string }) {

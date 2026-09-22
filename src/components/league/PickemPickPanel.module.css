@@ -1,0 +1,103 @@
+.turnBanner {
+  background: var(--accent);
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+  color: #fafafa;
+}
+
+.turnBannerHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.turnBannerUpNow {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.turnBannerLabel {
+  opacity: 0.85;
+}
+
+.turnBannerMeta {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.turnChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.turnChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.turnChipActive {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.turnChipPos {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.turnChipActive .turnChipPos {
+  color: #fafafa;
+}
+
+.turnChipName {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fafafa;
+}
+
+.turnChipNameBold {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fafafa;
+}
+
+.turnChipStatusPicked,
+.turnChipStatusActive,
+.turnChipStatusWaiting {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.turnChipStatusPicked {
+  color: #bfe3c9;
+}
+
+.turnChipStatusActive {
+  color: #fafafa;
+}
+
+.turnChipStatusWaiting {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.pickCard {
+  max-width: 420px;
+}
+
+.totalCell {
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: var(--accent);
+}

@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import LeagueHero from "@/components/league/LeagueHero";
 import LeagueTabs from "@/components/league/LeagueTabs";
@@ -34,7 +33,7 @@ export default async function LeagueHubLayout({
     notFound();
   }
 
-  const { league, membership, season, standings, myRank, myStanding, nextOpenRace, races } = data;
+  const { league, membership, season, standings, myRank, myStanding, races } = data;
   const racesCompleted = races.filter((r) => r.status === "COMPLETE").length;
 
   return (
@@ -70,14 +69,6 @@ export default async function LeagueHubLayout({
         racesCompleted={racesCompleted}
         racesTotal={races.length}
       />
-
-      {nextOpenRace && (
-        <Card title="Up next">
-          <Link href={`/leagues/${league.id}/races/${nextOpenRace.id}`}>
-            Make your pick for Week {nextOpenRace.week} — {nextOpenRace.trackName}
-          </Link>
-        </Card>
-      )}
 
       <LeagueTabs leagueId={leagueId} />
 

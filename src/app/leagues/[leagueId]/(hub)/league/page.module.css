@@ -1,0 +1,64 @@
+.matrixCard {
+  overflow: hidden;
+}
+
+.sub {
+  margin: -8px 0 14px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.scrollX {
+  overflow-x: auto;
+}
+
+.scrollX table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.sticky {
+  position: sticky;
+  left: 0;
+  background: var(--bg-surface);
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.totalRow {
+  font-weight: 800;
+  border-top: 2px solid var(--border-color);
+}
+
+.accentCell {
+  font-family: var(--font-heading);
+  color: var(--accent);
+}
+
+.rulesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.ruleRow {
+  display: flex;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ruleRow:last-child {
+  border-bottom: none;
+}
+
+.ruleDash {
+  color: var(--accent);
+  font-weight: 800;
+  flex-shrink: 0;
+}
