@@ -15,11 +15,14 @@
   justify-content: center;
   font-weight: 700;
   font-size: 1.1rem;
+  font-family: var(--font-heading);
   flex-shrink: 0;
 }
 
 .name {
   font-size: 1.3rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
 }
 
 .sub {
@@ -38,9 +41,10 @@
 
 .statValue {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
+  font-family: var(--font-heading);
 }
 
 .statLabel {

@@ -21,6 +21,6 @@
 
 .active,
 .active:hover {
-  color: var(--color-ink);
-  border-bottom-color: var(--color-ink);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }

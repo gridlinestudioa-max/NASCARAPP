@@ -1,21 +1,26 @@
 :root {
-  /* Brand triad */
-  --color-ink: #070707;
-  --color-cream: #fffef1;
-  --color-slate: #646e78;
+  /* Global style (source: design tool export) */
+  --color-ink: #2e2e2e;
+  --color-cream: #ffffff;
+  --color-slate: #6b6b6b;
+  --accent: #000000;
+
+  /* Fonts */
+  --font-body: var(--font-inter), "Inter", Helvetica, Arial, sans-serif;
+  --font-heading: var(--font-barlow), "Barlow", sans-serif;
 
   /* Surfaces */
-  --bg-app: #f2f1e6;
-  --bg-sidebar: #fffef1;
-  --bg-surface: #fffef1;
-  --bg-surface-muted: #f5f4ea;
-  --border-color: #e6e4d4;
-  --shadow-card: 0 1px 2px rgba(7, 7, 7, 0.04), 0 8px 24px rgba(7, 7, 7, 0.05);
+  --bg-app: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-surface: #f7f7f7;
+  --bg-surface-muted: #f7f7f7;
+  --border-color: #e3e3e3;
+  --shadow-card: 0 1px 2px rgba(20, 20, 20, 0.04), 0 8px 24px rgba(20, 20, 20, 0.05);
 
   /* Text */
   --text-primary: var(--color-ink);
   --text-secondary: var(--color-slate);
-  --text-muted: #9aa1a8;
+  --text-muted: #9a9a97;
   --text-on-ink: var(--color-cream);
 
   /* Semantic accents (used sparingly, functional only) */
@@ -37,8 +42,9 @@
   --tier-c-bg: #e6f0f1;
 
   /* Scale */
-  --radius-sm: 8px;
-  --radius-md: 14px;
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-btn: 9px;
   --radius-pill: 999px;
   --space-1: 4px;
   --space-2: 8px;
@@ -64,7 +70,7 @@ body {
   min-height: 100%;
   color: var(--text-primary);
   background: var(--bg-app);
-  font-family: var(--font-geist-sans), "Inter", Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 15px;
@@ -86,14 +92,16 @@ figure {
 
 h1 {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.01em;
+  font-family: var(--font-heading);
 }
 
 h2 {
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
+  font-family: var(--font-heading);
 }
 
 h3 {
@@ -195,7 +203,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-ink);
-  box-shadow: 0 0 0 3px rgba(7, 7, 7, 0.08);
+  box-shadow: 0 0 0 3px rgba(46, 46, 46, 0.08);
 }
 
 input[type="checkbox"],
@@ -216,7 +224,7 @@ button {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   padding: 0.55em 1.3em;
   transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
@@ -227,9 +235,9 @@ button:disabled {
 }
 
 button[type="submit"] {
-  background: var(--color-ink);
+  background: var(--accent);
   color: var(--text-on-ink);
-  border: 1px solid var(--color-ink);
+  border: 1px solid var(--accent);
 }
 
 button[type="submit"]:hover:not(:disabled) {
