@@ -1,8 +1,149 @@
-.leagueRow {
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.headerSub {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.chartRow {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .chartRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trendCard,
+.donutCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.trendHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.trendTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.trendLegend {
+  display: flex;
+  gap: 14px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+.legendDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.legendDotInk {
+  background: var(--ink);
+}
+
+.legendDotFaint {
+  background: var(--faint);
+}
+
+.trendScore {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 6px 0 8px;
+  font-family: var(--font-heading);
+}
+
+.donutSub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.tableHead {
+  display: grid;
+  grid-template-columns: 2.4fr 1fr 1fr 1fr 1.2fr;
+  gap: var(--space-3);
+  padding: 10px var(--space-3);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2.4fr 1fr 1fr 1fr 1.2fr;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.tableRow:hover {
+  background: var(--bg-surface-muted);
+}
+
+.tableRow + .tableRow {
+  border-top: 1px solid var(--border-color);
+}
+
+.leagueCell {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  width: 100%;
+  min-width: 0;
+}
+
+.leagueCellText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -27,6 +168,59 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
-  min-width: 0;
+}
+
+.muted {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.scoreCell {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.lockedCell {
+  display: flex;
+  gap: 5px;
+}
+
+.lockChip {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-image: repeating-linear-gradient(45deg, var(--border-color) 0 4px, var(--bg-surface) 4px 8px);
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "league league"
+      "score rank";
+  }
+
+  .leagueCell {
+    grid-area: league;
+  }
+
+  .scoreCell {
+    grid-area: score;
+  }
+
+  .tableRow > *:nth-child(4) {
+    grid-area: rank;
+    text-align: right;
+  }
+
+  .tableRow > *:nth-child(2),
+  .lockedCell {
+    display: none;
+  }
 }

@@ -62,7 +62,7 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #141414;
+  background: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -228,9 +228,9 @@
 }
 
 .sidebar .themeOptionActive {
-  background: #141414;
+  background: var(--ink);
   color: #ffffff;
-  border-color: #141414;
+  border-color: var(--ink);
 }
 
 .settingsPanelLink {
@@ -262,7 +262,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #141414;
+  background: var(--ink);
   color: #ffffff;
   display: flex;
   align-items: center;

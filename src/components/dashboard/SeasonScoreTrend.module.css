@@ -1,0 +1,31 @@
+.svg {
+  overflow: visible;
+  display: block;
+}
+
+.avgLine {
+  stroke: var(--faint);
+}
+
+.myLine {
+  stroke: var(--ink);
+}
+
+.dot {
+  fill: var(--surface);
+  stroke: var(--ink);
+}
+
+.axisLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--faint);
+  margin-top: 2px;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: var(--space-4) 0;
+}
