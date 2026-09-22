@@ -1,8 +1,10 @@
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import { Geist_Mono, Inter, Barlow } from "next/font/google";
+import { Geist_Mono, Inter, Barlow, Oswald } from "next/font/google";
 import { auth } from "@/lib/auth";
 import { isSiteAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
+import { getAppTheme, themeToCssVars } from "@/lib/theme";
 import AppShell from "@/components/shell/AppShell";
 import styles from "@/components/shell/AppShell.module.css";
 import "./globals.css";
@@ -16,6 +18,12 @@ const inter = Inter({
 const barlow = Barlow({
   variable: "--font-barlow",
   weight: ["600", "700", "800", "900"],
+  subsets: ["latin"],
+});
+
+const oswald = Oswald({
+  variable: "--font-oswald",
+  weight: ["600", "700"],
   subsets: ["latin"],
 });
 
@@ -33,18 +41,27 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
   const user = session?.user;
 
-  const leagues = user?.id
-    ? (
-        await prisma.leagueMembership.findMany({
-          where: { userId: user.id },
-          include: { league: { select: { id: true, name: true } } },
-          orderBy: { league: { name: "asc" } },
-        })
-      ).map((m) => ({ id: m.league.id, name: m.league.name }))
-    : [];
+  const [leagues, theme] = await Promise.all([
+    user?.id
+      ? prisma.leagueMembership
+          .findMany({
+            where: { userId: user.id },
+            include: { league: { select: { id: true, name: true } } },
+            orderBy: { league: { name: "asc" } },
+          })
+          .then((rows) => rows.map((m) => ({ id: m.league.id, name: m.league.name })))
+      : Promise.resolve([]),
+    getAppTheme(),
+  ]);
+
+  const themeVars = themeToCssVars(theme);
 
   return (
-    <html lang="en" className={`${inter.variable} ${barlow.variable} ${geistMono.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${barlow.variable} ${oswald.variable} ${geistMono.variable}`}
+      style={themeVars as CSSProperties}
+    >
       <body>
         {user?.id ? (
           <AppShell user={{ name: user.name, email: user.email ?? "" }} isAdmin={isSiteAdmin(user.email)} leagues={leagues}>

@@ -63,6 +63,24 @@ model SyncAlertState {
   lastAlertedAt DateTime?
 }
 
+// Singleton row (fixed id) holding the site-wide visual theme — colors,
+// heading font, card roundness. Edited from the admin-only Global Style
+// page (see src/lib/theme.ts for the defaults + loader) and applied
+// server-side in the root layout as CSS custom properties, so every page
+// (including pre-auth ones) picks it up with no flash and no per-user
+// storage.
+model AppTheme {
+  id          String   @id @default("singleton")
+  ink         String   @default("#2e2e2e")
+  pageBg      String   @default("#ffffff")
+  surface     String   @default("#f7f7f7")
+  border      String   @default("#e3e3e3")
+  accent      String   @default("#000000")
+  headingFont String   @default("Barlow")
+  radius      Int      @default(14)
+  updatedAt   DateTime @updatedAt
+}
+
 enum LeagueType {
   PICKEM
   TIERED_DRAFT
