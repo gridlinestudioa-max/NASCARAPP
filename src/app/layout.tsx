@@ -49,7 +49,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             include: { league: { select: { id: true, name: true } } },
             orderBy: { league: { name: "asc" } },
           })
-          .then((rows) => rows.map((m) => ({ id: m.league.id, name: m.league.name })))
+          .then((rows) => rows.map((m) => ({ id: m.league.id, name: m.league.name, color: m.color })))
       : Promise.resolve([]),
     getAppTheme(),
   ]);
@@ -61,10 +61,28 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${inter.variable} ${barlow.variable} ${oswald.variable} ${geistMono.variable}`}
       style={themeVars as CSSProperties}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Sets data-theme before hydration so dark mode never flashes light
+            first — a plain inline script is the standard way to read a
+            client-only preference (localStorage) ahead of paint; this
+            string is fixed and owned by us, not user input. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('colorMode')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}",
+          }}
+        />
+      </head>
       <body>
         {user?.id ? (
-          <AppShell user={{ name: user.name, email: user.email ?? "" }} isAdmin={isSiteAdmin(user.email)} leagues={leagues}>
+          <AppShell
+            user={{ name: user.name, email: user.email ?? "" }}
+            isAdmin={isSiteAdmin(user.email)}
+            leagues={leagues}
+            logoUrl={theme.logoUrl}
+          >
             {children}
           </AppShell>
         ) : (

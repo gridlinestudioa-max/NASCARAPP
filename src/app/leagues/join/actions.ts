@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isLeagueColorSwatch } from "@/lib/leagueColors";
 
 export async function joinLeague(
   _prevState: string | undefined,
@@ -13,6 +14,8 @@ export async function joinLeague(
   if (typeof inviteCode !== "string" || inviteCode.trim().length === 0) {
     return "Enter an invite code.";
   }
+  const rawColor = formData.get("color");
+  const color = isLeagueColorSwatch(rawColor) ? rawColor : null;
 
   const session = await auth();
   if (!session?.user?.id) {
@@ -30,7 +33,7 @@ export async function joinLeague(
   await prisma.leagueMembership.upsert({
     where: { leagueId_userId: { leagueId: league.id, userId } },
     update: {},
-    create: { leagueId: league.id, userId, role: "MEMBER" },
+    create: { leagueId: league.id, userId, role: "MEMBER", color },
   });
 
   // The sidebar's league quick-list is fetched by the root layout, which

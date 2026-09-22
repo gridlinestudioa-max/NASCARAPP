@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isLeagueColorSwatch } from "@/lib/leagueColors";
 
 export type FormState = { kind: "error" | "status"; message: string } | undefined;
 
@@ -114,6 +115,31 @@ export async function updatePassword(_prevState: FormState, formData: FormData):
   await prisma.user.update({ where: { id: session.user.id }, data: { passwordHash } });
 
   return { kind: "status", message: "Password changed." };
+}
+
+export async function updateLeagueColor(_prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { kind: "error", message: "You're not signed in." };
+  }
+
+  const leagueId = formData.get("leagueId");
+  const color = formData.get("color");
+  if (typeof leagueId !== "string" || !isLeagueColorSwatch(color)) {
+    return { kind: "error", message: "Pick a color." };
+  }
+
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { leagueId_userId: { leagueId, userId: session.user.id } },
+  });
+  if (!membership) {
+    return { kind: "error", message: "You're not a member of that league." };
+  }
+
+  await prisma.leagueMembership.update({ where: { id: membership.id }, data: { color } });
+  // The sidebar's league list is fetched by the root layout.
+  revalidatePath("/", "layout");
+  return { kind: "status", message: "League color saved." };
 }
 
 export async function updateNotifications(_prevState: FormState, formData: FormData): Promise<FormState> {

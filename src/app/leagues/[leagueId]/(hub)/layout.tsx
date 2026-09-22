@@ -40,7 +40,7 @@ export default async function LeagueHubLayout({
     <main>
       <LiveRefresh />
       <div className={styles.topRow}>
-        <Breadcrumb items={[{ label: "My Leagues", href: "/my-leagues" }, { label: league.name }]} />
+        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: league.name }]} />
         {membership.role === "OWNER" && (
           <Link
             href={`/leagues/${leagueId}/commissioner`}
@@ -62,6 +62,7 @@ export default async function LeagueHubLayout({
 
       <LeagueHero
         leagueName={league.name}
+        iconUrl={league.iconUrl}
         seasonYear={season?.year}
         total={myStanding?.total ?? 0}
         rank={myRank}

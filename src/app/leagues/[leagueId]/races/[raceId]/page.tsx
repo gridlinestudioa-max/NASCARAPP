@@ -43,7 +43,7 @@ export default async function RaceDetailPage(props: PageProps<"/leagues/[leagueI
       <LiveRefresh />
       <Breadcrumb
         items={[
-          { label: "My Leagues", href: "/my-leagues" },
+          { label: "Home", href: "/" },
           { label: leagueSeason.league.name, href: `/leagues/${leagueId}` },
           { label: race.trackName },
         ]}

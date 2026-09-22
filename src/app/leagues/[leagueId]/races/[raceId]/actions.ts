@@ -209,6 +209,9 @@ export async function submitTieredLineup(
   if (phase === "locked") {
     return "Lineups are locked for this race.";
   }
+  if (phase === "notYetOpen") {
+    return "Lineups aren't open yet for this race.";
+  }
 
   const submitted = new Map<number, string>();
   for (const slot of TIERED_LINEUP_SLOTS) {

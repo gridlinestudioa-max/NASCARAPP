@@ -10,6 +10,7 @@ import Breadcrumb from "@/components/ui/Breadcrumb";
 import { getLeagueHubData } from "../(hub)/leagueData";
 import TransferCommissionerForm from "./TransferCommissionerForm";
 import PickOrderForm from "./PickOrderForm";
+import LeagueIconForm from "./LeagueIconForm";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export default async function CommissionerPage(props: { params: Promise<{ league
     <main>
       <Breadcrumb
         items={[
-          { label: "My Leagues", href: "/my-leagues" },
+          { label: "Home", href: "/" },
           { label: league.name, href: `/leagues/${leagueId}` },
           { label: "Commissioner Tools" },
         ]}
@@ -58,6 +59,10 @@ export default async function CommissionerPage(props: { params: Promise<{ league
       <p>
         Invite code: <code>{league.inviteCode}</code> — share it so others can join this league.
       </p>
+
+      <Card title="League Icon">
+        <LeagueIconForm leagueId={leagueId} iconUrl={league.iconUrl} />
+      </Card>
 
       <Card title="Commissioner">
         <TransferCommissionerForm

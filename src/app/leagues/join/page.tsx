@@ -12,7 +12,7 @@ export default async function JoinLeaguePage() {
 
   return (
     <main>
-      <Breadcrumb items={[{ label: "My Leagues", href: "/my-leagues" }, { label: "Join a League" }]} />
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Join a League" }]} />
       <h1>Join a league</h1>
       <Card>
         <p>Ask the league owner for their invite code.</p>

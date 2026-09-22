@@ -1,0 +1,24 @@
+.row {
+  display: flex;
+  gap: 8px;
+  max-width: 220px;
+}
+
+.option {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.optionActive {
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  border-color: var(--color-ink);
+}

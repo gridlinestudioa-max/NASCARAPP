@@ -7,6 +7,8 @@ import ProfileForm from "./ProfileForm";
 import AccountForm from "./AccountForm";
 import PasswordForm from "./PasswordForm";
 import NotificationsForm from "./NotificationsForm";
+import LeagueColorsForm from "./LeagueColorsForm";
+import AppearanceForm from "./AppearanceForm";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +18,14 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  const [user, memberships] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.user.id } }),
+    prisma.leagueMembership.findMany({
+      where: { userId: session.user.id },
+      include: { league: { select: { name: true } } },
+      orderBy: { league: { name: "asc" } },
+    }),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -25,6 +34,22 @@ export default async function SettingsPage() {
     <main>
       <Breadcrumb items={[{ label: "Dashboards" }, { label: "Settings" }]} />
       <h1>Settings</h1>
+
+      <Card title="Appearance">
+        <p>
+          <small>Applies to the whole site, on this device.</small>
+        </p>
+        <AppearanceForm />
+      </Card>
+
+      <Card title="Your Leagues">
+        <p>
+          <small>Pick a color for each league&apos;s dot in your sidebar.</small>
+        </p>
+        <LeagueColorsForm
+          memberships={memberships.map((m) => ({ leagueId: m.leagueId, leagueName: m.league.name, color: m.color }))}
+        />
+      </Card>
 
       <Card title="Profile">
         <p>

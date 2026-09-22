@@ -18,7 +18,7 @@
 .sidebar {
   --sb-bg: var(--bg-sidebar);
   --sb-active-bg: var(--bg-sidebar);
-  --sb-text: var(--color-ink);
+  --sb-text: var(--text-primary);
   --sb-text-muted: var(--text-secondary);
   --sb-text-faint: var(--text-muted);
   --sb-divider: var(--border-color);
@@ -36,15 +36,6 @@
   color: var(--sb-text);
   z-index: 20;
   transition: width 0.15s ease, padding 0.15s ease, background 0.15s ease, color 0.15s ease;
-}
-
-.sidebarDark {
-  --sb-bg: #1c1c1b;
-  --sb-active-bg: #121212;
-  --sb-text: #f2f1ee;
-  --sb-text-muted: #9d9c98;
-  --sb-text-faint: #75746f;
-  --sb-divider: #2c2b29;
 }
 
 .brandRow {
@@ -67,6 +58,13 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.brandMarkImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brandText {
@@ -207,30 +205,6 @@
   flex-direction: column;
   gap: 6px;
   padding: 6px 10px 4px;
-}
-
-.themeToggleRow {
-  display: flex;
-  gap: 4px;
-}
-
-.sidebar .themeOption {
-  flex: 1;
-  padding: 6px 0;
-  border-radius: 6px;
-  border: 1px solid var(--sb-divider);
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  background: transparent;
-  color: var(--sb-text-muted);
-}
-
-.sidebar .themeOptionActive {
-  background: var(--ink);
-  color: #ffffff;
-  border-color: var(--ink);
 }
 
 .settingsPanelLink {

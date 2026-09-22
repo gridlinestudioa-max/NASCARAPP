@@ -1,0 +1,19 @@
+.swatchRow {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--space-1);
+}
+
+.swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatchActive {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-app);
+}

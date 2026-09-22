@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
-import { parseTieredDraftRuleSetConfig, TIERED_LINEUP_SLOTS, lineupLockPhase, type DriverTier } from "@/lib/tieredDraft";
+import {
+  parseTieredDraftRuleSetConfig,
+  TIERED_LINEUP_SLOTS,
+  lineupLockPhase,
+  entryListUnlockAt,
+  type DriverTier,
+} from "@/lib/tieredDraft";
 import { computeRecentFormAvgFinish } from "@/lib/tierRanking";
 import { nextEntryListWindowAt } from "@/lib/nascarSyncSchedule";
 import TieredLineupForm from "@/app/leagues/[leagueId]/races/[raceId]/TieredLineupForm";
@@ -118,9 +124,16 @@ export default async function TieredLineupPickPanel({
     );
   }
 
-  if (tierAssignments.length === 0) {
-    const nextCheck = nextEntryListWindowAt(new Date());
-    const unlockLabel = nextCheck.toLocaleString(undefined, {
+  const notYetOpen = phase === "notYetOpen" || tierAssignments.length === 0;
+
+  if (notYetOpen) {
+    // Tiers already assigned but the Tuesday floor hasn't passed yet (e.g.
+    // an admin set them early by hand) — the exact Tuesday is known. If
+    // tiers aren't assigned yet even though Tuesday has passed, fall back
+    // to explaining when the next sync window is, since that's the real
+    // blocker at that point.
+    const unlockAt = phase === "notYetOpen" ? entryListUnlockAt(race) : nextEntryListWindowAt(new Date());
+    const unlockLabel = unlockAt.toLocaleString(undefined, {
       weekday: "long",
       hour: "numeric",
       minute: "2-digit",

@@ -78,6 +78,10 @@ model AppTheme {
   accent      String   @default("#000000")
   headingFont String   @default("Barlow")
   radius      Int      @default(14)
+  // App-wide logo, shown in the sidebar brand mark in place of the default
+  // placeholder mark. Nullable — no real brand asset exists yet, so the UI
+  // falls back to the placeholder rather than fabricating one.
+  logoUrl     String?
   updatedAt   DateTime @updatedAt
 }
 
@@ -117,6 +121,11 @@ model League {
   // appended automatically.
   pickOrder     Json?
 
+  // Commissioner-set image for the league, shown in the league hub header
+  // in place of the default initial-letter avatar. Nullable — no upload
+  // infra exists yet, so this is a pasted image URL, not a file upload.
+  iconUrl String?
+
   memberships   LeagueMembership[]
   ruleSets      RuleSet[]
   leagueSeasons LeagueSeason[]
@@ -136,6 +145,10 @@ model LeagueMembership {
   // Used as the join-order fallback for pick order (see
   // src/lib/pickOrder.ts) when a league hasn't set a base order yet.
   createdAt DateTime       @default(now())
+  // This member's personal color for this league's dot in their own
+  // sidebar — set at join time or changed later from Settings. Nullable:
+  // falls back to a fixed rotation by list position when unset.
+  color     String?
 
   league League @relation(fields: [leagueId], references: [id])
   user   User   @relation(fields: [userId], references: [id])

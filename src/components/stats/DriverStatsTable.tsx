@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal, { ModalCloseButton } from "@/components/ui/Modal";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import styles from "./DriverStatsTable.module.css";
 
 export type DriverStatRow = {
@@ -49,7 +50,7 @@ export default function DriverStatsTable({ drivers }: { drivers: DriverStatRow[]
                 <td className={styles.rank}>{i + 1}</td>
                 <td>
                   <div className={styles.driverCell}>
-                    <span className={styles.avatar}>{d.driverName.charAt(0).toUpperCase()}</span>
+                    <DriverNumberBadge number={d.number} name={d.driverName} className={styles.avatar} />
                     <div>
                       <div className={styles.driverName}>{d.driverName}</div>
                       {d.team && <div className={styles.team}>{d.team}</div>}
@@ -81,7 +82,7 @@ export default function DriverStatsTable({ drivers }: { drivers: DriverStatRow[]
             </div>
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
-                <span className={styles.modalAvatar}>{selected.driverName.charAt(0).toUpperCase()}</span>
+                <DriverNumberBadge number={selected.number} name={selected.driverName} className={styles.modalAvatar} />
                 <div>
                   <div className={styles.modalName}>{selected.driverName}</div>
                   <div className={styles.modalSub}>

@@ -7,7 +7,7 @@ import styles from "./GlobalStyleForm.module.css";
 
 const FONT_OPTIONS: HeadingFont[] = ["Barlow", "Oswald"];
 
-const COLOR_FIELDS: { key: keyof Omit<AppTheme, "headingFont" | "radius">; label: string; helper: string }[] = [
+const COLOR_FIELDS: { key: keyof Omit<AppTheme, "headingFont" | "radius" | "logoUrl">; label: string; helper: string }[] = [
   { key: "ink", label: "Ink", helper: "Headings & body text" },
   { key: "pageBg", label: "Page background", helper: "Behind the sidebar & shell" },
   { key: "surface", label: "Card surface", helper: "Stat cards & table headers" },
@@ -110,6 +110,23 @@ export default function GlobalStyleForm({ initialTheme }: { initialTheme: AppThe
               onChange={(e) => change({ radius: Number(e.target.value) })}
               className={styles.range}
             />
+          </div>
+        </div>
+        <div className={styles.panel}>
+          <div className={styles.panelTitle}>Branding</div>
+          <div className={styles.fieldBlock}>
+            <label htmlFor="logo-url" className={styles.fieldLabel}>
+              Logo URL
+            </label>
+            <input
+              id="logo-url"
+              type="text"
+              placeholder="https://…"
+              value={theme.logoUrl ?? ""}
+              onChange={(e) => change({ logoUrl: e.target.value.trim() || null })}
+              className={styles.select}
+            />
+            <div className={styles.rowHelper}>Shown in the sidebar in place of the default mark. Leave blank to use it.</div>
           </div>
         </div>
       </div>

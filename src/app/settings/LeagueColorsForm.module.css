@@ -1,0 +1,49 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.leagueName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 120px;
+}
+
+.swatchRow {
+  display: flex;
+  gap: 6px;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatchActive {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-app);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.8rem;
+}

@@ -113,6 +113,36 @@ export async function updatePickOrder(
   return undefined;
 }
 
+export async function updateLeagueIcon(
+  _prevState: string | undefined,
+  formData: FormData,
+): Promise<string | undefined> {
+  const leagueId = formData.get("leagueId");
+  const iconUrlRaw = formData.get("iconUrl");
+  if (typeof leagueId !== "string" || typeof iconUrlRaw !== "string") {
+    return "Missing league icon.";
+  }
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    return "You need to be signed in.";
+  }
+  const userId = session.user.id;
+
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { leagueId_userId: { leagueId, userId } },
+  });
+  if (!membership || membership.role !== "OWNER") {
+    return "Only the league commissioner can set its icon.";
+  }
+
+  await prisma.league.update({ where: { id: leagueId }, data: { iconUrl: iconUrlRaw.trim() || null } });
+
+  revalidatePath(`/leagues/${leagueId}`);
+  revalidatePath("/", "layout");
+  return undefined;
+}
+
 export async function transferCommissioner(
   _prevState: string | undefined,
   formData: FormData,

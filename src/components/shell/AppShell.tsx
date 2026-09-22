@@ -8,14 +8,12 @@ import styles from "./AppShell.module.css";
 
 const ESSENTIAL_NAV_ITEMS = [
   {
-    href: "/my-leagues",
-    label: "My Leagues",
+    href: "/",
+    label: "Home",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor" />
-        <rect x="13" y="3" width="8" height="8" rx="2" fill="currentColor" opacity="0.4" />
-        <rect x="3" y="13" width="8" height="8" rx="2" fill="currentColor" opacity="0.4" />
-        <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 11l9-8 9 8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 10v10h14V10" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -78,10 +76,6 @@ const ADD_ICON = (
 
 const DOT_COLORS = ["#141414", "#6b6b6b", "#9a9a97", "#c7c6c0"];
 
-const SIDEBAR_THEME_KEY = "sidebarTheme";
-
-type SidebarTheme = "light" | "dark";
-
 function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -90,29 +84,18 @@ export default function AppShell({
   user,
   isAdmin,
   leagues,
+  logoUrl,
   children,
 }: {
   user: { name?: string | null; email: string };
   isAdmin: boolean;
-  leagues: { id: string; name: string }[];
+  leagues: { id: string; name: string; color: string | null }[];
+  logoUrl?: string | null;
   children: ReactNode;
 }) {
   const pathname = usePathname();
   const [hovered, setHovered] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // Lazy initializer (not an effect) so the stored preference applies on the
-  // very first client render instead of flashing light-then-dark.
-  const [sidebarTheme, setSidebarTheme] = useState<SidebarTheme>(() => {
-    if (typeof window === "undefined") return "light";
-    const stored = window.localStorage.getItem(SIDEBAR_THEME_KEY);
-    return stored === "dark" ? "dark" : "light";
-  });
-
-  const chooseSidebarTheme = (mode: SidebarTheme) => {
-    setSidebarTheme(mode);
-    window.localStorage.setItem(SIDEBAR_THEME_KEY, mode);
-    setSettingsOpen(false);
-  };
 
   const activeLeagueId = pathname.match(/^\/leagues\/([^/]+)/)?.[1];
   const displayName = user.name ?? user.email;
@@ -121,8 +104,7 @@ export default function AppShell({
     <div className={styles.shell}>
       <div className={styles.sidebarSlot}>
         <aside
-          className={sidebarTheme === "dark" ? `${styles.sidebar} ${styles.sidebarDark}` : styles.sidebar}
-          suppressHydrationWarning
+          className={styles.sidebar}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => {
             setHovered(false);
@@ -137,20 +119,25 @@ export default function AppShell({
           }}
         >
           <Link
-            href="/my-leagues"
+            href="/"
             className={styles.brandRow}
             style={{ justifyContent: hovered ? "flex-start" : "center" }}
           >
             <span className={styles.brandMark}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M4 3v18M4 4h12l-2.5 3L16 10H4"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </svg>
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- admin-pasted URL, not a static/local asset
+                <img src={logoUrl} alt="" className={styles.brandMarkImg} />
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M4 3v18M4 4h12l-2.5 3L16 10H4"
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
             </span>
             {hovered && (
               <span className={styles.brandText}>
@@ -196,7 +183,10 @@ export default function AppShell({
                   className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
                   style={{ justifyContent: hovered ? "flex-start" : "center" }}
                 >
-                  <span className={styles.leagueDot} style={{ background: DOT_COLORS[i % DOT_COLORS.length] }} />
+                  <span
+                    className={styles.leagueDot}
+                    style={{ background: league.color ?? DOT_COLORS[i % DOT_COLORS.length] }}
+                  />
                   {hovered && <span className={styles.navLabel}>{league.name}</span>}
                 </Link>
               );
@@ -230,26 +220,6 @@ export default function AppShell({
             </button>
             {settingsOpen && (
               <div className={styles.settingsPanel}>
-                <div className={styles.themeToggleRow}>
-                  <button
-                    type="button"
-                    onClick={() => chooseSidebarTheme("light")}
-                    className={
-                      sidebarTheme === "light" ? `${styles.themeOption} ${styles.themeOptionActive}` : styles.themeOption
-                    }
-                  >
-                    Light
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => chooseSidebarTheme("dark")}
-                    className={
-                      sidebarTheme === "dark" ? `${styles.themeOption} ${styles.themeOptionActive}` : styles.themeOption
-                    }
-                  >
-                    Dark
-                  </button>
-                </div>
                 {isAdmin && (
                   <Link href="/admin/style" className={styles.settingsPanelLink}>
                     Edit global style →

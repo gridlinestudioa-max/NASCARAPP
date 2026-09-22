@@ -122,11 +122,11 @@ function pacificOffsetMinutes(instant: Date): number {
   return (match ? parseInt(match[1], 10) : -8) * 60;
 }
 
-// 2:00 AM Pacific on the calendar date (as observed in Pacific time) that
+// `hour`:00 Pacific on the calendar date (as observed in Pacific time) that
 // `instant` falls on. Samples the UTC offset at midday on that date rather
-// than at 2am itself, which sidesteps the one date a year (the DST
-// spring-forward transition) where a literal 2am Pacific doesn't exist.
-export function pacific2amOnDateOf(instant: Date): Date {
+// than at `hour` itself, which sidesteps the one date a year (the DST
+// spring-forward transition) where a literal wall-clock time doesn't exist.
+function pacificHourOnDateOf(instant: Date, hour: number): Date {
   const dateParts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Los_Angeles",
     year: "numeric",
@@ -138,7 +138,11 @@ export function pacific2amOnDateOf(instant: Date): Date {
   const d = Number(dateParts.find((p) => p.type === "day")!.value);
 
   const offsetMinutes = pacificOffsetMinutes(new Date(Date.UTC(y, m - 1, d, 10, 0, 0)));
-  return new Date(Date.UTC(y, m - 1, d, 2, 0, 0) - offsetMinutes * 60000);
+  return new Date(Date.UTC(y, m - 1, d, hour, 0, 0) - offsetMinutes * 60000);
+}
+
+export function pacific2amOnDateOf(instant: Date): Date {
+  return pacificHourOnDateOf(instant, 2);
 }
 
 export function lateSwapEndAt(race: { date: Date }): Date {
@@ -153,11 +157,31 @@ export function initialLockAt(race: { qualifyingAt: Date | null; date: Date }): 
   return lateSwapEndAt(race);
 }
 
-export type LineupLockPhase = "open" | "lateSwapOnly" | "locked";
+const PACIFIC_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// Midnight Pacific on the Tuesday of this race's week — NASCAR's entry
+// list (and this app's auto-tier assignment off it) is expected to have
+// populated by then, so lineups have no business being settable before it
+// regardless of whether tiers happen to already be assigned (e.g. an
+// admin set them early by hand). If the race itself falls on a Tuesday,
+// that's the Tuesday of the *following* week's race, so this looks back a
+// full 7 days rather than treating the race's own day as its unlock.
+export function entryListUnlockAt(race: { date: Date }): Date {
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", weekday: "short" }).format(
+    race.date,
+  );
+  const weekdayIndex = PACIFIC_WEEKDAYS.indexOf(weekday);
+  const daysBack = ((weekdayIndex - 2 + 7) % 7) || 7;
+  const approxTargetDate = new Date(race.date.getTime() - daysBack * 24 * 60 * 60 * 1000);
+  return pacificHourOnDateOf(approxTargetDate, 0);
+}
+
+export type LineupLockPhase = "notYetOpen" | "open" | "lateSwapOnly" | "locked";
 
 export function lineupLockPhase(race: { qualifyingAt: Date | null; date: Date }, now: number): LineupLockPhase {
   if (now >= lateSwapEndAt(race).getTime()) return "locked";
   if (now >= initialLockAt(race).getTime()) return "lateSwapOnly";
+  if (now < entryListUnlockAt(race).getTime()) return "notYetOpen";
   return "open";
 }
 

@@ -80,6 +80,35 @@
   --sidebar-width: 240px;
 }
 
+/* Dark mode — a per-viewer preference (see AppearanceForm on /settings),
+   layered on top of whatever brand theme the admin set above. Only the
+   *derived* semantic tokens are overridden here, never the 7 raw admin
+   knobs (--ink/--pageBg/--surface/--border/--accent/...): those are
+   inlined on <html style="..."> by the root layout, and an inline style
+   always wins over a class/attribute selector, so redeclaring them here
+   would silently do nothing. --ink/--color-ink/--accent are also left
+   alone so "solid ink chip" backgrounds (buttons, badges, avatars — which
+   pair a dark fill with white text) keep working unchanged in both modes,
+   the same treatment --accent already gets. */
+:root[data-theme="dark"] {
+  --muted: #b9b8b4;
+  --faint: #8b8a86;
+
+  --bg-app: #121212;
+  --bg-sidebar: #121212;
+  --bg-surface: #1c1c1b;
+  --bg-surface-muted: #1c1c1b;
+  --border-color: #2c2b29;
+  --color-cream: #121212;
+
+  --text-primary: #f2f1ee;
+  --text-secondary: var(--muted);
+  --text-muted: var(--faint);
+
+  --shadow-card: 0 14px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-shell: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
 html {
   height: 100%;
 }
@@ -142,7 +171,7 @@ a {
 }
 
 a:not([class]) {
-  color: var(--color-ink);
+  color: var(--text-primary);
   text-decoration: underline;
   text-decoration-color: var(--border-color);
   text-underline-offset: 3px;

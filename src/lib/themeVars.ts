@@ -11,6 +11,10 @@ export type AppTheme = {
   accent: string;
   headingFont: HeadingFont;
   radius: number;
+  // App-wide logo shown in the sidebar brand mark, in place of the default
+  // placeholder mark. Not a CSS var (see themeToCssVars) — a component
+  // renders it directly. Nullable: no real brand asset exists yet.
+  logoUrl: string | null;
 };
 
 export const DEFAULT_THEME: AppTheme = {
@@ -21,6 +25,7 @@ export const DEFAULT_THEME: AppTheme = {
   accent: "#000000",
   headingFont: "Barlow",
   radius: 14,
+  logoUrl: null,
 };
 
 // CSS custom properties for the root theme knobs, plus every derived value

@@ -20,7 +20,7 @@ export default async function NewLeaguePage() {
 
   return (
     <main>
-      <Breadcrumb items={[{ label: "My Leagues", href: "/my-leagues" }, { label: "Create a League" }]} />
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Create a League" }]} />
       <h1>Create a league</h1>
       <p>You&apos;ll be the owner and can invite others once it&apos;s created.</p>
       <LeagueRulesForm completedRaces={completedRaces} />

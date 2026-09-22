@@ -4,6 +4,7 @@ import styles from "./LeagueHero.module.css";
 
 export default function LeagueHero({
   leagueName,
+  iconUrl,
   seasonYear,
   total,
   rank,
@@ -12,6 +13,7 @@ export default function LeagueHero({
   racesTotal,
 }: {
   leagueName: string;
+  iconUrl?: string | null;
   seasonYear?: number;
   total: number;
   rank: number | null;
@@ -24,7 +26,12 @@ export default function LeagueHero({
   return (
     <Card>
       <div className={styles.identity}>
-        <div className={styles.avatar}>{leagueName.charAt(0).toUpperCase()}</div>
+        {iconUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- commissioner-pasted URL, not a static/local asset
+          <img src={iconUrl} alt="" className={styles.avatarImg} />
+        ) : (
+          <div className={styles.avatar}>{leagueName.charAt(0).toUpperCase()}</div>
+        )}
         <div>
           <h1 className={styles.name}>{leagueName}</h1>
           {seasonYear && (
