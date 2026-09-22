@@ -123,6 +123,11 @@ export async function GET(request: Request) {
     if (raceResult && !raceResult.ok) failures.push(`Race sync (week ${race.week}, ${race.trackName}): ${raceResult.error}`);
     if (!backfillResult.ok) failures.push(`Past-race backfill: ${backfillResult.error}`);
     else if (backfillResult.message.includes("Failed:")) failures.push(`Past-race backfill: ${backfillResult.message}`);
+    // This path returns 200 (the request itself succeeded — it's the sync
+    // that partially failed), so without this the only record of *why* is
+    // the throttled alert email; logging it means Vercel's runtime logs
+    // show the reason on every tick, not just once an hour.
+    if (failures.length > 0) console.error(`[sync-nascar] ${failures.join(" | ")}`);
     await maybeSendFailureAlert(failures);
 
     return Response.json({
@@ -136,6 +141,7 @@ export async function GET(request: Request) {
     });
   } catch (cause) {
     const message = (cause as Error).message;
+    console.error(`[sync-nascar] Unhandled error: ${message}`, cause);
     await maybeSendFailureAlert([`Unhandled error in the sync route: ${message}`]);
     return Response.json({ ok: false, error: message }, { status: 500 });
   }
