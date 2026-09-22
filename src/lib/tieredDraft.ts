@@ -108,23 +108,6 @@ export function finishPoints(finishPosition: number | null | undefined, config: 
   return pointsForPosition(finishPosition, config.finishPositionPoints);
 }
 
-export type TieredScoreBreakdown = {
-  baseScore: number;
-  qualifyingBonus: number;
-  total: number;
-};
-
-export function computeTieredScore(
-  role: PickRole,
-  qualifyingPosition: number | null,
-  finishPosition: number | null,
-  config: TieredDraftRuleSetConfig,
-): TieredScoreBreakdown {
-  const qualifyingBonus = qualifyingPoints(qualifyingPosition, config);
-  const baseScore = role === "STARTER" ? finishPoints(finishPosition, config) : 0;
-  return { baseScore, qualifyingBonus, total: baseScore + qualifyingBonus };
-}
-
 // ---------- Lineup locking ----------
 
 // Returns the UTC offset (in minutes) America/Los_Angeles observes at the
