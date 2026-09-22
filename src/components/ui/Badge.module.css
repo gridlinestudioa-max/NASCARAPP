@@ -23,6 +23,11 @@
   color: var(--text-on-ink);
 }
 
+.accent {
+  background: var(--accent);
+  color: #ffffff;
+}
+
 .success {
   background: var(--success-bg);
   color: var(--success);

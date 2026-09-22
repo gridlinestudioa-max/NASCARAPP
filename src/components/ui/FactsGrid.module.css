@@ -1,0 +1,25 @@
+.grid {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-top: 2px;
+}

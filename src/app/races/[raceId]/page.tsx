@@ -3,7 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import FactsGrid from "@/components/ui/FactsGrid";
+import RaceResultsTabs, { type ResultRow } from "@/components/race/RaceResultsTabs";
 import { normalizeTrackName } from "@/lib/nascarFeed";
+import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +25,7 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
     include: {
       season: true,
       results: { include: { driver: true }, orderBy: { finishingPosition: "asc" } },
-      stageResults: { where: { position: 1 }, include: { driver: true }, orderBy: { stageNumber: "asc" } },
+      stageResults: { include: { driver: true }, orderBy: [{ stageNumber: "asc" }, { position: "asc" }] },
     },
   });
   if (!race) {
@@ -54,55 +57,42 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
   pastWinners.sort((a, b) => b.year - a.year);
   const past3Winners = pastWinners.slice(0, 3);
 
+  const displayName = race.venueName ?? race.trackName;
+  const eventName = race.venueName ? race.trackName : null;
+
+  const finalRows: ResultRow[] = race.results.map((r) => ({ pos: r.finishingPosition, driver: r.driver.name }));
+  const stage1Rows: ResultRow[] = race.stageResults
+    .filter((s) => s.stageNumber === 1)
+    .map((s) => ({ pos: s.position, driver: s.driver.name }));
+  const stage2Rows: ResultRow[] = race.stageResults
+    .filter((s) => s.stageNumber === 2)
+    .map((s) => ({ pos: s.position, driver: s.driver.name }));
+
   return (
     <main>
-      <Breadcrumb items={[{ label: "Schedule", href: "/races" }, { label: race.trackName }]} />
-      <h1>
-        Week {race.week} — {race.trackName}
-      </h1>
-      <p>
-        {race.venueName && <>{race.venueName} · </>}
-        {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} ·{" "}
-        {race.season.year} season · Field size {race.fieldSize}
-      </p>
+      <Breadcrumb items={[{ label: "Schedule", href: "/races" }, { label: displayName }]} />
+
+      <div className={styles.eyebrow}>Week {race.week}</div>
+      <h1>{displayName}</h1>
+      {eventName && <p className={styles.eventName}>{eventName}</p>}
+
+      <FactsGrid
+        items={[
+          {
+            label: "Date",
+            value: new Date(race.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+          },
+          { label: "Time", value: new Date(race.date).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) },
+          { label: "Field Size", value: race.fieldSize },
+          { label: "Season", value: `${race.season.year}` },
+          ...(past3Winners.length > 0
+            ? [{ label: "Last Year's Winner", value: past3Winners[0].driverName, fullWidth: true }]
+            : []),
+        ]}
+      />
 
       <Card title="Results">
-        {race.results.length === 0 ? (
-          <p>Results haven&apos;t been entered for this race yet.</p>
-        ) : (
-          <table>
-            <caption>Only drivers picked in at least one league — not the full field.</caption>
-            <thead>
-              <tr>
-                <th>Finish</th>
-                <th>Driver</th>
-              </tr>
-            </thead>
-            <tbody>
-              {race.results.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.finishingPosition}</td>
-                  <td>{r.driver.name}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
-
-      <Card title="Stage winners">
-        {race.stageResults.length === 0 ? (
-          <p>No stage results yet.</p>
-        ) : (
-          <ul className="rowList">
-            {race.stageResults.map((s) => (
-              <li key={s.id}>
-                <span>Stage {s.stageNumber}</span>
-                <span>{s.driver.name}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <RaceResultsTabs stage1={stage1Rows} stage2={stage2Rows} final={finalRows} />
       </Card>
 
       <Card title="Past winners">

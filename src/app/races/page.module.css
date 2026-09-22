@@ -1,0 +1,137 @@
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.headerSub {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legendDotFaint {
+  background: var(--faint);
+}
+
+.legendDotAccent {
+  background: var(--accent);
+}
+
+.monthGroup {
+  margin-top: var(--space-5);
+}
+
+.monthLabel {
+  margin: 0 0 10px;
+}
+
+.monthCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: calc(var(--radius) + 2px);
+  box-shadow: 0 1px 2px rgba(7, 7, 7, 0.04), 0 8px 24px rgba(7, 7, 7, 0.05);
+  overflow: hidden;
+}
+
+.raceRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.raceRow:last-child {
+  border-bottom: none;
+}
+
+.raceRow:hover {
+  background: var(--bg-surface-muted);
+}
+
+.weekChip {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  border: 1px solid var(--border-color);
+}
+
+.raceInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.trackName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venueName {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.raceMeta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.dateLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 80px;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .raceInfo {
+    min-width: 100px;
+  }
+
+  .dateLabel {
+    width: auto;
+  }
+}
