@@ -48,6 +48,8 @@ export type SeasonPointsEntry = {
   wins: number;
   top5: number;
   top10: number;
+  races: number;
+  avgFinish: number;
   inChase: boolean;
 };
 
@@ -100,7 +102,17 @@ export async function computeSeasonPointsStandings(seasonId: string, beforeWeek?
   function getEntry(byDriverId: Map<string, SeasonPointsEntry>, driverId: string): SeasonPointsEntry {
     let entry = byDriverId.get(driverId);
     if (!entry) {
-      entry = { driverId, driverName: driverNameById.get(driverId) ?? "Unknown driver", points: 0, wins: 0, top5: 0, top10: 0, inChase: false };
+      entry = {
+        driverId,
+        driverName: driverNameById.get(driverId) ?? "Unknown driver",
+        points: 0,
+        wins: 0,
+        top5: 0,
+        top10: 0,
+        races: 0,
+        avgFinish: 0,
+        inChase: false,
+      };
       byDriverId.set(driverId, entry);
     }
     return entry;
@@ -133,13 +145,22 @@ export async function computeSeasonPointsStandings(seasonId: string, beforeWeek?
     }
   }
 
-  // Wins/top5/top10 are season-wide counts (not reset by the Chase) —
-  // just a career-style tally for the year, computed once over every race.
+  // Wins/top5/top10/races are season-wide counts (not reset by the
+  // Chase) — just a career-style tally for the year, computed once over
+  // every race. avgFinish sums alongside them and divides once all races
+  // are counted.
+  const finishSumByDriverId = new Map<string, number>();
   for (const r of results) {
     const entry = getEntry(byDriverId, r.driverId);
+    entry.races += 1;
     if (r.finishingPosition === 1) entry.wins += 1;
     if (r.finishingPosition <= 5) entry.top5 += 1;
     if (r.finishingPosition <= 10) entry.top10 += 1;
+    finishSumByDriverId.set(r.driverId, (finishSumByDriverId.get(r.driverId) ?? 0) + r.finishingPosition);
+  }
+  for (const entry of byDriverId.values()) {
+    const sum = finishSumByDriverId.get(entry.driverId);
+    entry.avgFinish = sum != null && entry.races > 0 ? Math.round((sum / entry.races) * 10) / 10 : 0;
   }
 
   return [...byDriverId.values()].sort((a, b) => b.points - a.points);

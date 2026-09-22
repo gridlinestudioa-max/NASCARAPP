@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Card from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import DriverStatsTable, { type DriverStatRow } from "@/components/stats/DriverStatsTable";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
+import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +17,36 @@ export default async function StatsPage() {
   const season = await prisma.season.findFirst({ orderBy: { year: "desc" } });
   const pointsStandings = season ? await computeSeasonPointsStandings(season.id) : [];
 
+  const driverProfiles = pointsStandings.length
+    ? await prisma.driver.findMany({
+        where: { id: { in: pointsStandings.map((e) => e.driverId) } },
+        select: { id: true, team: true, number: true, bio: true },
+      })
+    : [];
+  const profileById = new Map(driverProfiles.map((d) => [d.id, d]));
+
+  const drivers: DriverStatRow[] = pointsStandings.map((e) => ({
+    driverId: e.driverId,
+    driverName: e.driverName,
+    team: profileById.get(e.driverId)?.team ?? null,
+    number: profileById.get(e.driverId)?.number ?? null,
+    bio: profileById.get(e.driverId)?.bio ?? null,
+    points: e.points,
+    wins: e.wins,
+    top5: e.top5,
+    top10: e.top10,
+    races: e.races,
+    avgFinish: e.avgFinish,
+    inChase: e.inChase,
+  }));
+
   return (
     <main>
       <Breadcrumb items={[{ label: "Dashboards" }, { label: "Driver Stats" }]} />
       <h1>Driver Stats</h1>
-      {season && <p>{season.year} season</p>}
+      <p className={styles.sub}>
+        {season && `${season.year} season · `}ranked by year points
+      </p>
 
       <p>
         <small>
@@ -32,38 +57,18 @@ export default async function StatsPage() {
           top of that — everyone else keeps accumulating normally.
         </small>
       </p>
-      <Card>
-        {pointsStandings.length === 0 ? (
-          <p>No results have been entered yet.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Driver</th>
-                <th>Points</th>
-                <th>Wins</th>
-                <th>Top 5</th>
-                <th>Top 10</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pointsStandings.map((e, i) => (
-                <tr key={e.driverId}>
-                  <td>{i + 1}</td>
-                  <td>
-                    {e.driverName} {e.inChase && <Badge tone="success">Chase</Badge>}
-                  </td>
-                  <td>{e.points}</td>
-                  <td>{e.wins}</td>
-                  <td>{e.top5}</td>
-                  <td>{e.top10}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+
+      {drivers.length === 0 ? (
+        <p>No results have been entered yet.</p>
+      ) : (
+        <>
+          <div className={styles.legend}>
+            <span className={styles.legendSwatch} />
+            <span className={styles.legendLabel}>Top 16 — Playoff / Chase field</span>
+          </div>
+          <DriverStatsTable drivers={drivers} />
+        </>
+      )}
     </main>
   );
 }

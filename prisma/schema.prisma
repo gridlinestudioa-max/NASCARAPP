@@ -191,6 +191,14 @@ model Driver {
   name     String  @unique
   isActive Boolean @default(true)
 
+  // Profile fields for the Driver Stats page's detail modal — nullable
+  // since we have no real source for these yet (no team/number/bio feed is
+  // wired up); the UI omits each one when unset rather than showing a
+  // fabricated placeholder.
+  number Int?
+  team   String?
+  bio    String?
+
   raceResults           RaceResult[]
   stageResults          StageResult[]
   qualifyingResults     QualifyingResult[]

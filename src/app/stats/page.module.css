@@ -1,0 +1,25 @@
+.sub {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #f7edcb;
+  border: 1px solid #e6d9a0;
+  display: inline-block;
+}
+
+.legendLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
