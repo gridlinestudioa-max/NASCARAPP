@@ -113,34 +113,26 @@ export async function updatePickOrder(
   return undefined;
 }
 
-export async function updateLeagueIcon(
-  _prevState: string | undefined,
-  formData: FormData,
-): Promise<string | undefined> {
-  const leagueId = formData.get("leagueId");
-  const iconUrlRaw = formData.get("iconUrl");
-  if (typeof leagueId !== "string" || typeof iconUrlRaw !== "string") {
-    return "Missing league icon.";
-  }
-
+// Called directly (not through useActionState/FormData) by ImageUploadField
+// right after a league icon finishes uploading to Blob storage.
+export async function setLeagueIcon(leagueId: string, iconUrl: string | null): Promise<{ error?: string }> {
   const session = await auth();
   if (!session?.user?.id) {
-    return "You need to be signed in.";
+    return { error: "You need to be signed in." };
   }
-  const userId = session.user.id;
 
   const membership = await prisma.leagueMembership.findUnique({
-    where: { leagueId_userId: { leagueId, userId } },
+    where: { leagueId_userId: { leagueId, userId: session.user.id } },
   });
   if (!membership || membership.role !== "OWNER") {
-    return "Only the league commissioner can set its icon.";
+    return { error: "Only the league commissioner can set its icon." };
   }
 
-  await prisma.league.update({ where: { id: leagueId }, data: { iconUrl: iconUrlRaw.trim() || null } });
+  await prisma.league.update({ where: { id: leagueId }, data: { iconUrl } });
 
   revalidatePath(`/leagues/${leagueId}`);
   revalidatePath("/", "layout");
-  return undefined;
+  return {};
 }
 
 export async function transferCommissioner(

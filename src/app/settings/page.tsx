@@ -9,6 +9,7 @@ import PasswordForm from "./PasswordForm";
 import NotificationsForm from "./NotificationsForm";
 import LeagueColorsForm from "./LeagueColorsForm";
 import AppearanceForm from "./AppearanceForm";
+import AvatarUploadForm from "./AvatarUploadForm";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,7 @@ export default async function SettingsPage() {
             everywhere else across every league you&apos;re in.
           </small>
         </p>
+        <AvatarUploadForm name={user.name ?? user.email} avatarUrl={user.avatarUrl} />
         <ProfileForm name={user.name ?? ""} />
       </Card>
 

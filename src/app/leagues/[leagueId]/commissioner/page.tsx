@@ -61,7 +61,7 @@ export default async function CommissionerPage(props: { params: Promise<{ league
       </p>
 
       <Card title="League Icon">
-        <LeagueIconForm leagueId={leagueId} iconUrl={league.iconUrl} />
+        <LeagueIconForm leagueId={leagueId} leagueName={league.name} iconUrl={league.iconUrl} />
       </Card>
 
       <Card title="Commissioner">

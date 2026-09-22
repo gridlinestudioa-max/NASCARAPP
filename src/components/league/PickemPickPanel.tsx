@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import UserAvatar from "@/components/ui/UserAvatar";
 import { parseRuleSetConfig, pickemLockAt } from "@/lib/scoring";
 import { PICK_ORDER_MODE_INFO, computePickOrderSeats, computeWeekPickOrder, sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import PickForm from "@/app/leagues/[leagueId]/races/[raceId]/PickForm";
@@ -62,7 +63,12 @@ export default async function PickemPickPanel({
             <tbody>
               {picks.map((p) => (
                 <tr key={p.id} style={p.userId === userId ? { fontWeight: 700 } : undefined}>
-                  <td>{p.user.name ?? p.user.email}</td>
+                  <td>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                      <UserAvatar name={p.user.name ?? p.user.email} avatarUrl={p.user.avatarUrl} />
+                      {p.user.name ?? p.user.email}
+                    </span>
+                  </td>
                   <td>{p.driver.name}</td>
                   <td>{p.score?.finishPosition ?? "—"}</td>
                   <td>{p.score?.baseScore ?? "—"}</td>
@@ -115,6 +121,7 @@ export default async function PickemPickPanel({
   const pickedUserIds = new Set(picks.map((p) => p.userId));
   const seats = computePickOrderSeats(weekOrder, pickedUserIds);
   const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
+  const avatarByUserId = new Map(members.map((m) => [m.userId, m.user.avatarUrl]));
 
   const myTurn = seats.find((s) => s.userId === userId);
   const onTheClockSeat = seats.find((s) => s.status === "onTheClock");
@@ -129,9 +136,16 @@ export default async function PickemPickPanel({
     <>
       <div className={styles.turnBanner}>
         <div className={styles.turnBannerHead}>
-          <p className={styles.turnBannerUpNow}>
-            <span className={styles.turnBannerLabel}>Up now:</span>{" "}
-            {onTheClockSeat ? nameByUserId.get(onTheClockSeat.userId) : "All picks in"}
+          <p className={styles.turnBannerUpNow} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span className={styles.turnBannerLabel}>Up now:</span>
+            {onTheClockSeat ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <UserAvatar name={nameByUserId.get(onTheClockSeat.userId) ?? "?"} avatarUrl={avatarByUserId.get(onTheClockSeat.userId)} size="md" />
+                {nameByUserId.get(onTheClockSeat.userId)}
+              </span>
+            ) : (
+              "All picks in"
+            )}
           </p>
           <p className={styles.turnBannerMeta}>
             {PICK_ORDER_MODE_INFO[pickOrderMode].label} order · pick {onTheClockSeat ? onTheClockSeat.position : seats.length} of {seats.length}
@@ -144,6 +158,7 @@ export default async function PickemPickPanel({
               className={seat.status === "onTheClock" ? `${styles.turnChip} ${styles.turnChipActive}` : styles.turnChip}
             >
               <span className={styles.turnChipPos}>{seat.position}</span>
+              <UserAvatar name={nameByUserId.get(seat.userId) ?? "?"} avatarUrl={avatarByUserId.get(seat.userId)} />
               <span className={seat.userId === userId ? styles.turnChipNameBold : styles.turnChipName}>
                 {nameByUserId.get(seat.userId)}
                 {seat.userId === userId ? " (you)" : ""}

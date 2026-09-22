@@ -1,24 +1,26 @@
 "use client";
 
-import { useActionState } from "react";
-import { updateLeagueIcon } from "./actions";
+import ImageUploadField from "@/components/ui/ImageUploadField";
+import { setLeagueIcon } from "./actions";
 
-export default function LeagueIconForm({ leagueId, iconUrl }: { leagueId: string; iconUrl: string | null }) {
-  const [error, formAction, pending] = useActionState(updateLeagueIcon, undefined);
-
+export default function LeagueIconForm({
+  leagueId,
+  leagueName,
+  iconUrl,
+}: {
+  leagueId: string;
+  leagueName: string;
+  iconUrl: string | null;
+}) {
   return (
-    <form action={formAction}>
-      <input type="hidden" name="leagueId" value={leagueId} />
-      <label htmlFor="iconUrl">Icon image URL</label>
-      <br />
-      <input id="iconUrl" name="iconUrl" type="text" placeholder="https://…" defaultValue={iconUrl ?? ""} />{" "}
-      <button type="submit" disabled={pending}>
-        {pending ? "Saving..." : "Save"}
-      </button>
-      {error && <p role="alert">{error}</p>}
-      <p>
-        <small>Shown in place of your league&apos;s initial-letter avatar. Leave blank to use that instead.</small>
-      </p>
-    </form>
+    <ImageUploadField
+      currentUrl={iconUrl}
+      fallbackText={(leagueName.charAt(0) || "?").toUpperCase()}
+      pathPrefix={`league-icons/${leagueId}`}
+      clientPayload={JSON.stringify({ kind: "league-icon", leagueId })}
+      onUploaded={(url) => setLeagueIcon(leagueId, url)}
+      shape="square"
+      helperText="Shown next to your league's name in place of the initial-letter avatar. JPG, PNG, WEBP or GIF, up to 5MB."
+    />
   );
 }

@@ -22,6 +22,11 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
+  // Uploaded profile picture (Vercel Blob URL) — shown next to this
+  // user's name anywhere a league lists its members. Nullable: falls back
+  // to an initial-letter avatar, same treatment as League.iconUrl.
+  avatarUrl String?
+
   // Null passwordHash means the account (e.g. from a historical data
   // import) hasn't been claimed with a username/password yet.
   username     String? @unique
@@ -121,9 +126,9 @@ model League {
   // appended automatically.
   pickOrder     Json?
 
-  // Commissioner-set image for the league, shown in the league hub header
-  // in place of the default initial-letter avatar. Nullable — no upload
-  // infra exists yet, so this is a pasted image URL, not a file upload.
+  // Commissioner-uploaded image for the league (Vercel Blob URL), shown in
+  // the league hub header in place of the default initial-letter avatar.
+  // Nullable — falls back to the letter avatar.
   iconUrl String?
 
   memberships   LeagueMembership[]

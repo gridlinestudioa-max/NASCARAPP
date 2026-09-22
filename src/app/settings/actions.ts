@@ -142,6 +142,19 @@ export async function updateLeagueColor(_prevState: FormState, formData: FormDat
   return { kind: "status", message: "League color saved." };
 }
 
+// Called directly (not through useActionState/FormData) by ImageUploadField
+// right after a profile picture finishes uploading to Blob storage.
+export async function setAvatarUrl(url: string | null): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "You're not signed in." };
+  }
+
+  await prisma.user.update({ where: { id: session.user.id }, data: { avatarUrl: url } });
+  revalidatePath("/", "layout");
+  return {};
+}
+
 export async function updateNotifications(_prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
   if (!session?.user?.id) {

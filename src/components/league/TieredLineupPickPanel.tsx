@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import UserAvatar from "@/components/ui/UserAvatar";
 import {
   parseTieredDraftRuleSetConfig,
   TIERED_LINEUP_SLOTS,
@@ -110,11 +111,18 @@ export default async function TieredLineupPickPanel({
         <Card title="Team totals this week">
           <ul className="rowList">
             {members
-              .map((m) => ({ name: m.user.name ?? m.user.email, total: totalByUserId.get(m.userId) ?? 0 }))
+              .map((m) => ({
+                name: m.user.name ?? m.user.email,
+                avatarUrl: m.user.avatarUrl,
+                total: totalByUserId.get(m.userId) ?? 0,
+              }))
               .sort((a, b) => b.total - a.total)
               .map((m) => (
                 <li key={m.name}>
-                  {m.name}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                    <UserAvatar name={m.name} avatarUrl={m.avatarUrl} />
+                    {m.name}
+                  </span>
                   <strong>{m.total}</strong>
                 </li>
               ))}
@@ -259,7 +267,10 @@ export default async function TieredLineupPickPanel({
         <ul className="rowList">
           {members.map((m) => (
             <li key={m.userId}>
-              {m.user.name ?? m.user.email}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <UserAvatar name={m.user.name ?? m.user.email} avatarUrl={m.user.avatarUrl} />
+                {m.user.name ?? m.user.email}
+              </span>
               <Badge tone={lineupSetUserIds.has(m.userId) ? "accent" : "neutral"}>
                 {lineupSetUserIds.has(m.userId) ? "Set" : "Not yet"}
               </Badge>
