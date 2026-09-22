@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import EntryListForm from "./EntryListForm";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +26,9 @@ export default async function EnterEntryListPage(props: PageProps<"/admin/races/
 
   return (
     <main>
-      <p>
-        <Link href={`/admin/races/${raceId}`}>&larr; Week {race.week}</Link>
-      </p>
+      <Breadcrumb
+        items={[{ label: "Admin", href: "/admin" }, { label: race.trackName, href: `/admin/races/${raceId}` }, { label: "Entries" }]}
+      />
       <h1>
         Entry list — Week {race.week}, {race.trackName}
       </h1>

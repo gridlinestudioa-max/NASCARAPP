@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function SchedulePage() {
 
   return (
     <main>
+      <Breadcrumb items={[{ label: "Dashboards" }, { label: "Schedule" }]} />
       <h1>Schedule</h1>
       {season && <p>{season.year} season</p>}
 

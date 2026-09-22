@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +6,7 @@ import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import { getLeagueHubData } from "../(hub)/leagueData";
 import TransferCommissionerForm from "./TransferCommissionerForm";
 import PickOrderForm from "./PickOrderForm";
@@ -45,9 +45,13 @@ export default async function CommissionerPage(props: { params: Promise<{ league
 
   return (
     <main>
-      <p>
-        <Link href={`/leagues/${leagueId}`}>&larr; Back to league</Link>
-      </p>
+      <Breadcrumb
+        items={[
+          { label: "My Leagues", href: "/my-leagues" },
+          { label: league.name, href: `/leagues/${leagueId}` },
+          { label: "Commissioner Tools" },
+        ]}
+      />
 
       <h1>Commissioner tools</h1>
 

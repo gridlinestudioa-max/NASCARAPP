@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import HistoricalImportPanel from "./HistoricalImportPanel";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export default async function HistoricalImportPage() {
 
   return (
     <main>
+      <Breadcrumb items={[{ label: "Admin", href: "/admin" }, { label: "Historical Import" }]} />
       <h1>Historical results import</h1>
       <p>
         One-time backfill of the 8 seasons before this one, pulled from NASCAR&apos;s own feed — gives the

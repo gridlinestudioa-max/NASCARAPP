@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import LeagueHero from "@/components/league/LeagueHero";
 import LeagueTabs from "@/components/league/LeagueTabs";
 import LiveRefresh from "@/components/league/LiveRefresh";
@@ -40,9 +41,7 @@ export default async function LeagueHubLayout({
     <main>
       <LiveRefresh />
       <div className={styles.topRow}>
-        <p>
-          <Link href="/my-leagues">&larr; My Leagues</Link>
-        </p>
+        <Breadcrumb items={[{ label: "My Leagues", href: "/my-leagues" }, { label: league.name }]} />
         {membership.role === "OWNER" && (
           <Link
             href={`/leagues/${leagueId}/commissioner`}

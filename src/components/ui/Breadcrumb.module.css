@@ -1,0 +1,26 @@
+.breadcrumb {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-5);
+}
+
+.segment {
+  white-space: nowrap;
+}
+
+.separator {
+  margin: 0 0.5em;
+}
+
+.link {
+  color: var(--text-muted);
+}
+
+.link:hover {
+  color: var(--text-secondary);
+}
+
+.current {
+  color: var(--text-primary);
+  font-weight: 600;
+}

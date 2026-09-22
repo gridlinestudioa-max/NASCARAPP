@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +20,7 @@ export default async function NewLeaguePage() {
 
   return (
     <main>
-      <p>
-        <Link href="/my-leagues">&larr; My Leagues</Link>
-      </p>
+      <Breadcrumb items={[{ label: "My Leagues", href: "/my-leagues" }, { label: "Create a League" }]} />
       <h1>Create a league</h1>
       <p>You&apos;ll be the owner and can invite others once it&apos;s created.</p>
       <LeagueRulesForm completedRaces={completedRaces} />

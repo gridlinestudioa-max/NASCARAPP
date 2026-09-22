@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { materializeCarriedOverLineups } from "@/lib/tieredDraft";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import ResultsForm from "./ResultsForm";
 
 export const dynamic = "force-dynamic";
@@ -52,9 +52,9 @@ export default async function EnterResultsPage(props: PageProps<"/admin/races/[r
 
   return (
     <main>
-      <p>
-        <Link href={`/admin/races/${raceId}`}>&larr; Week {race.week}</Link>
-      </p>
+      <Breadcrumb
+        items={[{ label: "Admin", href: "/admin" }, { label: race.trackName, href: `/admin/races/${raceId}` }, { label: "Results" }]}
+      />
       <h1>
         Enter results — Week {race.week}, {race.trackName}
       </h1>

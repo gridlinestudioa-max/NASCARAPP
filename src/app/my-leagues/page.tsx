@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -25,27 +27,40 @@ export default async function MyLeaguesPage() {
 
   return (
     <main>
+      <Breadcrumb items={[{ label: "Dashboards" }, { label: "My Leagues" }]} />
       <h1>My Leagues</h1>
 
-      <Card>
+      <Card
+        title="Your Leagues"
+        actions={
+          <>
+            <Link href="/leagues/new" className="linkButton">
+              Create a league
+            </Link>
+            <Link href="/leagues/join" className="linkButtonOutline">
+              Join with code
+            </Link>
+          </>
+        }
+      >
         {memberships.length === 0 ? (
           <p>You&apos;re not in any leagues yet.</p>
         ) : (
           <ul className="rowList">
             {memberships.map((m) => (
               <li key={m.id}>
-                <Link href={`/leagues/${m.league.id}`}>{m.league.name}</Link>
-                {m.role === "OWNER" && <Badge tone="ink">Commissioner</Badge>}
+                <Link href={`/leagues/${m.league.id}`}>
+                  <span className={styles.leagueRow}>
+                    <span className={styles.avatar}>{m.league.name.charAt(0).toUpperCase()}</span>
+                    <span className={styles.leagueName}>{m.league.name}</span>
+                    {m.role === "OWNER" && <Badge tone="neutral">Commish</Badge>}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
         )}
       </Card>
-
-      <p>
-        <Link href="/leagues/new">Create a league</Link> or{" "}
-        <Link href="/leagues/join">join one with an invite code</Link>.
-      </p>
     </main>
   );
 }

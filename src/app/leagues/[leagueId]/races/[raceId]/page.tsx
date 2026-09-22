@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import { parseRuleSetConfig, pickemLockAt } from "@/lib/scoring";
 import {
   TIERED_LINEUP_SLOTS,
@@ -84,7 +84,7 @@ async function renderPickem({
   race: { week: number; trackName: string; date: Date; qualifyingAt: Date | null; fieldSize: number; seasonId: string };
   leagueSeason: {
     ruleSet: { config: unknown };
-    league: { pickOrderMode: string; pickOrder: unknown };
+    league: { name: string; pickOrderMode: string; pickOrder: unknown };
   };
 }) {
   const config = parseRuleSetConfig(leagueSeason.ruleSet.config);
@@ -152,9 +152,13 @@ async function renderPickem({
     return (
       <main>
         <LiveRefresh />
-        <p>
-          <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
-        </p>
+        <Breadcrumb
+          items={[
+            { label: "My Leagues", href: "/my-leagues" },
+            { label: leagueSeason.league.name, href: `/leagues/${leagueId}` },
+            { label: race.trackName },
+          ]}
+        />
         <h1>
           Week {race.week} — {race.trackName}
         </h1>
@@ -217,9 +221,13 @@ async function renderPickem({
   return (
     <main>
       <LiveRefresh />
-      <p>
-        <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
-      </p>
+      <Breadcrumb
+        items={[
+          { label: "My Leagues", href: "/my-leagues" },
+          { label: leagueSeason.league.name, href: `/leagues/${leagueId}` },
+          { label: race.trackName },
+        ]}
+      />
       <h1>
         Week {race.week} — {race.trackName}
       </h1>
@@ -280,7 +288,7 @@ async function renderTieredLineup({
     seasonId: string;
     status: string;
   };
-  leagueSeason: { ruleSet: { config: unknown } };
+  leagueSeason: { ruleSet: { config: unknown }; league: { name: string } };
 }) {
   const config = parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config);
   const now = Date.now();
@@ -310,9 +318,13 @@ async function renderTieredLineup({
     return (
       <main>
         <LiveRefresh />
-        <p>
-          <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
-        </p>
+        <Breadcrumb
+          items={[
+            { label: "My Leagues", href: "/my-leagues" },
+            { label: leagueSeason.league.name, href: `/leagues/${leagueId}` },
+            { label: race.trackName },
+          ]}
+        />
         <h1>
           Week {race.week} — {race.trackName}
         </h1>
@@ -393,9 +405,13 @@ async function renderTieredLineup({
     return (
       <main>
         <LiveRefresh />
-        <p>
-          <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
-        </p>
+        <Breadcrumb
+          items={[
+            { label: "My Leagues", href: "/my-leagues" },
+            { label: leagueSeason.league.name, href: `/leagues/${leagueId}` },
+            { label: race.trackName },
+          ]}
+        />
         <h1>
           Week {race.week} — {race.trackName}
         </h1>
@@ -493,9 +509,13 @@ async function renderTieredLineup({
   return (
     <main>
       <LiveRefresh />
-      <p>
-        <Link href={`/leagues/${leagueId}`}>&larr; Standings</Link>
-      </p>
+      <Breadcrumb
+        items={[
+          { label: "My Leagues", href: "/my-leagues" },
+          { label: leagueSeason.league.name, href: `/leagues/${leagueId}` },
+          { label: race.trackName },
+        ]}
+      />
       <h1>
         Week {race.week} — {race.trackName}
       </h1>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import ProfileForm from "./ProfileForm";
 import AccountForm from "./AccountForm";
 import PasswordForm from "./PasswordForm";
@@ -22,6 +23,7 @@ export default async function SettingsPage() {
 
   return (
     <main>
+      <Breadcrumb items={[{ label: "Dashboards" }, { label: "Settings" }]} />
       <h1>Settings</h1>
 
       <Card title="Profile">

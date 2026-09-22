@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import { normalizeTrackName } from "@/lib/nascarFeed";
 
 export const dynamic = "force-dynamic";
@@ -56,9 +56,7 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
 
   return (
     <main>
-      <p>
-        <Link href="/races">&larr; Schedule</Link>
-      </p>
+      <Breadcrumb items={[{ label: "Schedule", href: "/races" }, { label: race.trackName }]} />
       <h1>
         Week {race.week} — {race.trackName}
       </h1>

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import JoinLeagueForm from "./JoinLeagueForm";
 
 export default async function JoinLeaguePage() {
@@ -12,9 +12,7 @@ export default async function JoinLeaguePage() {
 
   return (
     <main>
-      <p>
-        <Link href="/my-leagues">&larr; My Leagues</Link>
-      </p>
+      <Breadcrumb items={[{ label: "My Leagues", href: "/my-leagues" }, { label: "Join a League" }]} />
       <h1>Join a league</h1>
       <Card>
         <p>Ask the league owner for their invite code.</p>

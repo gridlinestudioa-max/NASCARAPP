@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <main>
+      <Breadcrumb items={[{ label: "Dashboards" }, { label: "Admin" }]} />
       <h1>Admin</h1>
       <p>
         Schedule, entry lists, qualifying, and results sync automatically from NASCAR. Use a race below only when

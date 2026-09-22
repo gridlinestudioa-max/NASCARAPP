@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import ScheduleEditForm from "./ScheduleEditForm";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +20,7 @@ export default async function AdminRacePage(props: PageProps<"/admin/races/[race
 
   return (
     <main>
-      <p>
-        <Link href="/admin">&larr; Admin</Link>
-      </p>
+      <Breadcrumb items={[{ label: "Admin", href: "/admin" }, { label: race.trackName }]} />
       <h1>
         Week {race.week} — {race.trackName}
       </h1>

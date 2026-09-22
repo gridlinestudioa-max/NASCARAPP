@@ -15,7 +15,7 @@
   --bg-surface: #f7f7f7;
   --bg-surface-muted: #f7f7f7;
   --border-color: #e3e3e3;
-  --shadow-card: 0 1px 2px rgba(20, 20, 20, 0.04), 0 8px 24px rgba(20, 20, 20, 0.05);
+  --shadow-card: 0 14px 30px -10px rgba(20, 20, 20, 0.12), 0 1px 3px rgba(20, 20, 20, 0.05);
   --shadow-shell: 0 24px 60px -12px rgba(20, 20, 20, 0.25), 0 2px 8px rgba(20, 20, 20, 0.08);
 
   /* Text */
@@ -130,6 +130,40 @@ a:not([class]):hover {
   text-decoration-color: currentColor;
 }
 
+/* A link styled to look like a button — for header actions (e.g. "Create a
+   league") that need to be an <a> (navigation) rather than a <button>
+   (form submission / client handler). */
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  border-radius: var(--radius-btn);
+  padding: 0.5em 1em;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.linkButton:hover {
+  opacity: 0.85;
+}
+
+.linkButtonOutline {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-btn);
+  padding: 0.5em 1em;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.linkButtonOutline:hover {
+  border-color: var(--text-muted);
+}
+
 code {
   font-family: var(--font-geist-mono), monospace;
   background: var(--bg-surface-muted);
@@ -166,11 +200,12 @@ p + p {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
 }
 
 .rowList a:hover {
-  color: var(--text-secondary);
+  background: var(--bg-surface-muted);
 }
 
 /* ---------- Forms ---------- */

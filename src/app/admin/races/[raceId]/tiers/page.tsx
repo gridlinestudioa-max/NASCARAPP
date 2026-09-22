@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import TiersForm from "./TiersForm";
 
 export const dynamic = "force-dynamic";
@@ -37,9 +37,9 @@ export default async function AssignTiersPage(props: PageProps<"/admin/races/[ra
 
   return (
     <main>
-      <p>
-        <Link href={`/admin/races/${raceId}`}>&larr; Week {race.week}</Link>
-      </p>
+      <Breadcrumb
+        items={[{ label: "Admin", href: "/admin" }, { label: race.trackName, href: `/admin/races/${raceId}` }, { label: "Tiers" }]}
+      />
       <h1>
         Assign weekly tiers — Week {race.week}, {race.trackName}
       </h1>

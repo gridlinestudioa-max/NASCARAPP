@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function StatsPage() {
 
   return (
     <main>
+      <Breadcrumb items={[{ label: "Dashboards" }, { label: "Driver Stats" }]} />
       <h1>Driver Stats</h1>
       {season && <p>{season.year} season</p>}
 
