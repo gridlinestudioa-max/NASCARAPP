@@ -220,11 +220,6 @@ export default function AppShell({
             </button>
             {settingsOpen && (
               <div className={styles.settingsPanel}>
-                {isAdmin && (
-                  <Link href="/admin/style" className={styles.settingsPanelLink}>
-                    Edit global style →
-                  </Link>
-                )}
                 <Link href="/settings" className={styles.settingsPanelLink}>
                   Account settings →
                 </Link>

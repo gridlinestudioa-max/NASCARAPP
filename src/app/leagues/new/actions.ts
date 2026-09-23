@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { LeagueType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { generateInviteCode } from "@/lib/inviteCode";
 import { computeScore, parseRuleSetConfig, type PickemRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 
@@ -36,8 +37,16 @@ export async function createLeague(
   const currentSeason = await prisma.season.findFirst({ orderBy: { year: "desc" } });
 
   const league = await prisma.$transaction(async (tx) => {
+    // Collisions are astronomically unlikely at this keyspace (32^6), but
+    // cheap to guard against rather than let a unique-constraint error
+    // bubble up as a confusing "create league" failure.
+    let inviteCode = generateInviteCode();
+    for (let attempt = 0; attempt < 5 && (await tx.league.findUnique({ where: { inviteCode } })); attempt++) {
+      inviteCode = generateInviteCode();
+    }
+
     const league = await tx.league.create({
-      data: { name: trimmed, type: leagueType, ownerId: userId },
+      data: { name: trimmed, type: leagueType, ownerId: userId, inviteCode },
     });
     await tx.leagueMembership.create({
       data: { leagueId: league.id, userId, role: "OWNER" },

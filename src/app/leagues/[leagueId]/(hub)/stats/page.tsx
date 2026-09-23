@@ -188,17 +188,14 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
               <li key={p.id}>
                 <span className={styles.raceRowMain}>
                   <RaceRowIcon />
-                  <span className={styles.raceRowText}>
-                    <span className={styles.raceRowLabel}>
-                      {raceByWeek.get(p.raceId) ? displayRaceName(raceByWeek.get(p.raceId)!.trackName) : "—"}
-                    </span>
-                    <span className={styles.raceRowSub}>
-                      {p.driver.name}
-                      {p.score?.finishPosition != null && ` — finished ${p.score.finishPosition}`}
-                    </span>
+                  <span className={styles.raceRowLabel}>
+                    {raceByWeek.get(p.raceId) ? displayRaceName(raceByWeek.get(p.raceId)!.trackName) : "—"}
                   </span>
                 </span>
-                <strong className={styles.accentCell}>{p.score?.total ?? "—"}</strong>
+                <span className={styles.raceRowRight}>
+                  <span className={styles.raceRowDriver}>{p.driver.name}</span>
+                  <strong className={styles.accentCell}>{p.score?.total ?? "—"}</strong>
+                </span>
               </li>
             ))}
         </ul>
@@ -300,6 +297,45 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       )}
 
       <Card title="Player Stats">
+        <div className={styles.desktopTable}>
+          <table className={styles.compactTable}>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Momentum</th>
+                <th className={styles.num}>Consistency</th>
+                <th className={styles.num}>Stage Points</th>
+                <th className={styles.num}>Unique Drivers</th>
+              </tr>
+            </thead>
+            <tbody>
+              {playerStats.map((p) => (
+                <tr key={p.userId}>
+                  <td>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                      <UserAvatar name={p.name} avatarUrl={avatarByUserId.get(p.userId)} />
+                      {p.name}
+                    </span>
+                  </td>
+                  <td>
+                    {p.momentum != null ? (
+                      <Badge tone={p.momentum >= 0 ? "success" : "danger"}>
+                        {p.momentum >= 0 ? "+" : ""}
+                        {p.momentum}
+                      </Badge>
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td className={`${styles.num} ${styles.accentCell}`}>{p.consistencyScore.toFixed(2)}</td>
+                  <td className={`${styles.num} ${styles.accentCell}`}>{p.stagePts}</td>
+                  <td className={styles.num}>{p.uniqueDrivers}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className={styles.mobileTabs}>
         <TabbedPanel
           tabs={[
             momentumSorted.length > 0 && {
@@ -408,6 +444,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
             },
           ].filter(Boolean) as { id: string; label: string; content: ReactNode }[]}
         />
+        </div>
       </Card>
 
       {renderPersonalStatsCard(data, userId)}
@@ -415,6 +452,38 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       {renderPersonalLimitCard(data, userId)}
 
       <Card title="Drivers">
+        <div className={styles.desktopTable}>
+          {driverStats.length === 0 ? (
+            <p>No picks made yet this season.</p>
+          ) : (
+            <table className={styles.compactTable}>
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>Picked most by</th>
+                  <th className={styles.num}>Times picked</th>
+                  <th className={styles.num}>Avg pts</th>
+                  <th className={styles.num}>Total pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {driverStats.map((d) => {
+                  const topOwner = topOwnerByDriver.get(d.driverId);
+                  return (
+                    <tr key={d.driverId}>
+                      <td>{d.name}</td>
+                      <td className={styles.muted}>{topOwner ? `${topOwner.name} · ${topOwner.count}×` : "—"}</td>
+                      <td className={`${styles.num} ${styles.accentCell}`}>{d.timesPicked}</td>
+                      <td className={styles.num}>{d.avgPts.toFixed(1)}</td>
+                      <td className={styles.num}>{d.totalPts}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className={styles.mobileTabs}>
         <TabbedPanel
           tabs={[
             {
@@ -478,6 +547,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
             },
           ]}
         />
+        </div>
       </Card>
     </>
   );

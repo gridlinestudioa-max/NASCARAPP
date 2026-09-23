@@ -112,8 +112,11 @@ model League {
   name       String
   type       LeagueType
   ownerId    String
-  // Share link for joining — regenerable, so it's not derived from name/id.
-  inviteCode String     @unique @default(cuid())
+  // Share link for joining — a short, human-typeable code (see
+  // src/lib/inviteCode.ts), generated app-side at league creation rather
+  // than via a DB default so it can use its own small alphabet/length
+  // instead of cuid()'s long id-shaped string.
+  inviteCode String     @unique
   createdAt  DateTime   @default(now())
 
   // Weekly pick order for PICKEM leagues (see src/lib/pickOrder.ts). Unset

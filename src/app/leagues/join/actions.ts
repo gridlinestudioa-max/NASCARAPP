@@ -23,8 +23,10 @@ export async function joinLeague(
   }
   const userId = session.user.id;
 
+  // Codes are generated uppercase-only (src/lib/inviteCode.ts) — normalize
+  // whatever case someone typed rather than making the match fail on it.
   const league = await prisma.league.findUnique({
-    where: { inviteCode: inviteCode.trim() },
+    where: { inviteCode: inviteCode.trim().toUpperCase() },
   });
   if (!league) {
     return "That invite code doesn't match any league.";

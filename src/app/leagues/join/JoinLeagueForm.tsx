@@ -14,7 +14,17 @@ export default function JoinLeagueForm() {
       <div>
         <label htmlFor="inviteCode">Invite code</label>
         <br />
-        <input id="inviteCode" name="inviteCode" type="text" required autoFocus />
+        <input
+          id="inviteCode"
+          name="inviteCode"
+          type="text"
+          required
+          autoFocus
+          maxLength={6}
+          autoCapitalize="characters"
+          autoComplete="off"
+          style={{ textTransform: "uppercase" }}
+        />
       </div>
 
       <div>
