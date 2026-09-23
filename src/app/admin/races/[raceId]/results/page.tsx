@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { materializeCarriedOverLineups } from "@/lib/tieredDraft";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { displayRaceName } from "@/lib/raceName";
 import ResultsForm from "./ResultsForm";
 
 export const dynamic = "force-dynamic";
@@ -53,10 +54,14 @@ export default async function EnterResultsPage(props: PageProps<"/admin/races/[r
   return (
     <main>
       <Breadcrumb
-        items={[{ label: "Admin", href: "/admin" }, { label: race.trackName, href: `/admin/races/${raceId}` }, { label: "Results" }]}
+        items={[
+          { label: "Admin", href: "/admin" },
+          { label: displayRaceName(race.trackName), href: `/admin/races/${raceId}` },
+          { label: "Results" },
+        ]}
       />
       <h1>
-        Enter results — Week {race.week}, {race.trackName}
+        Enter results — Week {race.week}, {displayRaceName(race.trackName)}
       </h1>
       <Card>
         {drivers.length === 0 ? (

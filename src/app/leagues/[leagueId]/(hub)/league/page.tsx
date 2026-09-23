@@ -5,6 +5,7 @@ import { CheckeredFlagIcon } from "@/components/ui/icons";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { PICK_ORDER_MODE_INFO, type PickOrderMode } from "@/lib/pickOrder";
+import { displayRaceName } from "@/lib/raceName";
 import { getLeagueHubData } from "../leagueData";
 import styles from "./page.module.css";
 import raceBreakdownStyles from "./RaceBreakdown.module.css";
@@ -121,7 +122,7 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
                           <span className={styles.raceIcon}>
                             <CheckeredFlagIcon size={14} />
                           </span>
-                          <span className={styles.raceName}>{r.trackName}</span>
+                          <span className={styles.raceName}>{displayRaceName(r.trackName)}</span>
                         </span>
                       </td>
                       {members.map((m) => (
@@ -168,7 +169,7 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
                 <details key={r.id} className={raceBreakdownStyles.raceItem}>
                   <summary className={raceBreakdownStyles.summary}>
                     <div>
-                      <div className={raceBreakdownStyles.trackName}>{r.trackName}</div>
+                      <div className={raceBreakdownStyles.trackName}>{displayRaceName(r.trackName)}</div>
                       <div className={raceBreakdownStyles.raceNum}>Week {r.week}</div>
                     </div>
                     <svg

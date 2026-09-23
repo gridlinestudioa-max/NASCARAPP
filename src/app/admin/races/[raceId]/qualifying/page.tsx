@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { displayRaceName } from "@/lib/raceName";
 import QualifyingForm from "./QualifyingForm";
 
 export const dynamic = "force-dynamic";
@@ -37,10 +38,14 @@ export default async function EnterQualifyingPage(props: PageProps<"/admin/races
   return (
     <main>
       <Breadcrumb
-        items={[{ label: "Admin", href: "/admin" }, { label: race.trackName, href: `/admin/races/${raceId}` }, { label: "Qualifying" }]}
+        items={[
+          { label: "Admin", href: "/admin" },
+          { label: displayRaceName(race.trackName), href: `/admin/races/${raceId}` },
+          { label: "Qualifying" },
+        ]}
       />
       <h1>
-        Enter qualifying results — Week {race.week}, {race.trackName}
+        Enter qualifying results — Week {race.week}, {displayRaceName(race.trackName)}
       </h1>
       <Card>
         {drivers.length === 0 ? (

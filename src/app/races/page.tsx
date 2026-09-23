@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Badge from "@/components/ui/Badge";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { displayRaceName } from "@/lib/raceName";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -70,8 +71,8 @@ export default async function SchedulePage() {
                   <Link key={r.id} href={`/races/${r.id}`} className={styles.raceRow}>
                     <span className={styles.weekChip}>{r.week}</span>
                     <span className={styles.raceInfo}>
-                      <span className={styles.trackName}>{r.venueName ?? r.trackName}</span>
-                      {r.venueName && <span className={styles.venueName}>{r.trackName}</span>}
+                      <span className={styles.trackName}>{r.venueName ?? displayRaceName(r.trackName)}</span>
+                      {r.venueName && <span className={styles.venueName}>{displayRaceName(r.trackName)}</span>}
                     </span>
                     <span className={styles.raceMeta}>
                       {isNext && <Badge tone="accent">Next Up</Badge>}

@@ -16,8 +16,8 @@
 
 .statGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
 }
 
 .statCard {
@@ -25,11 +25,11 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
-  padding: 18px 20px;
+  padding: 12px 14px;
 }
 
 .statValue {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   font-family: var(--font-heading);
@@ -37,9 +37,17 @@
 }
 
 .statLabel {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 2px;
+}
+
+/* Applied to every data table on this page — the default global td/th
+   padding (8px/12px) is comfortable for a standalone table, but adds up
+   fast across the dozen-plus tables stacked on this one page. */
+.compactTable td,
+.compactTable th {
+  padding: 5px 10px;
 }
 
 .twoCol {
@@ -55,7 +63,7 @@
 }
 
 .barRow + .barRow {
-  margin-top: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .barLabelRow {
@@ -121,13 +129,17 @@
 }
 
 .raceList {
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.raceList > li {
+  padding: 8px var(--space-3);
 }
 
 .raceRowMain {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-width: 0;
 }
 
@@ -135,8 +147,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   border-radius: var(--radius-sm);
   background: var(--bg-surface-muted);

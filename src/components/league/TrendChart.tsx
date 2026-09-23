@@ -37,10 +37,14 @@ export default function TrendChart({
   // ("Weekly Placement") where a lower number is better, unlike a points
   // or differential series where higher is better.
   yReversed = false,
+  // Lets a tighter layout (e.g. Stats tab) ask for a shorter chart than
+  // the 260px default.
+  height = 260,
 }: {
   labels: string[];
   series: TrendSeries[];
   yReversed?: boolean;
+  height?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -122,7 +126,7 @@ export default function TrendChart({
 
   return (
     <div>
-      <div className={styles.wrap}>
+      <div className={styles.wrap} style={{ height }}>
         <canvas ref={canvasRef} />
       </div>
       <div className={styles.legend}>

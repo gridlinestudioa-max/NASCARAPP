@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { displayRaceName } from "@/lib/raceName";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export default async function AdminDashboardPage() {
             {races.map((r) => (
               <li key={r.id}>
                 <Link href={`/admin/races/${r.id}`}>
-                  Week {r.week} — {r.trackName}
+                  Week {r.week} — {displayRaceName(r.trackName)}
                 </Link>
                 <span style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
                   {new Date(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
