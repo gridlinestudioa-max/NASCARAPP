@@ -1,5 +1,6 @@
-/* Matches the top-of-page tab bubble (LeagueTabs.module.css) so this
-   toggle reads as the same control language, just scoped smaller. */
+/* A smaller version of the main LeagueTabs pill (LeagueTabs.module.css) —
+   used anywhere a card needs its own local view switcher rather than a
+   page-level navigation control. */
 .toggle {
   display: inline-flex;
   gap: 2px;

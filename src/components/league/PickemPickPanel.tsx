@@ -228,9 +228,9 @@ export default async function PickemPickPanel({
           </Card>
         )}
 
-        <Card title="Your Top Picks">
+        <Card title="Your Top Picks" className={styles.topPicksCard}>
           {topDrivers.length === 0 ? (
-            <p>You haven&apos;t made a pick yet this season.</p>
+            <p className={styles.topPicksEmpty}>You haven&apos;t made a pick yet this season.</p>
           ) : (
             <div className={styles.topDriversList}>
               {topDrivers.map(([name, count]) => (

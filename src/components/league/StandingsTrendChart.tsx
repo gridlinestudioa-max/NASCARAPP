@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import MiniTabs from "@/components/ui/MiniTabs";
 import TrendChart, { type TrendSeries } from "./TrendChart";
-import styles from "./StandingsTrendChart.module.css";
+
+const MODES = [
+  { id: "places", label: "Weekly Placement" },
+  { id: "diffs", label: "Point Differential" },
+];
 
 // The Standings tab's trend chart, toggled between two views of the same
 // week-by-week data: Weekly Placement (each player's standings rank at
@@ -22,22 +27,7 @@ export default function StandingsTrendChart({
 
   return (
     <div>
-      <div className={styles.toggle}>
-        <button
-          type="button"
-          className={mode === "places" ? `${styles.toggleBtn} ${styles.toggleBtnActive}` : styles.toggleBtn}
-          onClick={() => setMode("places")}
-        >
-          Weekly Placement
-        </button>
-        <button
-          type="button"
-          className={mode === "diffs" ? `${styles.toggleBtn} ${styles.toggleBtnActive}` : styles.toggleBtn}
-          onClick={() => setMode("diffs")}
-        >
-          Point Differential
-        </button>
-      </div>
+      <MiniTabs tabs={MODES} active={mode} onChange={(id) => setMode(id as "places" | "diffs")} />
       <TrendChart labels={labels} series={mode === "places" ? places : diffs} yReversed={mode === "places"} />
     </div>
   );
