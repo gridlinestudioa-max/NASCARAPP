@@ -38,7 +38,10 @@ export type NascarRaceListEntry = {
 type NascarWeekendResult = {
   driver_id: number;
   driver_fullname: string;
-  car_number: number | null;
+  // Sent as a numeric string ("88"), not a number, in the live feed —
+  // confirmed against a real weekend-feed response, not just the (thinner)
+  // reference client this file was originally cross-checked against.
+  car_number: string | number | null;
   car_make: string | null;
   team_name: string | null;
   starting_position: number | null;
@@ -172,6 +175,15 @@ function isDnf(finishingStatus: string | null | undefined): boolean {
   return !RUNNING_STATUSES.has(finishingStatus.trim().toLowerCase());
 }
 
+function parseCarNumber(raw: string | number | null | undefined): number | null {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const parsed = Number(raw.trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 export function parseWeekendData(weekend: NascarWeekendInfo): ParsedWeekendData | null {
   const race = weekend.weekend_race?.[0];
   if (!race || !Array.isArray(race.results)) return null;
@@ -189,7 +201,7 @@ export function parseWeekendData(weekend: NascarWeekendInfo): ParsedWeekendData 
       seenDriverNames.add(driverName);
       entries.push({
         driverName,
-        carNumber: typeof r.car_number === "number" ? r.car_number : null,
+        carNumber: parseCarNumber(r.car_number),
         teamName: r.team_name?.trim() || null,
         manufacturer: r.car_make?.trim() || null,
       });
