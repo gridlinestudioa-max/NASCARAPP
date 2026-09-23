@@ -49,7 +49,7 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
     const max = config?.maxStartsPerDriverPerSeason ?? null;
 
     return (
-      <Card title="Your Driver Limits" titlePlacement="outside">
+      <Card title="Your Driver Limits">
         <p>
           Starts used per driver this season{max != null ? ` — limit ${max} start(s) each` : ""}. Benching a
           driver doesn&apos;t count against this cap, only starting them does.
@@ -83,7 +83,7 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
   const rows = [...countByDriver.entries()].sort((a, b) => b[1] - a[1]);
 
   return (
-    <Card title="Your Driver Limits" titlePlacement="outside">
+    <Card title="Your Driver Limits">
       <p>
         {max == null
           ? "Unlimited repeat picks — no per-driver cap this season."
@@ -129,7 +129,7 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
     const weeks = [...byRace.values()].sort((a, b) => a.week - b.week);
 
     return (
-      <Card title="Personal Stats" titlePlacement="outside">
+      <Card title="Personal Stats">
         <p className={styles.cardSub}>Every driver you&apos;ve rostered this season, week by week.</p>
         <p>
           Season total <strong>{totalScore}</strong> across {weeks.length} race(s)
@@ -163,7 +163,7 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
   const scoredCount = myPicks.filter((p) => p.score).length;
 
   return (
-    <Card title="Personal Stats" titlePlacement="outside">
+    <Card title="Personal Stats">
       <p className={styles.cardSub}>Every driver you&apos;ve picked this season, week by week.</p>
       <p>
         Season total <strong>{totalScore}</strong> across {myPicks.length} pick(s)
@@ -267,10 +267,10 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
     <>
       {scoredRaces.length > 0 && (
         <div className={styles.chartRow}>
-          <Card title="Points by week" titlePlacement="outside">
+          <Card title="Points by week">
             <TrendChart labels={trend.labels} series={trend.totals} />
           </Card>
-          <Card title="Point differential by week" titlePlacement="outside">
+          <Card title="Point differential by week">
             <TrendChart labels={trend.labels} series={trend.diffs} />
           </Card>
         </div>
@@ -290,7 +290,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       )}
 
       <div className={styles.twoCol}>
-        <Card title="Consistency" titlePlacement="outside">
+        <Card title="Consistency">
           <p className={styles.cardSub}>
             Season average points per race, divided by standard deviation — higher means steadier output relative
             to their own average.
@@ -311,7 +311,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
           )}
         </Card>
 
-        <Card title="Stage Points" titlePlacement="outside">
+        <Card title="Stage Points">
           <p className={styles.cardSub}>Points earned from stage-end bonuses this season.</p>
           {stageSorted.length === 0 ? (
             <p>No scored picks yet this season.</p>
@@ -333,7 +333,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       {renderPersonalLimitCard(data, userId)}
 
       <div className={styles.twoCol}>
-        <Card title="Most Picked Drivers — League Wide" titlePlacement="outside">
+        <Card title="Most Picked Drivers — League Wide">
           {driverStats.length === 0 ? (
             <p>No picks made yet this season.</p>
           ) : (
@@ -350,7 +350,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
           )}
         </Card>
 
-        <Card title="Most Picked by Player" titlePlacement="outside">
+        <Card title="Most Picked by Player">
           {favorites.every((f) => f.driverName == null) ? (
             <p>No picks made yet this season.</p>
           ) : (
@@ -370,7 +370,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
         </Card>
       </div>
 
-      <Card title="Driver Value" titlePlacement="outside">
+      <Card title="Driver Value">
         <p className={styles.cardSub}>Points scored per time picked, league wide.</p>
         {driverValue.length === 0 ? (
           <p>No scored picks yet this season.</p>
@@ -393,7 +393,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
         )}
       </Card>
 
-      <Card title="Driver Diversity" titlePlacement="outside">
+      <Card title="Driver Diversity">
         <table>
           <thead>
             <tr>
@@ -412,7 +412,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
         </table>
       </Card>
 
-      <Card title="Driver Ownership" titlePlacement="outside">
+      <Card title="Driver Ownership">
         {drivers.length === 0 ? (
           <p>No picks made yet this season.</p>
         ) : (

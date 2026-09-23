@@ -105,7 +105,7 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
                 <tr>
                   <th className={styles.sticky}>Week</th>
                   {members.map((m) => (
-                    <th key={m.userId} className={styles.num}>
+                    <th key={m.userId} className={styles.playerCol}>
                       {m.user.name ?? m.user.email}
                     </th>
                   ))}
@@ -121,11 +121,11 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
                           <span className={styles.raceIcon}>
                             <CheckeredFlagIcon size={14} />
                           </span>
-                          {r.trackName}
+                          <span className={styles.raceName}>{r.trackName}</span>
                         </span>
                       </td>
                       {members.map((m) => (
-                        <td key={m.userId} className={styles.num}>
+                        <td key={m.userId} className={styles.playerCol}>
                           {byUser.get(m.userId) ?? "—"}
                         </td>
                       ))}
@@ -135,7 +135,7 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
                 <tr>
                   <td className={`${styles.sticky} ${styles.totalRow}`}>Total</td>
                   {members.map((m) => (
-                    <td key={m.userId} className={`${styles.num} ${styles.totalRow} ${styles.accentCell}`}>
+                    <td key={m.userId} className={`${styles.playerCol} ${styles.totalRow} ${styles.accentCell}`}>
                       {totalByUser.get(m.userId) ?? 0}
                     </td>
                   ))}
