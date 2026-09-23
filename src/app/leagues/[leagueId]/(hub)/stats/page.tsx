@@ -15,7 +15,6 @@ import {
   computePlayerSeasonStats,
   computeTrendSeries,
   computeDriverStats,
-  computeMostPickedByPlayer,
   computeDriverOwnership,
 } from "@/lib/leagueStats";
 import { getLeagueHubData, type LeagueHubData } from "../leagueData";
@@ -38,6 +37,8 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
   const myPicks = picks.filter((p) => p.userId === userId);
 
   if (league.type === "TIERED_DRAFT") {
+    // Tiered Lineup always has a starts cap (it's a required config field,
+    // never null), so this card is always relevant for that league type.
     const config = leagueSeason ? parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config) : null;
     const starterSlotNumbers = new Set(
       TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER").map((s) => s.pickNumber),
@@ -78,6 +79,10 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
 
   const config = leagueSeason ? parseRuleSetConfig(leagueSeason.ruleSet.config) : null;
   const max = config?.maxPicksPerDriverPerSeason ?? null;
+  // No per-driver cap configured — there's nothing to track against, so
+  // skip this card entirely instead of showing an "unlimited" placeholder.
+  if (max == null) return null;
+
   const countByDriver = new Map<string, number>();
   for (const p of myPicks) {
     countByDriver.set(p.driver.name, (countByDriver.get(p.driver.name) ?? 0) + 1);
@@ -86,11 +91,7 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
 
   return (
     <Card title="Your Driver Limits">
-      <p>
-        {max == null
-          ? "Unlimited repeat picks — no per-driver cap this season."
-          : `Each driver can be picked up to ${max} time(s) this season.`}
-      </p>
+      <p>Each driver can be picked up to {max} time(s) this season.</p>
       {rows.length === 0 ? (
         <p>You haven&apos;t made a pick yet this season.</p>
       ) : (
@@ -258,7 +259,6 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
   const driverStats = computeDriverStats(picks).sort((a, b) => b.timesPicked - a.timesPicked);
   const driverValue = driverStats.slice().sort((a, b) => b.avgPts - a.avgPts);
   const maxAvg = Math.max(0, ...driverValue.map((d) => d.avgPts));
-  const favorites = computeMostPickedByPlayer(members, picks);
   const diversity = members
     .map((m) => ({
       userId: m.userId,
@@ -266,8 +266,18 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       uniqueDrivers: new Set(picks.filter((p) => p.userId === m.userId).map((p) => p.driverId)).size,
     }))
     .sort((a, b) => b.uniqueDrivers - a.uniqueDrivers);
-  const { drivers, ownership } = computeDriverOwnership(picks);
-  const maxOwnership = Math.max(1, ...drivers.map((d) => Math.max(...members.map((m) => ownership.get(d)?.get(m.userId) ?? 0))));
+  const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
+  const { ownership } = computeDriverOwnership(picks);
+  // Who picked each driver most often, and how many times — folded
+  // directly into the Most Picked Drivers row instead of a separate
+  // per-player table.
+  const topOwnerByDriver = new Map(
+    driverStats.map((d) => {
+      const byUser = ownership.get(d.name);
+      const top = byUser ? [...byUser.entries()].sort((a, b) => b[1] - a[1])[0] : undefined;
+      return [d.driverId, top ? { name: nameByUserId.get(top[0]) ?? "—", count: top[1] } : null] as const;
+    }),
+  );
 
   return (
     <>
@@ -359,43 +369,35 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
 
       {renderPersonalLimitCard(data, userId)}
 
-      <div className={styles.twoCol}>
-        <Card title="Most Picked Drivers — League Wide">
-          {driverStats.length === 0 ? (
-            <p>No picks made yet this season.</p>
-          ) : (
-            <table className={styles.compactTable}>
-              <tbody>
-                {driverStats.map((d) => (
+      <Card title="Most Picked Drivers — League Wide">
+        {driverStats.length === 0 ? (
+          <p>No picks made yet this season.</p>
+        ) : (
+          <table className={styles.compactTable}>
+            <thead>
+              <tr>
+                <th>Driver</th>
+                <th>Picked most by</th>
+                <th className={styles.num}>Times picked</th>
+              </tr>
+            </thead>
+            <tbody>
+              {driverStats.map((d) => {
+                const topOwner = topOwnerByDriver.get(d.driverId);
+                return (
                   <tr key={d.driverId}>
                     <td>{d.name}</td>
+                    <td className={styles.muted}>
+                      {topOwner ? `${topOwner.name} · ${topOwner.count}×` : "—"}
+                    </td>
                     <td className={`${styles.num} ${styles.accentCell}`}>{d.timesPicked}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-
-        <Card title="Most Picked by Player">
-          {favorites.every((f) => f.driverName == null) ? (
-            <p>No picks made yet this season.</p>
-          ) : (
-            <table className={styles.compactTable}>
-              <tbody>
-                {favorites.map((f) => (
-                  <tr key={f.userId}>
-                    <td>{f.name}</td>
-                    <td className={styles.num}>
-                      {f.driverName ?? "—"} {f.count > 0 && `· ${f.count}×`}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-      </div>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Card>
 
       <Card title="Driver Value">
         {driverValue.length === 0 ? (
@@ -436,61 +438,6 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
             ))}
           </tbody>
         </table>
-      </Card>
-
-      <Card title="Driver Ownership">
-        {drivers.length === 0 ? (
-          <p>No picks made yet this season.</p>
-        ) : (
-          <>
-            <div className={styles.scrollX}>
-              <table className={styles.compactTable}>
-                <thead>
-                  <tr>
-                    <th>Driver</th>
-                    {members.map((m) => (
-                      <th key={m.userId} className={styles.num}>
-                        {m.user.name ?? m.user.email}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {drivers.map((driverName) => (
-                    <tr key={driverName}>
-                      <td>{driverName}</td>
-                      {members.map((m) => {
-                        const count = ownership.get(driverName)?.get(m.userId) ?? 0;
-                        if (count === 0) {
-                          return (
-                            <td key={m.userId} className={styles.num}>
-                              <span className={styles.heatCellEmpty}>–</span>
-                            </td>
-                          );
-                        }
-                        const intensity = count / maxOwnership;
-                        return (
-                          <td key={m.userId} className={styles.num}>
-                            <span
-                              className={styles.heatCell}
-                              style={{
-                                background: `rgba(7, 7, 7, ${0.1 + intensity * 0.45})`,
-                                color: intensity > 0.5 ? "#ffffff" : "var(--text-primary)",
-                              }}
-                            >
-                              {count}
-                            </span>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className={styles.cardFootnote}>Darker cells mean a player drafted that driver more often this season.</p>
-          </>
-        )}
       </Card>
     </>
   );

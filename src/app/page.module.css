@@ -12,59 +12,6 @@
   font-size: 0.95rem;
 }
 
-.leagueSnapshotRow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
-}
-
-.leagueSnapshotCard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.leagueSnapshotHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.leagueSnapshotName {
-  font-size: 0.95rem;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.leagueSnapshotStats {
-  display: flex;
-  gap: var(--space-5);
-}
-
-.snapshotStat {
-  display: flex;
-  flex-direction: column;
-}
-
-.snapshotValue {
-  font-size: 1.3rem;
-  font-weight: 800;
-  font-family: var(--font-heading);
-  letter-spacing: -0.01em;
-}
-
-.snapshotLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
 .empty {
   color: var(--text-muted);
   font-size: 0.88rem;
@@ -72,7 +19,7 @@
 
 .tableHead {
   display: grid;
-  grid-template-columns: 2.4fr 1fr 1fr 1fr 1.2fr;
+  grid-template-columns: 2.2fr 0.7fr 0.8fr 0.7fr 1fr 1.2fr;
   gap: var(--space-3);
   padding: 10px var(--space-3);
   font-size: 0.72rem;
@@ -85,7 +32,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2.4fr 1fr 1fr 1fr 1.2fr;
+  grid-template-columns: 2.2fr 0.7fr 0.8fr 0.7fr 1fr 1.2fr;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3);
@@ -161,6 +108,11 @@
   flex-shrink: 0;
 }
 
+.actionCell {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 640px) {
   .tableHead {
     display: none;
@@ -170,7 +122,8 @@
     grid-template-columns: 1fr auto;
     grid-template-areas:
       "league league"
-      "score rank";
+      "score rank"
+      "action action";
   }
 
   .leagueCell {
@@ -184,6 +137,17 @@
   .tableRow > *:nth-child(4) {
     grid-area: rank;
     text-align: right;
+  }
+
+  .actionCell {
+    grid-area: action;
+    justify-content: stretch;
+    margin-top: 4px;
+  }
+
+  .actionCell > a {
+    width: 100%;
+    justify-content: center;
   }
 
   .tableRow > *:nth-child(2),
@@ -210,4 +174,25 @@
   border-radius: var(--radius-btn);
   object-fit: cover;
   flex-shrink: 0;
+}
+
+.scheduleRace {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weekChip {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  border: 1px solid var(--border-color);
 }

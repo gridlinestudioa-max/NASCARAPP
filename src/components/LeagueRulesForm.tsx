@@ -26,6 +26,17 @@ type EditingLeague = {
   tieredConfig?: TieredDraftRuleSetConfig;
 };
 
+// Every numeric field below is `type="text" inputMode="numeric"` rather
+// than `type="number"` — Chromium/Firefox don't track a caret position for
+// number inputs at all (selectionStart is always null), so a controlled
+// number input snaps the cursor to the end on every keystroke no matter
+// where you clicked to position it. Plain text with digit-only filtering
+// gets normal, click-to-position cursor behavior back.
+function parseDigits(raw: string, fallback: number): number {
+  const digits = raw.replace(/[^0-9]/g, "");
+  return digits === "" ? fallback : parseInt(digits, 10);
+}
+
 function clonePreset(preset: PickemRuleSetConfig): PickemRuleSetConfig {
   return {
     ...preset,
@@ -58,10 +69,12 @@ function PointsMatrix({
           <div key={i} className={styles.matrixCell}>
             <span className={styles.matrixPos}>Pos {i + 1}</span>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               aria-label={`Points for position ${i + 1}`}
               value={pts}
-              onChange={(e) => onChange(i, parseInt(e.target.value, 10) || 0)}
+              onChange={(e) => onChange(i, parseDigits(e.target.value, 0))}
               className={styles.matrixInput}
             />
           </div>
@@ -246,14 +259,15 @@ export default function LeagueRulesForm({
               </label>
               <input
                 id="maxStarts"
-                type="number"
-                min={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 className={styles.numberInputSmall}
                 value={tieredConfig.maxStartsPerDriverPerSeason}
                 onChange={(e) =>
                   setTieredConfig((c) => ({
                     ...c,
-                    maxStartsPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1),
+                    maxStartsPerDriverPerSeason: Math.max(1, parseDigits(e.target.value, 1)),
                   }))
                 }
               />
@@ -307,12 +321,14 @@ export default function LeagueRulesForm({
               </label>
               <input
                 id="picksPerWeek"
-                type="number"
-                min={1}
-                max={10}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 className={styles.numberInputSmall}
                 value={config.picksPerWeek}
-                onChange={(e) => setConfig((c) => ({ ...c, picksPerWeek: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+                onChange={(e) =>
+                  setConfig((c) => ({ ...c, picksPerWeek: Math.min(10, Math.max(1, parseDigits(e.target.value, 1))) }))
+                }
               />
             </div>
 
@@ -335,12 +351,13 @@ export default function LeagueRulesForm({
                   </label>
                   <input
                     id="maxRepeats"
-                    type="number"
-                    min={1}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     className={styles.numberInputSmall}
                     value={config.maxPicksPerDriverPerSeason ?? 1}
                     onChange={(e) =>
-                      setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: Math.max(1, parseInt(e.target.value, 10) || 1) }))
+                      setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: Math.max(1, parseDigits(e.target.value, 1)) }))
                     }
                   />
                 </div>
@@ -421,11 +438,13 @@ export default function LeagueRulesForm({
               {config.includeWinnerBonus && (
                 <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     aria-label="Winner bonus value"
                     className={styles.numberInputSmall}
                     value={config.winnerBonus}
-                    onChange={(e) => setConfig((c) => ({ ...c, winnerBonus: parseInt(e.target.value, 10) || 0 }))}
+                    onChange={(e) => setConfig((c) => ({ ...c, winnerBonus: parseDigits(e.target.value, 0) }))}
                   />
                   <span className={styles.fieldHelper}>points added on top of 1st place&apos;s position points</span>
                 </div>

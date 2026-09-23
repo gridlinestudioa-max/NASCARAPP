@@ -192,20 +192,6 @@ export function computeDriverStats(picks: PickLite[]): DriverPickStat[] {
   }));
 }
 
-export type FavoriteDriver = { userId: string; name: string; driverName: string | null; count: number };
-
-export function computeMostPickedByPlayer(members: MemberLite[], picks: PickLite[]): FavoriteDriver[] {
-  return members.map((m) => {
-    const counts = new Map<string, number>();
-    for (const p of picks) {
-      if (p.userId !== m.userId) continue;
-      counts.set(p.driver.name, (counts.get(p.driver.name) ?? 0) + 1);
-    }
-    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
-    return { userId: m.userId, name: m.user.name ?? m.user.email, driverName: top?.[0] ?? null, count: top?.[1] ?? 0 };
-  });
-}
-
 // driverName -> userId -> times that player picked that driver, plus a
 // stable driver ordering (by total picks, descending) for rendering.
 export function computeDriverOwnership(picks: PickLite[]): { drivers: string[]; ownership: Map<string, Map<string, number>> } {

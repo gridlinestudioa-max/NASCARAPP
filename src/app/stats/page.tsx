@@ -48,16 +48,6 @@ export default async function StatsPage() {
         {season && `${season.year} season · `}ranked by year points
       </p>
 
-      <p>
-        <small>
-          Computed from our own synced results using the 2026 Cup points system — NASCAR doesn&apos;t expose a
-          persistent standings feed we can pull from, only a live leaderboard that only exists while a race is
-          actually green-flag live. Finish points (55 for a win, then 37 minus position, floor of 1) plus stage
-          points, first 26 races. After that, the top 16 get reset to their Chase seed and the last 10 races add on
-          top of that — everyone else keeps accumulating normally.
-        </small>
-      </p>
-
       {drivers.length === 0 ? (
         <p>No results have been entered yet.</p>
       ) : (
