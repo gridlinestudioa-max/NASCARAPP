@@ -5,13 +5,13 @@ export default function Card({
   title,
   actions,
   className,
-  // "inside" (default) renders the title inside the card's own border/
-  // padding, as most of the site does. "outside" instead prints it above
-  // the card as its own label with no shared border — the layout the
-  // Stats tab now uses, matching the reference design's section labels
-  // ("SUMMARY", "SPENDING BREAKDOWN") that sit above their box rather
-  // than inside it.
-  titlePlacement = "inside",
+  // "outside" (default, and the site-wide standard) prints the title
+  // above the card as its own label with no shared border, matching the
+  // reference design's section labels ("SUMMARY", "SPENDING BREAKDOWN").
+  // "inside" is kept as an option for a card that specifically wants its
+  // title sharing the card's own border/padding, but nothing currently
+  // uses it.
+  titlePlacement = "outside",
   children,
 }: {
   title?: string;

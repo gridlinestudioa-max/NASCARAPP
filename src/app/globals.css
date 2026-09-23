@@ -72,10 +72,10 @@
   --tier-c-bg: #e6f0f1;
 
   /* Scale — radius-md (cards) and shell-radius track the theme's radius
-     knob directly; radius-sm/btn/pill are smaller fixed steps that don't
-     need to move with it. */
+     knob directly (radius-md at half, per a flatter card look); radius-
+     sm/btn/pill are smaller fixed steps that don't need to move with it. */
   --radius-sm: 4px;
-  --radius-md: var(--radius);
+  --radius-md: calc(var(--radius) / 2);
   --radius-btn: 9px;
   --radius-pill: 999px;
   --shell-radius: var(--shellRadius);

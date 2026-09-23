@@ -28,6 +28,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
 }
 
 .raceIcon {
@@ -42,8 +43,29 @@
   color: var(--text-secondary);
 }
 
+.raceName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+/* Narrower once the table has to scroll anyway, so the race-name column
+   gives up its width first instead of pushing every score column
+   off-screen behind the scrollbar. */
+@media (max-width: 640px) {
+  .raceName {
+    max-width: 90px;
+  }
+}
+
 .num {
   text-align: right;
+  white-space: nowrap;
+}
+
+.playerCol {
+  text-align: center;
   white-space: nowrap;
 }
 
