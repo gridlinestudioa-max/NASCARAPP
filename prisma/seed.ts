@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { generateInviteCode } from "../src/lib/inviteCode";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -129,6 +130,7 @@ async function main() {
         name: LEAGUE_NAME,
         type: "PICKEM",
         ownerId: userByPlayer.get("Will")!.id,
+        inviteCode: generateInviteCode(),
       },
     });
   }
