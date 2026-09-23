@@ -8,6 +8,7 @@ import Badge from "@/components/ui/Badge";
 import { getLeagueHubData } from "@/app/leagues/[leagueId]/(hub)/leagueData";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 import { computePlayerSeasonStats, computeWeeklyTotals, ordinal, scoredRacesInOrder } from "@/lib/leagueStats";
+import { displayRaceName } from "@/lib/raceName";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -92,7 +93,7 @@ function ScheduleSnapshot({
           {races.map((r) => (
             <li key={r.id}>
               <span>
-                Wk {r.week} — {r.trackName}
+                Wk {r.week} — {displayRaceName(r.trackName)}
               </span>
               <span className={styles.muted}>
                 {r.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
+import { displayRaceName } from "@/lib/raceName";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function NewLeaguePage() {
     where: { results: { some: {} } },
     orderBy: { week: "asc" },
   });
-  const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${r.trackName}` }));
+  const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${displayRaceName(r.trackName)}` }));
 
   return (
     <main>

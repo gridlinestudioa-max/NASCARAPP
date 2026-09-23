@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { displayRaceName } from "@/lib/raceName";
 import TiersForm from "./TiersForm";
 
 export const dynamic = "force-dynamic";
@@ -38,10 +39,14 @@ export default async function AssignTiersPage(props: PageProps<"/admin/races/[ra
   return (
     <main>
       <Breadcrumb
-        items={[{ label: "Admin", href: "/admin" }, { label: race.trackName, href: `/admin/races/${raceId}` }, { label: "Tiers" }]}
+        items={[
+          { label: "Admin", href: "/admin" },
+          { label: displayRaceName(race.trackName), href: `/admin/races/${raceId}` },
+          { label: "Tiers" },
+        ]}
       />
       <h1>
-        Assign weekly tiers — Week {race.week}, {race.trackName}
+        Assign weekly tiers — Week {race.week}, {displayRaceName(race.trackName)}
       </h1>
       <p>
         Shared across every Tiered Lineup league. Tiers now recompute automatically (season points/recent form/track

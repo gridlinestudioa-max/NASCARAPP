@@ -14,6 +14,7 @@
 // instead of a crash.
 
 import { Resend } from "resend";
+import { displayRaceName } from "./raceName";
 
 export type SendEmailResult = { ok: true } | { ok: false; error: string };
 
@@ -58,11 +59,12 @@ export async function sendResultsPostedEmail(
   to: string,
   params: { trackName: string; week: number; raceUrl: string },
 ): Promise<SendEmailResult> {
+  const raceName = displayRaceName(params.trackName);
   return sendEmail({
     to,
-    subject: `Results are in: Week ${params.week} — ${params.trackName}`,
+    subject: `Results are in: Week ${params.week} — ${raceName}`,
     html: `
-      <p>Results are posted for Week ${params.week} — ${params.trackName}.</p>
+      <p>Results are posted for Week ${params.week} — ${raceName}.</p>
       <p><a href="${params.raceUrl}">See the results</a>, then check your leagues to see how you scored.</p>
       <p><small>You're getting this because results notifications are on for your account — turn them off any time from Settings.</small></p>
     `,

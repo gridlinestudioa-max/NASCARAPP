@@ -7,6 +7,7 @@ import { sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { displayRaceName } from "@/lib/raceName";
 import { getLeagueHubData } from "../(hub)/leagueData";
 import TransferCommissionerForm from "./TransferCommissionerForm";
 import PickOrderForm from "./PickOrderForm";
@@ -38,7 +39,7 @@ export default async function CommissionerPage(props: { params: Promise<{ league
   }
 
   const racesWithResults = await prisma.race.findMany({ where: { results: { some: {} } }, orderBy: { week: "asc" } });
-  const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${r.trackName}` }));
+  const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${displayRaceName(r.trackName)}` }));
 
   const pickemConfig = league.type === "PICKEM" && leagueSeason ? parseRuleSetConfig(leagueSeason.ruleSet.config) : undefined;
   const tieredConfig =

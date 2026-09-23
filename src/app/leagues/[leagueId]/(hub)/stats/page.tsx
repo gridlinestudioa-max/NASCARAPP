@@ -6,6 +6,7 @@ import Badge from "@/components/ui/Badge";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { CheckeredFlagIcon } from "@/components/ui/icons";
 import TrendChart from "@/components/league/TrendChart";
+import { displayRaceName } from "@/lib/raceName";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig, TIERED_LINEUP_SLOTS } from "@/lib/tieredDraft";
 import {
@@ -131,13 +132,12 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
 
     return (
       <Card title="Personal Stats">
-        <p className={styles.cardSub}>Every driver you&apos;ve rostered this season, week by week.</p>
-        <p>
+        <p className={styles.cardSub}>
           Season total <strong>{totalScore}</strong> across {weeks.length} race(s)
           {weeks.length > 0 && (
             <>
               {" "}
-              — avg <strong>{(totalScore / weeks.length).toFixed(1)}</strong> per week
+              — avg <strong>{(totalScore / weeks.length).toFixed(1)}</strong>/wk
             </>
           )}
           .
@@ -150,7 +150,7 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
               <li key={w.week}>
                 <span className={styles.raceRowMain}>
                   <RaceRowIcon />
-                  <span className={styles.raceRowLabel}>{w.trackName}</span>
+                  <span className={styles.raceRowLabel}>{displayRaceName(w.trackName)}</span>
                 </span>
                 <strong className={styles.accentCell}>{w.total}</strong>
               </li>
@@ -165,13 +165,12 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
 
   return (
     <Card title="Personal Stats">
-      <p className={styles.cardSub}>Every driver you&apos;ve picked this season, week by week.</p>
-      <p>
+      <p className={styles.cardSub}>
         Season total <strong>{totalScore}</strong> across {myPicks.length} pick(s)
         {scoredCount > 0 && (
           <>
             {" "}
-            — avg <strong>{(totalScore / scoredCount).toFixed(1)}</strong> per scored pick
+            — avg <strong>{(totalScore / scoredCount).toFixed(1)}</strong>/pick
           </>
         )}
         .
@@ -188,7 +187,9 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
                 <span className={styles.raceRowMain}>
                   <RaceRowIcon />
                   <span className={styles.raceRowText}>
-                    <span className={styles.raceRowLabel}>{raceByWeek.get(p.raceId)?.trackName ?? "—"}</span>
+                    <span className={styles.raceRowLabel}>
+                      {raceByWeek.get(p.raceId) ? displayRaceName(raceByWeek.get(p.raceId)!.trackName) : "—"}
+                    </span>
                     <span className={styles.raceRowSub}>
                       {p.driver.name}
                       {p.score?.finishPosition != null && ` — finished ${p.score.finishPosition}`}
@@ -272,14 +273,24 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
     <>
       {scoredRaces.length > 0 && (
         <Card title="Points by week">
-          <TrendChart labels={trend.labels} series={trend.totals} />
+          <TrendChart labels={trend.labels} series={trend.totals} height={190} />
         </Card>
+      )}
+
+      {leagueStatCards.length > 0 && (
+        <div className={styles.statGrid}>
+          {leagueStatCards.map((c) => (
+            <div key={c.label} className={styles.statCard}>
+              <div className={styles.statValue}>{c.value}</div>
+              <div className={styles.statLabel}>{c.label}</div>
+            </div>
+          ))}
+        </div>
       )}
 
       {momentumSorted.length > 0 && (
         <Card title="Momentum">
-          <p className={styles.cardSub}>How each player&apos;s most recent race compared to the one before it.</p>
-          <table>
+          <table className={styles.compactTable}>
             <thead>
               <tr>
                 <th>Player</th>
@@ -310,27 +321,12 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
 
       {renderPersonalStatsCard(data, userId)}
 
-      {leagueStatCards.length > 0 && (
-        <div className={styles.statGrid}>
-          {leagueStatCards.map((c) => (
-            <div key={c.label} className={styles.statCard}>
-              <div className={styles.statValue}>{c.value}</div>
-              <div className={styles.statLabel}>{c.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div className={styles.twoCol}>
         <Card title="Consistency">
-          <p className={styles.cardSub}>
-            Season average points per race, divided by standard deviation — higher means steadier output relative
-            to their own average.
-          </p>
           {consistencySorted.length === 0 || scoredRaces.length === 0 ? (
             <p>No scored races yet this season.</p>
           ) : (
-            <table>
+            <table className={styles.compactTable}>
               <tbody>
                 {consistencySorted.map((p) => (
                   <tr key={p.userId}>
@@ -344,11 +340,10 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
         </Card>
 
         <Card title="Stage Points">
-          <p className={styles.cardSub}>Points earned from stage-end bonuses this season.</p>
           {stageSorted.length === 0 ? (
             <p>No scored picks yet this season.</p>
           ) : (
-            <table>
+            <table className={styles.compactTable}>
               <tbody>
                 {stageSorted.map((p) => (
                   <tr key={p.userId}>
@@ -369,7 +364,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
           {driverStats.length === 0 ? (
             <p>No picks made yet this season.</p>
           ) : (
-            <table>
+            <table className={styles.compactTable}>
               <tbody>
                 {driverStats.map((d) => (
                   <tr key={d.driverId}>
@@ -386,7 +381,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
           {favorites.every((f) => f.driverName == null) ? (
             <p>No picks made yet this season.</p>
           ) : (
-            <table>
+            <table className={styles.compactTable}>
               <tbody>
                 {favorites.map((f) => (
                   <tr key={f.userId}>
@@ -403,7 +398,6 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       </div>
 
       <Card title="Driver Value">
-        <p className={styles.cardSub}>Points scored per time picked, league wide.</p>
         {driverValue.length === 0 ? (
           <p>No scored picks yet this season.</p>
         ) : (
@@ -426,7 +420,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       </Card>
 
       <Card title="Driver Diversity">
-        <table>
+        <table className={styles.compactTable}>
           <thead>
             <tr>
               <th>Player</th>
@@ -450,7 +444,7 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
         ) : (
           <>
             <div className={styles.scrollX}>
-              <table>
+              <table className={styles.compactTable}>
                 <thead>
                   <tr>
                     <th>Driver</th>

@@ -5,6 +5,7 @@ import Breadcrumb from "@/components/ui/Breadcrumb";
 import LiveRefresh from "@/components/league/LiveRefresh";
 import PickemPickPanel from "@/components/league/PickemPickPanel";
 import TieredLineupPickPanel from "@/components/league/TieredLineupPickPanel";
+import { displayRaceName } from "@/lib/raceName";
 
 export const dynamic = "force-dynamic";
 
@@ -45,11 +46,11 @@ export default async function RaceDetailPage(props: PageProps<"/leagues/[leagueI
         items={[
           { label: "Home", href: "/" },
           { label: leagueSeason.league.name, href: `/leagues/${leagueId}` },
-          { label: race.trackName },
+          { label: displayRaceName(race.trackName) },
         ]}
       />
       <h1>
-        Week {race.week} — {race.trackName}
+        Week {race.week} — {displayRaceName(race.trackName)}
       </h1>
       <p>
         {race.venueName && <>{race.venueName} · </>}

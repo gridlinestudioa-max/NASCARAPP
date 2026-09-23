@@ -6,6 +6,7 @@ import Breadcrumb from "@/components/ui/Breadcrumb";
 import FactsGrid from "@/components/ui/FactsGrid";
 import RaceResultsTabs, { type ResultRow } from "@/components/race/RaceResultsTabs";
 import { normalizeTrackName } from "@/lib/nascarFeed";
+import { displayRaceName } from "@/lib/raceName";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -57,8 +58,8 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
   pastWinners.sort((a, b) => b.year - a.year);
   const past3Winners = pastWinners.slice(0, 3);
 
-  const displayName = race.venueName ?? race.trackName;
-  const eventName = race.venueName ? race.trackName : null;
+  const displayName = race.venueName ?? displayRaceName(race.trackName);
+  const eventName = race.venueName ? displayRaceName(race.trackName) : null;
 
   const finalRows: ResultRow[] = race.results.map((r) => ({ pos: r.finishingPosition, driver: r.driver.name }));
   const stage1Rows: ResultRow[] = race.stageResults
