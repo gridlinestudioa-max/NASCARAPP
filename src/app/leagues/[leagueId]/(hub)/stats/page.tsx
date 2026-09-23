@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import UserAvatar from "@/components/ui/UserAvatar";
 import { CheckeredFlagIcon } from "@/components/ui/icons";
 import TrendChart from "@/components/league/TrendChart";
 import { parseRuleSetConfig } from "@/lib/scoring";
@@ -219,11 +220,15 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
 
   const { picks, races, members } = data;
   const raceByWeek = new Map(races.map((r) => [r.id, r]));
+  const avatarByUserId = new Map(members.map((m) => [m.userId, m.user.avatarUrl]));
 
   const weekly = computeWeeklyTotals(races, picks);
   const scoredRaces = scoredRacesInOrder(races, weekly);
   const playerStats = computePlayerSeasonStats(members, scoredRaces, weekly, picks);
   const trend = computeTrendSeries(members, scoredRaces, weekly);
+  const momentumSorted = playerStats
+    .filter((p) => p.momentum != null)
+    .sort((a, b) => (b.momentum ?? 0) - (a.momentum ?? 0));
 
   const scored = picks.filter((p) => p.score);
   const totalPoints = scored.reduce((sum, p) => sum + (p.score?.total ?? 0), 0);
@@ -268,6 +273,38 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
       {scoredRaces.length > 0 && (
         <Card title="Points by week">
           <TrendChart labels={trend.labels} series={trend.totals} />
+        </Card>
+      )}
+
+      {momentumSorted.length > 0 && (
+        <Card title="Momentum">
+          <p className={styles.cardSub}>How each player&apos;s most recent race compared to the one before it.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Momentum</th>
+              </tr>
+            </thead>
+            <tbody>
+              {momentumSorted.map((p) => (
+                <tr key={p.userId}>
+                  <td>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                      <UserAvatar name={p.name} avatarUrl={avatarByUserId.get(p.userId)} />
+                      {p.name}
+                    </span>
+                  </td>
+                  <td>
+                    <Badge tone={(p.momentum ?? 0) >= 0 ? "success" : "danger"}>
+                      {(p.momentum ?? 0) >= 0 ? "+" : ""}
+                      {p.momentum}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Card>
       )}
 

@@ -1,34 +1,68 @@
-.toggle {
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin-bottom: var(--space-3);
-  background: var(--bg-surface-muted);
-  border-radius: var(--radius-pill);
-  max-width: 100%;
-  overflow-x: auto;
+  flex-wrap: wrap;
 }
 
-.toggleBtn {
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  background: transparent;
+.toggleLabel,
+.toggleLabelActive {
+  background: none;
   border: none;
+  padding: 0;
+  font-size: 0.78rem;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.toggleBtn:hover {
+@media (max-width: 420px) {
+  .toggleLabel,
+  .toggleLabelActive {
+    font-size: 0.68rem;
+  }
+
+  .toggleRow {
+    gap: 6px;
+  }
+}
+
+.toggleLabel {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.toggleLabel:hover {
+  color: var(--text-secondary);
+}
+
+.toggleLabelActive {
+  font-weight: 700;
   color: var(--text-primary);
 }
 
-.toggleBtnActive,
-.toggleBtnActive:hover {
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 21px;
+  padding: 2px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface-muted);
+  cursor: pointer;
+}
+
+.knob {
+  display: block;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
   background: var(--accent);
-  color: #fafafa;
-  font-weight: 700;
+  transition: transform 0.15s ease;
+}
+
+.knobOn {
+  transform: translateX(17px);
 }

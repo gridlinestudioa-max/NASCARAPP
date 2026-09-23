@@ -19,20 +19,31 @@ export default function StandingsTrendChart({
   diffs: TrendSeries[];
 }) {
   const [mode, setMode] = useState<"places" | "diffs">("places");
+  const isDiffs = mode === "diffs";
 
   return (
     <div>
-      <div className={styles.toggle}>
+      <div className={styles.toggleRow}>
         <button
           type="button"
-          className={mode === "places" ? `${styles.toggleBtn} ${styles.toggleBtnActive}` : styles.toggleBtn}
+          className={isDiffs ? styles.toggleLabel : styles.toggleLabelActive}
           onClick={() => setMode("places")}
         >
           Weekly Placement
         </button>
         <button
           type="button"
-          className={mode === "diffs" ? `${styles.toggleBtn} ${styles.toggleBtnActive}` : styles.toggleBtn}
+          role="switch"
+          aria-checked={isDiffs}
+          aria-label="Toggle between weekly placement and point differential"
+          className={styles.switch}
+          onClick={() => setMode(isDiffs ? "places" : "diffs")}
+        >
+          <span className={isDiffs ? `${styles.knob} ${styles.knobOn}` : styles.knob} />
+        </button>
+        <button
+          type="button"
+          className={isDiffs ? styles.toggleLabelActive : styles.toggleLabel}
           onClick={() => setMode("diffs")}
         >
           Point Differential
