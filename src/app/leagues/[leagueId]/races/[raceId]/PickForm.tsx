@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { submitPick } from "./actions";
 import styles from "./PickForm.module.css";
 
-type Driver = { id: string; name: string };
+type Driver = { id: string; name: string; number: number | null };
 
 export default function PickForm({
   leagueId,
@@ -79,7 +80,12 @@ function DriverPicker({
     <div className={styles.field}>
       <div className={styles.fieldHead}>
         <span className={styles.fieldLabel}>{label}</span>
-        {selectedDriver && <span className={styles.selectedName}>{selectedDriver.name}</span>}
+        {selectedDriver && (
+          <span className={styles.selectedName}>
+            <DriverNumberBadge number={selectedDriver.number} name={selectedDriver.name} className={styles.selectedBadge} />
+            {selectedDriver.name}
+          </span>
+        )}
       </div>
       <input type="hidden" name={name} value={selectedId ?? ""} />
       <input
@@ -104,6 +110,7 @@ function DriverPicker({
                 className={active ? `${styles.driverRow} ${styles.driverRowActive}` : styles.driverRow}
                 onClick={() => setSelectedId(d.id)}
               >
+                <DriverNumberBadge number={d.number} name={d.name} className={styles.driverBadge} />
                 {d.name}
               </button>
             );

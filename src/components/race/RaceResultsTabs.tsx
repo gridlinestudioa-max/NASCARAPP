@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import MiniTabs from "@/components/ui/MiniTabs";
 import styles from "./RaceResultsTabs.module.css";
 
 export type ResultRow = { pos: number; driver: string };
 
 const TABS = [
-  { key: "stage1", label: "Stage 1" },
-  { key: "stage2", label: "Stage 2" },
-  { key: "final", label: "Final" },
+  { id: "stage1", label: "Stage 1" },
+  { id: "stage2", label: "Stage 2" },
+  { id: "final", label: "Final" },
 ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = (typeof TABS)[number]["id"];
 
 export default function RaceResultsTabs({
   stage1,
@@ -27,18 +28,7 @@ export default function RaceResultsTabs({
 
   return (
     <div>
-      <div className={styles.tabRow}>
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setActive(t.key)}
-            className={active === t.key ? `${styles.tab} ${styles.tabActive}` : styles.tab}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <MiniTabs tabs={[...TABS]} active={active} onChange={(id) => setActive(id as TabKey)} />
       {rows.length === 0 ? (
         <p className={styles.empty}>No results yet for this tab.</p>
       ) : (

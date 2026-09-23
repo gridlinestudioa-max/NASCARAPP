@@ -1,0 +1,6 @@
+.img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  display: block;
+}

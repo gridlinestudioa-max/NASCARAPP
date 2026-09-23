@@ -33,8 +33,19 @@ export default async function LeagueHubLayout({
     notFound();
   }
 
-  const { league, membership, season, standings, myRank, myStanding, races } = data;
+  const { league, membership, season, standings, myRank, myStanding, races, members } = data;
   const racesCompleted = races.filter((r) => r.status === "COMPLETE").length;
+
+  const leaderStanding = standings[0] ?? null;
+  const leaderMember = leaderStanding ? members.find((m) => m.userId === leaderStanding.userId) : null;
+  const leader = leaderStanding
+    ? {
+        name: leaderStanding.name,
+        avatarUrl: leaderMember?.user.avatarUrl ?? null,
+        total: leaderStanding.total,
+        isMe: leaderStanding.userId === session.user.id,
+      }
+    : null;
 
   return (
     <main>
@@ -69,6 +80,7 @@ export default async function LeagueHubLayout({
         memberCount={standings.length}
         racesCompleted={racesCompleted}
         racesTotal={races.length}
+        leader={leader}
       />
 
       <LeagueTabs leagueId={leagueId} />

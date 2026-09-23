@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import FactsGrid from "@/components/ui/FactsGrid";
+import RaceLogo from "@/components/ui/RaceLogo";
 import RaceResultsTabs, { type ResultRow } from "@/components/race/RaceResultsTabs";
 import { normalizeTrackName } from "@/lib/nascarFeed";
 import { displayRaceName } from "@/lib/raceName";
@@ -73,9 +74,14 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
     <main>
       <Breadcrumb items={[{ label: "Schedule", href: "/races" }, { label: displayName }]} />
 
-      <div className={styles.eyebrow}>Week {race.week}</div>
-      <h1>{displayName}</h1>
-      {eventName && <p className={styles.eventName}>{eventName}</p>}
+      <div className={styles.titleRow}>
+        <RaceLogo trackName={race.trackName} size={56} className={styles.titleLogo} />
+        <div>
+          <div className={styles.eyebrow}>Week {race.week}</div>
+          <h1>{displayName}</h1>
+          {eventName && <p className={styles.eventName}>{eventName}</p>}
+        </div>
+      </div>
 
       <FactsGrid
         items={[

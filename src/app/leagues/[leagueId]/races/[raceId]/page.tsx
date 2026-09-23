@@ -5,7 +5,9 @@ import Breadcrumb from "@/components/ui/Breadcrumb";
 import LiveRefresh from "@/components/league/LiveRefresh";
 import PickemPickPanel from "@/components/league/PickemPickPanel";
 import TieredLineupPickPanel from "@/components/league/TieredLineupPickPanel";
+import RaceLogo from "@/components/ui/RaceLogo";
 import { displayRaceName } from "@/lib/raceName";
+import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -49,13 +51,18 @@ export default async function RaceDetailPage(props: PageProps<"/leagues/[leagueI
           { label: displayRaceName(race.trackName) },
         ]}
       />
-      <h1>
-        Week {race.week} — {displayRaceName(race.trackName)}
-      </h1>
-      <p>
-        {race.venueName && <>{race.venueName} · </>}
-        {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
-      </p>
+      <div className={styles.titleRow}>
+        <RaceLogo trackName={race.trackName} size={48} className={styles.titleLogo} />
+        <div>
+          <h1>
+            Week {race.week} — {displayRaceName(race.trackName)}
+          </h1>
+          <p>
+            {race.venueName && <>{race.venueName} · </>}
+            {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+      </div>
 
       {leagueSeason.league.type === "TIERED_DRAFT" ? (
         <TieredLineupPickPanel leagueId={leagueId} raceId={raceId} userId={userId} race={race} leagueSeason={leagueSeason} />

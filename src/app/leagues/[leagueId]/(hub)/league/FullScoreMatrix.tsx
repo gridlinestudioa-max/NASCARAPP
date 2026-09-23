@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { CheckeredFlagIcon } from "@/components/ui/icons";
+import RaceLogo from "@/components/ui/RaceLogo";
 import { displayRaceName } from "@/lib/raceName";
 import styles from "./page.module.css";
 
@@ -71,9 +71,7 @@ export default function FullScoreMatrix({
                       >
                         <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <span className={styles.raceIcon}>
-                        <CheckeredFlagIcon size={14} />
-                      </span>
+                      <RaceLogo trackName={r.trackName} size={22} className={styles.raceIcon} />
                       <span className={styles.raceName}>{displayRaceName(r.trackName)}</span>
                     </span>
                   </td>
