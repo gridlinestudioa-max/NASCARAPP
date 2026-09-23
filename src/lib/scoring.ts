@@ -164,13 +164,26 @@ export function computeScore(
   return { baseScore, winBonus, stageBonus, total: baseScore + winBonus + stageBonus };
 }
 
+// A real qualifying session is always within a couple weeks of the race
+// it belongs to — anything further back than this is a bad value (the
+// NASCAR feed has been seen sending a "1900-01-01" sentinel for a
+// qualifying_date that hasn't been scheduled yet, which nascarFeed.ts now
+// filters on the way in, but a race synced before that fix can still have
+// it sitting in the database). Treating a value like that as real would
+// lock "beforeQualifying" picks as of 1900 — i.e. immediately, forever.
+const MAX_QUALIFYING_LOOKBACK_MS = 14 * 24 * 60 * 60 * 1000;
+
+function hasPlausibleQualifyingDate(race: { qualifyingAt: Date | null; date: Date }): boolean {
+  return race.qualifyingAt != null && race.date.getTime() - race.qualifyingAt.getTime() <= MAX_QUALIFYING_LOOKBACK_MS;
+}
+
 // When picks lock for a given race, per the league's lockTiming setting.
 // "beforeQualifying" locks the moment qualifying begins (blind picks); a
-// race with no qualifyingAt recorded, or a league using "afterQualifying",
-// locks 5 minutes before the race itself starts.
+// race with no (plausible) qualifyingAt recorded, or a league using
+// "afterQualifying", locks 5 minutes before the race itself starts.
 export function pickemLockAt(race: { qualifyingAt: Date | null; date: Date }, lockTiming: LockTiming): Date {
-  if (lockTiming === "beforeQualifying" && race.qualifyingAt) {
-    return race.qualifyingAt;
+  if (lockTiming === "beforeQualifying" && hasPlausibleQualifyingDate(race)) {
+    return race.qualifyingAt!;
   }
   return new Date(race.date.getTime() - 5 * 60 * 1000);
 }
