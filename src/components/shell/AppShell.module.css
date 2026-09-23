@@ -7,12 +7,19 @@
   box-sizing: border-box;
 }
 
+/* Fixed to the viewport (not sticky-within-.shell) so the sidebar's
+   position and height never move with page scroll, however tall the
+   content column grows. .content below compensates with matching
+   left margin so removing this from flex flow doesn't collapse the
+   gap it used to occupy. */
 .sidebarSlot {
   width: 72px;
   flex-shrink: 0;
-  position: sticky;
+  position: fixed;
   top: var(--space-5);
+  left: var(--space-5);
   height: calc(100vh - (var(--space-5) * 2));
+  z-index: 20;
 }
 
 .sidebar {
@@ -291,6 +298,7 @@
 .content {
   flex: 1;
   min-width: 0;
+  margin-left: calc(72px + var(--space-5));
   background: var(--bg-app);
   border-radius: var(--shell-radius);
   box-shadow: var(--shadow-shell);
@@ -328,6 +336,10 @@
     width: 100% !important;
     height: auto !important;
     position: static !important;
+  }
+
+  .content {
+    margin-left: 0;
   }
 
   .sidebar {

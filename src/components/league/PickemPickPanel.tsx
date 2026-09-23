@@ -86,12 +86,20 @@ export default async function PickemPickPanel({
     );
   }
 
-  const [members, entries, allActiveDrivers, joinOrderMemberships] = await Promise.all([
+  const [members, entries, allActiveDrivers, joinOrderMemberships, myAllPicks] = await Promise.all([
     prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
     prisma.raceEntry.findMany({ where: { raceId }, include: { driver: true }, orderBy: { driver: { name: "asc" } } }),
     prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     prisma.leagueMembership.findMany({ where: { leagueId }, orderBy: { createdAt: "asc" }, select: { userId: true } }),
+    prisma.pick.findMany({ where: { leagueId, userId, race: { seasonId: race.seasonId } }, include: { driver: true } }),
   ]);
+
+  const topDriverCounts = new Map<string, number>();
+  for (const p of myAllPicks) {
+    topDriverCounts.set(p.driver.name, (topDriverCounts.get(p.driver.name) ?? 0) + 1);
+  }
+  const topDrivers = [...topDriverCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const maxTopDriverCount = Math.max(0, ...topDrivers.map(([, count]) => count));
   // Once this week's entry list is known (from a NASCAR sync), scope
   // picks to who's actually racing instead of every driver ever seen.
   const allDrivers = entries.length > 0 ? entries.map((e) => e.driver) : allActiveDrivers;
@@ -199,25 +207,50 @@ export default async function PickemPickPanel({
         </div>
       </div>
 
-      {canPick ? (
-        <Card title={myPicks.length > 0 ? "Your pick" : "Make your pick"} className={styles.pickCard}>
-          <PickForm
-            leagueId={leagueId}
-            raceId={raceId}
-            drivers={drivers}
-            picksPerWeek={config.picksPerWeek}
-            currentDriverIdBySlot={currentDriverIdBySlot}
-          />
+      <div className={styles.pickRow}>
+        {canPick ? (
+          <Card title={myPicks.length > 0 ? "Your pick" : "Make your pick"} className={styles.pickCard}>
+            <PickForm
+              leagueId={leagueId}
+              raceId={raceId}
+              drivers={drivers}
+              picksPerWeek={config.picksPerWeek}
+              currentDriverIdBySlot={currentDriverIdBySlot}
+            />
+          </Card>
+        ) : (
+          <Card title="Waiting for your turn" className={styles.pickCard}>
+            <p>
+              {onTheClockSeat
+                ? `${nameByUserId.get(onTheClockSeat.userId) ?? "Another player"} is on the clock. You're up at position ${myTurn?.position}.`
+                : "Waiting for the pick order to open up."}
+            </p>
+          </Card>
+        )}
+
+        <Card title="Your Top Picks">
+          {topDrivers.length === 0 ? (
+            <p>You haven&apos;t made a pick yet this season.</p>
+          ) : (
+            <div className={styles.topDriversList}>
+              {topDrivers.map(([name, count]) => (
+                <div key={name} className={styles.topDriverRow}>
+                  <div className={styles.topDriverLabelRow}>
+                    <span className={styles.topDriverName}>{name}</span>
+                    <span className={styles.topDriverCount}>{count}×</span>
+                  </div>
+                  <div className={styles.topDriverTrack}>
+                    <div
+                      className={styles.topDriverFill}
+                      style={{ width: `${maxTopDriverCount > 0 ? (count / maxTopDriverCount) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
-      ) : (
-        <Card title="Waiting for your turn">
-          <p>
-            {onTheClockSeat
-              ? `${nameByUserId.get(onTheClockSeat.userId) ?? "Another player"} is on the clock. You're up at position ${myTurn?.position}.`
-              : "Waiting for the pick order to open up."}
-          </p>
-        </Card>
-      )}
+      </div>
 
       {takenDriverNames.length > 0 && (
         <Card title="Drivers taken this week">

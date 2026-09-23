@@ -135,8 +135,59 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
+.pickRow {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) minmax(240px, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 760px) {
+  .pickRow {
+    grid-template-columns: 1fr;
+  }
+}
+
 .pickCard {
   max-width: 420px;
+}
+
+.topDriversList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.topDriverLabelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: 4px;
+}
+
+.topDriverName {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.topDriverCount {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.topDriverTrack {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface-muted);
+  overflow: hidden;
+}
+
+.topDriverFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
 }
 
 .totalCell {

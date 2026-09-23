@@ -1,0 +1,12 @@
+.standingsRow {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(320px, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 760px) {
+  .standingsRow {
+    grid-template-columns: 1fr;
+  }
+}

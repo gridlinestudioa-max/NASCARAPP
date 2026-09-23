@@ -266,14 +266,9 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
   return (
     <>
       {scoredRaces.length > 0 && (
-        <div className={styles.chartRow}>
-          <Card title="Points by week">
-            <TrendChart labels={trend.labels} series={trend.totals} />
-          </Card>
-          <Card title="Point differential by week">
-            <TrendChart labels={trend.labels} series={trend.diffs} />
-          </Card>
-        </div>
+        <Card title="Points by week">
+          <TrendChart labels={trend.labels} series={trend.totals} />
+        </Card>
       )}
 
       {renderPersonalStatsCard(data, userId)}

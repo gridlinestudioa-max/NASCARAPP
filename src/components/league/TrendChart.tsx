@@ -30,7 +30,18 @@ const SERIES_COLORS = [
 
 export type TrendSeries = { userId: string; name: string; data: number[] };
 
-export default function TrendChart({ labels, series }: { labels: string[]; series: TrendSeries[] }) {
+export default function TrendChart({
+  labels,
+  series,
+  // Flips the y-axis so 1st place plots at the top — for a rank series
+  // ("Weekly Placement") where a lower number is better, unlike a points
+  // or differential series where higher is better.
+  yReversed = false,
+}: {
+  labels: string[];
+  series: TrendSeries[];
+  yReversed?: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -50,8 +61,19 @@ export default function TrendChart({ labels, series }: { labels: string[]; serie
       hidden: hidden.has(s.userId),
     }));
 
+    const yScale = {
+      reverse: yReversed,
+      grid: { color: "#e6e4d4" },
+      ticks: {
+        color: "#9aa1a8",
+        stepSize: yReversed ? 1 : undefined,
+        precision: yReversed ? 0 : undefined,
+      },
+    };
+
     if (chartRef.current) {
       chartRef.current.data = { labels, datasets };
+      chartRef.current.options.scales = { ...chartRef.current.options.scales, y: yScale };
       chartRef.current.update();
     } else {
       chartRef.current = new Chart(canvasRef.current, {
@@ -74,12 +96,12 @@ export default function TrendChart({ labels, series }: { labels: string[]; serie
           },
           scales: {
             x: { grid: { color: "#e6e4d4" }, ticks: { color: "#9aa1a8", maxRotation: 0, autoSkip: true } },
-            y: { grid: { color: "#e6e4d4" }, ticks: { color: "#9aa1a8" } },
+            y: yScale,
           },
         },
       });
     }
-  }, [labels, series, hidden]);
+  }, [labels, series, hidden, yReversed]);
 
   useEffect(() => {
     return () => {
