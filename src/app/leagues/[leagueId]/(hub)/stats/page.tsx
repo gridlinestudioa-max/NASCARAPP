@@ -177,7 +177,7 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
         <table>
           <thead>
             <tr>
-              <th>Week</th>
+              <th>Race</th>
               <th>Driver</th>
               <th className={styles.num}>Finish</th>
               <th className={styles.num}>Score</th>
@@ -189,7 +189,7 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
               .sort((a, b) => (raceByWeek.get(a.raceId)?.week ?? 0) - (raceByWeek.get(b.raceId)?.week ?? 0))
               .map((p) => (
                 <tr key={p.id}>
-                  <td>{raceByWeek.get(p.raceId)?.week ?? "—"}</td>
+                  <td>{raceByWeek.get(p.raceId)?.trackName ?? "—"}</td>
                   <td>{p.driver.name}</td>
                   <td className={styles.num}>{p.score?.finishPosition ?? "—"}</td>
                   <td className={`${styles.num} ${styles.accentCell}`}>{p.score?.total ?? "—"}</td>
