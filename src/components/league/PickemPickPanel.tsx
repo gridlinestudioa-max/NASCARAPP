@@ -35,9 +35,10 @@ export default async function PickemPickPanel({
     orderBy: [{ score: { total: "desc" } }, { pickNumber: "asc" }],
   });
 
-  // Picks are open (and other players' driver choices stay hidden) until
-  // either results come in or the race has already happened — whichever
-  // comes first. Once locked, everyone's picks become visible.
+  // Picks are open until either results come in or the race has already
+  // happened — whichever comes first. Once locked, scores join the view
+  // below (everyone's picks are already visible in the turn order above
+  // as soon as they pick, open or locked).
   const hasResults = picks.some((p) => p.score);
   const isOpenForPicks = !hasResults && pickemLockAt(race, config.lockTiming).getTime() > currentTimestamp();
 
@@ -123,11 +124,20 @@ export default async function PickemPickPanel({
   const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
   const avatarByUserId = new Map(members.map((m) => [m.userId, m.user.avatarUrl]));
 
+  // What each player already picked this week, in slot order — shown next
+  // to their row once it's their turn's done, so you can see the board as
+  // it fills in rather than just who's "Picked" with no detail.
+  const pickedDriverNamesByUserId = new Map<string, string[]>();
+  for (const p of [...picks].sort((a, b) => a.pickNumber - b.pickNumber)) {
+    const names = pickedDriverNamesByUserId.get(p.userId) ?? [];
+    names.push(p.driver.name);
+    pickedDriverNamesByUserId.set(p.userId, names);
+  }
+
   const myTurn = seats.find((s) => s.userId === userId);
   const onTheClockSeat = seats.find((s) => s.status === "onTheClock");
   const canPick = myTurn?.status === "picked" || myTurn?.status === "onTheClock";
-  // Drivers already claimed by someone else this week aren't offered —
-  // whose pick is still visibly hidden until lock, just not the name.
+  // Drivers already claimed by someone else this week aren't offered.
   const takenByOthersIds = new Set(picks.filter((p) => p.userId !== userId).map((p) => p.driverId));
   const drivers = allDrivers.filter((d) => !takenByOthersIds.has(d.id));
   const takenDriverNames = allDrivers.filter((d) => takenByOthersIds.has(d.id)).map((d) => d.name);
@@ -151,31 +161,41 @@ export default async function PickemPickPanel({
             {PICK_ORDER_MODE_INFO[pickOrderMode].label} order · pick {onTheClockSeat ? onTheClockSeat.position : seats.length} of {seats.length}
           </p>
         </div>
-        <div className={styles.turnChips}>
-          {seats.map((seat) => (
-            <span
-              key={seat.userId}
-              className={seat.status === "onTheClock" ? `${styles.turnChip} ${styles.turnChipActive}` : styles.turnChip}
-            >
-              <span className={styles.turnChipPos}>{seat.position}</span>
-              <UserAvatar name={nameByUserId.get(seat.userId) ?? "?"} avatarUrl={avatarByUserId.get(seat.userId)} />
-              <span className={seat.userId === userId ? styles.turnChipNameBold : styles.turnChipName}>
-                {nameByUserId.get(seat.userId)}
-                {seat.userId === userId ? " (you)" : ""}
-              </span>
-              <span
-                className={
-                  seat.status === "picked"
-                    ? styles.turnChipStatusPicked
-                    : seat.status === "onTheClock"
-                      ? styles.turnChipStatusActive
-                      : styles.turnChipStatusWaiting
-                }
+        <div className={styles.turnTable}>
+          {seats.map((seat) => {
+            const pickedNames = pickedDriverNamesByUserId.get(seat.userId);
+            return (
+              <div
+                key={seat.userId}
+                className={seat.status === "onTheClock" ? `${styles.turnRow} ${styles.turnRowActive}` : styles.turnRow}
               >
-                {seat.status === "picked" ? "Picked" : seat.status === "onTheClock" ? "Up now" : "Waiting"}
-              </span>
-            </span>
-          ))}
+                <span className={styles.turnRowPos}>{seat.position}</span>
+                <span className={styles.turnRowPlayer}>
+                  <UserAvatar name={nameByUserId.get(seat.userId) ?? "?"} avatarUrl={avatarByUserId.get(seat.userId)} />
+                  <span className={seat.userId === userId ? styles.turnRowNameBold : styles.turnRowName}>
+                    {nameByUserId.get(seat.userId)}
+                    {seat.userId === userId ? " (you)" : ""}
+                  </span>
+                </span>
+                <span className={styles.turnRowRight}>
+                  {seat.status === "picked" && pickedNames && pickedNames.length > 0 && (
+                    <span className={styles.turnRowPick}>{pickedNames.join(", ")}</span>
+                  )}
+                  <span
+                    className={
+                      seat.status === "picked"
+                        ? styles.turnStatusPicked
+                        : seat.status === "onTheClock"
+                          ? styles.turnStatusActive
+                          : styles.turnStatusWaiting
+                    }
+                  >
+                    {seat.status === "picked" ? "Picked" : seat.status === "onTheClock" ? "Up now" : "Waiting"}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -349,8 +349,14 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
   // entries/qualifying/results data just written is what actually matters.
   try {
     await refreshAutoTiersIfDue(raceId);
-  } catch {
-    // Swallowed — tiers just won't be current until the next sync tick.
+  } catch (cause) {
+    // Not re-thrown — tiers just won't be current until the next sync
+    // tick, and that's better than failing the entries/results sync that
+    // already committed above. But logged (unlike before), since a
+    // silent failure here once went unnoticed for days: see
+    // nascarFeed.ts's parseQualifyingDate for the incident that motivated
+    // this.
+    console.error(`[sync-nascar] Tier refresh failed for race ${raceId}: ${(cause as Error).message}`, cause);
   }
 
   try {

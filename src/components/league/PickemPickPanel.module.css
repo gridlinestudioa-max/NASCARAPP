@@ -29,66 +29,109 @@
   opacity: 0.75;
 }
 
-.turnChips {
+.turnTable {
+  margin-top: 14px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* Flexbox rather than grid on purpose: when a row's contents don't fit one
+   line (a long name plus a long driver name on a narrow phone), the pick
+   info should wrap down to its own line rather than the player's own name
+   getting squeezed toward zero width — a grid track can't yield space to
+   its neighbor the way a wrapped flex item can. */
+.turnRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.turnChip {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.12);
+  gap: 6px 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.turnChipActive {
-  background: rgba(255, 255, 255, 0.28);
+.turnRow:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.turnChipPos {
-  font-size: 0.68rem;
+.turnRowActive {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.turnRowPos {
+  flex: 0 0 auto;
+  width: 20px;
+  font-size: 0.7rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.turnChipActive .turnChipPos {
+.turnRowActive .turnRowPos {
   color: #fafafa;
 }
 
-.turnChipName {
+.turnRowPlayer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.turnRowName,
+.turnRowNameBold {
   font-size: 0.85rem;
+  color: #fafafa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.turnRowName {
   font-weight: 500;
-  color: #fafafa;
 }
 
-.turnChipNameBold {
-  font-size: 0.85rem;
+.turnRowNameBold {
   font-weight: 700;
-  color: #fafafa;
 }
 
-.turnChipStatusPicked,
-.turnChipStatusActive,
-.turnChipStatusWaiting {
+.turnRowRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.turnRowPick {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.turnStatusPicked,
+.turnStatusActive,
+.turnStatusWaiting {
   font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.turnChipStatusPicked {
+.turnStatusPicked {
   color: #bfe3c9;
 }
 
-.turnChipStatusActive {
+.turnStatusActive {
   color: #fafafa;
 }
 
-.turnChipStatusWaiting {
+.turnStatusWaiting {
   color: rgba(255, 255, 255, 0.75);
 }
 
