@@ -184,6 +184,25 @@ function parseCarNumber(raw: string | number | null | undefined): number | null 
   return null;
 }
 
+// The feed sends a sentinel placeholder ("1900-01-01T00:00:00", confirmed
+// against a real weekend-feed response) for qualifying_date when that
+// session hasn't officially been scheduled yet, rather than omitting the
+// field — a non-null but clearly-bogus date. Treating it as a real value
+// corrupted Race.qualifyingAt with a date in 1900, which made
+// lib/tieredDraft.ts's initialLockAt() (2am Pacific on qualifying day)
+// read as already-passed, silently freezing that race's auto-tier
+// refresh (see refreshAutoTiersIfDue in tierRanking.ts) forever. Any date
+// this far in the past can't be a real NASCAR qualifying session, so it's
+// treated the same as the field being absent.
+const EARLIEST_PLAUSIBLE_QUALIFYING_YEAR = 2000;
+
+function parseQualifyingDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime()) || parsed.getUTCFullYear() < EARLIEST_PLAUSIBLE_QUALIFYING_YEAR) return null;
+  return parsed;
+}
+
 export function parseWeekendData(weekend: NascarWeekendInfo): ParsedWeekendData | null {
   const race = weekend.weekend_race?.[0];
   if (!race || !Array.isArray(race.results)) return null;
@@ -238,7 +257,7 @@ export function parseWeekendData(weekend: NascarWeekendInfo): ParsedWeekendData 
     fieldSize: race.number_of_cars_in_field ?? null,
     stage1Laps: race.stage_1_laps ?? null,
     stage2Laps: race.stage_2_laps ?? null,
-    qualifyingAt: race.qualifying_date ? new Date(race.qualifying_date) : null,
+    qualifyingAt: parseQualifyingDate(race.qualifying_date),
     venueName: race.track_name?.trim() || null,
   };
 }

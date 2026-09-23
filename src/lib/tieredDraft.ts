@@ -149,11 +149,24 @@ export function lateSwapEndAt(race: { date: Date }): Date {
   return new Date(race.date.getTime() - 5 * 60 * 1000);
 }
 
+// A real qualifying session is always within a few days of the race it
+// belongs to — anything further back than this is a bad value (e.g. a
+// feed sentinel/placeholder date that slipped past nascarFeed.ts's own
+// sanitizing, or a manual-entry typo), not an actual qualifying time.
+// Treating it as real once caused initialLockAt to read as already-passed
+// and silently freeze auto-tier refresh for the whole week — see
+// nascarFeed.ts's parseQualifyingDate for the original bug.
+const MAX_QUALIFYING_LOOKBACK_MS = 14 * 24 * 60 * 60 * 1000;
+
+function hasPlausibleQualifyingDate(race: { qualifyingAt: Date | null; date: Date }): boolean {
+  return race.qualifyingAt != null && race.date.getTime() - race.qualifyingAt.getTime() <= MAX_QUALIFYING_LOOKBACK_MS;
+}
+
 // The initial lineup lock — 2am Pacific on qualifying day. A race with no
-// qualifyingAt recorded falls back to the late-swap cutoff itself, so
-// lineups for it aren't left open indefinitely.
+// (plausible) qualifyingAt recorded falls back to the late-swap cutoff
+// itself, so lineups for it aren't left open indefinitely.
 export function initialLockAt(race: { qualifyingAt: Date | null; date: Date }): Date {
-  if (race.qualifyingAt) return pacific2amOnDateOf(race.qualifyingAt);
+  if (hasPlausibleQualifyingDate(race)) return pacific2amOnDateOf(race.qualifyingAt!);
   return lateSwapEndAt(race);
 }
 
