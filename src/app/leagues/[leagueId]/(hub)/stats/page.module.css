@@ -131,3 +131,48 @@
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
+
+.raceList {
+  margin-top: var(--space-2);
+}
+
+.raceRowMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.raceIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
+}
+
+.raceRowText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.raceRowLabel {
+  font-weight: 600;
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.raceRowSub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

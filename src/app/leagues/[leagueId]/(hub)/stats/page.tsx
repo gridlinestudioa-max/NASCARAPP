@@ -20,6 +20,28 @@ import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
+// Placeholder for each race row in the Personal Stats list below — a
+// stand-in for a real per-race logo/badge (not available yet). Kept as
+// its own small component so swapping in an actual <img> per race later
+// is a one-line change at the call site rather than a rewrite.
+function RaceRowIcon() {
+  return (
+    <span className={styles.raceIcon}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M4 21V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path
+          d="M4 4h16v10H4z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+        <path d="M4 4h4v3H4zM12 4h4v3h-4zM8 7h4v3H8zM16 7h4v3h-4zM4 10h4v4H4zM12 10h4v4h-4z" fill="currentColor" />
+      </svg>
+    </span>
+  );
+}
+
 function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode {
   const { league, leagueSeason, picks } = data;
   const myPicks = picks.filter((p) => p.userId === userId);
@@ -133,24 +155,17 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
         {weeks.length === 0 ? (
           <p>No lineups have been scored yet this season.</p>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Week</th>
-                <th>Race</th>
-                <th className={styles.num}>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {weeks.map((w) => (
-                <tr key={w.week}>
-                  <td>{w.week}</td>
-                  <td>{w.trackName}</td>
-                  <td className={`${styles.num} ${styles.accentCell}`}>{w.total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className={`rowList ${styles.raceList}`}>
+            {weeks.map((w) => (
+              <li key={w.week}>
+                <span className={styles.raceRowMain}>
+                  <RaceRowIcon />
+                  <span className={styles.raceRowLabel}>{w.trackName}</span>
+                </span>
+                <strong className={styles.accentCell}>{w.total}</strong>
+              </li>
+            ))}
+          </ul>
         )}
       </Card>
     );
@@ -174,29 +189,26 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
       {myPicks.length === 0 ? (
         <p>You haven&apos;t made a pick yet this season.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Race</th>
-              <th>Driver</th>
-              <th className={styles.num}>Finish</th>
-              <th className={styles.num}>Score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {myPicks
-              .slice()
-              .sort((a, b) => (raceByWeek.get(a.raceId)?.week ?? 0) - (raceByWeek.get(b.raceId)?.week ?? 0))
-              .map((p) => (
-                <tr key={p.id}>
-                  <td>{raceByWeek.get(p.raceId)?.trackName ?? "—"}</td>
-                  <td>{p.driver.name}</td>
-                  <td className={styles.num}>{p.score?.finishPosition ?? "—"}</td>
-                  <td className={`${styles.num} ${styles.accentCell}`}>{p.score?.total ?? "—"}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+        <ul className={`rowList ${styles.raceList}`}>
+          {myPicks
+            .slice()
+            .sort((a, b) => (raceByWeek.get(a.raceId)?.week ?? 0) - (raceByWeek.get(b.raceId)?.week ?? 0))
+            .map((p) => (
+              <li key={p.id}>
+                <span className={styles.raceRowMain}>
+                  <RaceRowIcon />
+                  <span className={styles.raceRowText}>
+                    <span className={styles.raceRowLabel}>{raceByWeek.get(p.raceId)?.trackName ?? "—"}</span>
+                    <span className={styles.raceRowSub}>
+                      {p.driver.name}
+                      {p.score?.finishPosition != null && ` — finished ${p.score.finishPosition}`}
+                    </span>
+                  </span>
+                </span>
+                <strong className={styles.accentCell}>{p.score?.total ?? "—"}</strong>
+              </li>
+            ))}
+        </ul>
       )}
     </Card>
   );
