@@ -3,7 +3,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--accent);
+  color: var(--text-accent);
   margin-bottom: 6px;
 }
 
