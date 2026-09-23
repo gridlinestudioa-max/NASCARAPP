@@ -1,68 +1,43 @@
-.toggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+/* Matches the top-of-page tab bubble (LeagueTabs.module.css) so this
+   toggle reads as the same control language, just scoped smaller. */
+.toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
   margin-bottom: var(--space-3);
-  flex-wrap: wrap;
+  background: var(--bg-surface-muted);
+  border-radius: var(--radius-pill);
+  max-width: 100%;
+  overflow-x: auto;
 }
 
-.toggleLabel,
-.toggleLabelActive {
+.toggleBtn {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
   background: none;
   border: none;
-  padding: 0;
-  font-size: 0.78rem;
-  white-space: nowrap;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-@media (max-width: 420px) {
-  .toggleLabel,
-  .toggleLabelActive {
-    font-size: 0.68rem;
-  }
-
-  .toggleRow {
-    gap: 6px;
-  }
-}
-
-.toggleLabel {
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.toggleLabel:hover {
-  color: var(--text-secondary);
-}
-
-.toggleLabelActive {
-  font-weight: 700;
+.toggleBtn:hover {
   color: var(--text-primary);
 }
 
-.switch {
-  position: relative;
-  flex-shrink: 0;
-  width: 38px;
-  height: 21px;
-  padding: 2px;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: var(--bg-surface-muted);
-  cursor: pointer;
-}
-
-.knob {
-  display: block;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
+.toggleBtnActive,
+.toggleBtnActive:hover {
   background: var(--accent);
-  transition: transform 0.15s ease;
+  color: #fafafa;
+  font-weight: 700;
 }
 
-.knobOn {
-  transform: translateX(17px);
+@media (max-width: 420px) {
+  .toggleBtn {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
 }
