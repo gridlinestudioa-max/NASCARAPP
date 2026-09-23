@@ -5,7 +5,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import UserAvatar from "@/components/ui/UserAvatar";
 import TabbedPanel from "@/components/ui/TabbedPanel";
-import { CheckeredFlagIcon } from "@/components/ui/icons";
+import RaceLogo from "@/components/ui/RaceLogo";
 import TrendChart from "@/components/league/TrendChart";
 import { displayRaceName } from "@/lib/raceName";
 import { parseRuleSetConfig } from "@/lib/scoring";
@@ -23,14 +23,8 @@ import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
-// Wraps the shared placeholder icon in this page's badge styling — a
-// stand-in for a real per-race logo (not available yet).
-function RaceRowIcon() {
-  return (
-    <span className={styles.raceIcon}>
-      <CheckeredFlagIcon />
-    </span>
-  );
+function RaceRowIcon({ trackName }: { trackName: string }) {
+  return <RaceLogo trackName={trackName} size={26} className={styles.raceIcon} />;
 }
 
 function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode {
@@ -151,7 +145,7 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
             {weeks.map((w) => (
               <li key={w.week}>
                 <span className={styles.raceRowMain}>
-                  <RaceRowIcon />
+                  <RaceRowIcon trackName={w.trackName} />
                   <span className={styles.raceRowLabel}>{displayRaceName(w.trackName)}</span>
                 </span>
                 <strong className={styles.accentCell}>{w.total}</strong>
@@ -187,7 +181,7 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
             .map((p) => (
               <li key={p.id}>
                 <span className={styles.raceRowMain}>
-                  <RaceRowIcon />
+                  <RaceRowIcon trackName={raceByWeek.get(p.raceId)?.trackName ?? ""} />
                   <span className={styles.raceRowLabel}>
                     {raceByWeek.get(p.raceId) ? displayRaceName(raceByWeek.get(p.raceId)!.trackName) : "—"}
                   </span>
