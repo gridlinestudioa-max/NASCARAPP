@@ -108,14 +108,16 @@ export function computePlayerSeasonStats(
 
 export type TrendSeries = { userId: string; name: string; data: number[] };
 
-// Running (cumulative) totals per player across the scored races, and the
-// same for point differential to whoever's leading at that point in time —
-// the two "by week" line charts.
+// Running (cumulative) totals per player across the scored races, point
+// differential to whoever's leading at that point in time, and each
+// player's standings rank at that point in time — the "by week" line
+// charts (Points by week on Stats; Weekly Placement / Point Differential,
+// toggled by button, on Standings).
 export function computeTrendSeries(
   members: MemberLite[],
   scoredRaces: RaceLite[],
   weekly: WeeklyTotals,
-): { labels: string[]; totals: TrendSeries[]; diffs: TrendSeries[] } {
+): { labels: string[]; totals: TrendSeries[]; diffs: TrendSeries[]; places: TrendSeries[] } {
   const labels = scoredRaces.map((r) => `Wk ${r.week}`);
   const runningByUser = new Map<string, number[]>();
 
@@ -144,7 +146,26 @@ export function computeTrendSeries(
     return { userId: m.userId, name: m.user.name ?? m.user.email, data };
   });
 
-  return { labels, totals, diffs };
+  // Standings-competition ranking (ties share a rank, e.g. 1, 1, 3) at
+  // each week, from each player's cumulative total at that point.
+  const placesByUser = new Map<string, number[]>(members.map((m) => [m.userId, []]));
+  for (let i = 0; i < scoredRaces.length; i++) {
+    const atWeek = members
+      .map((m) => ({ userId: m.userId, value: runningByUser.get(m.userId)?.[i] ?? 0 }))
+      .sort((a, b) => b.value - a.value);
+    let rank = 1;
+    for (let j = 0; j < atWeek.length; j++) {
+      if (j > 0 && atWeek[j].value !== atWeek[j - 1].value) rank = j + 1;
+      placesByUser.get(atWeek[j].userId)?.push(rank);
+    }
+  }
+  const places: TrendSeries[] = members.map((m) => ({
+    userId: m.userId,
+    name: m.user.name ?? m.user.email,
+    data: placesByUser.get(m.userId) ?? [],
+  }));
+
+  return { labels, totals, diffs, places };
 }
 
 export type DriverPickStat = { driverId: string; name: string; timesPicked: number; totalPts: number; avgPts: number };
