@@ -1,5 +1,9 @@
+/* A block-level flex row (not inline-flex) so the pill group can be
+   centered within the page column via justify-content, rather than
+   sitting left-aligned at its own content width. */
 .tabs {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   gap: 2px;
   padding: 4px;
   background: var(--bg-surface-muted);
