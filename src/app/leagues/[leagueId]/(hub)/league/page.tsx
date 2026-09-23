@@ -1,14 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
-import { CheckeredFlagIcon } from "@/components/ui/icons";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { PICK_ORDER_MODE_INFO, type PickOrderMode } from "@/lib/pickOrder";
-import { displayRaceName } from "@/lib/raceName";
 import { getLeagueHubData } from "../leagueData";
+import FullScoreMatrix, { type MatrixRace } from "./FullScoreMatrix";
 import styles from "./page.module.css";
-import raceBreakdownStyles from "./RaceBreakdown.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -90,60 +88,44 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
     list.push(p);
     picksByRace.set(p.raceId, list);
   }
-  const mostRecentFirst = scoredRaces.slice().sort((a, b) => b.week - a.week);
   const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
+
+  // Every field a race row needs, plus its click-to-expand breakdown —
+  // built here so FullScoreMatrix (a client component, for the expand/
+  // collapse state) only has to render, not re-derive any of this.
+  const matrixRaces: MatrixRace[] = scoredRaces.map((r) => {
+    const byUser = scoreByRaceUser.get(r.id)!;
+    const rows = (picksByRace.get(r.id) ?? [])
+      .slice()
+      .sort((a, b) => (b.score?.total ?? 0) - (a.score?.total ?? 0));
+    return {
+      raceId: r.id,
+      week: r.week,
+      trackName: r.trackName,
+      scores: Object.fromEntries(byUser),
+      breakdown: rows.map((p) => ({
+        userId: p.userId,
+        playerName: nameByUserId.get(p.userId) ?? "—",
+        driverName: p.driver.name,
+        points: p.score?.total ?? 0,
+        stageBonus: p.score?.stageBonus ?? 0,
+      })),
+    };
+  });
+  const matrixMembers = members.map((m) => ({ userId: m.userId, name: m.user.name ?? m.user.email }));
 
   return (
     <>
       <Card title="Full Score Matrix" className={styles.matrixCard}>
-        <p className={styles.sub}>Every player&apos;s score, every week, this season.</p>
+        <p className={styles.sub}>Every player&apos;s score, every week, this season — click a race to see the breakdown.</p>
         {scoredRaces.length === 0 ? (
           <p>No races have been scored yet this season.</p>
         ) : (
-          <div className={styles.scrollX}>
-            <table>
-              <thead>
-                <tr>
-                  <th className={styles.sticky}>Week</th>
-                  {members.map((m) => (
-                    <th key={m.userId} className={styles.playerCol}>
-                      {m.user.name ?? m.user.email}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {scoredRaces.map((r) => {
-                  const byUser = scoreByRaceUser.get(r.id)!;
-                  return (
-                    <tr key={r.id}>
-                      <td className={styles.sticky}>
-                        <span className={styles.raceCell}>
-                          <span className={styles.raceIcon}>
-                            <CheckeredFlagIcon size={14} />
-                          </span>
-                          <span className={styles.raceName}>{displayRaceName(r.trackName)}</span>
-                        </span>
-                      </td>
-                      {members.map((m) => (
-                        <td key={m.userId} className={styles.playerCol}>
-                          {byUser.get(m.userId) ?? "—"}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-                <tr>
-                  <td className={`${styles.sticky} ${styles.totalRow}`}>Total</td>
-                  {members.map((m) => (
-                    <td key={m.userId} className={`${styles.playerCol} ${styles.totalRow} ${styles.accentCell}`}>
-                      {totalByUser.get(m.userId) ?? 0}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <FullScoreMatrix
+            members={matrixMembers}
+            races={matrixRaces}
+            totalByUser={Object.fromEntries(totalByUser)}
+          />
         )}
       </Card>
 
@@ -157,60 +139,6 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
           ))}
         </div>
       </Card>
-
-      {mostRecentFirst.length > 0 && (
-        <Card title="Race-by-Race Breakdown">
-          <div className={raceBreakdownStyles.raceList}>
-            {mostRecentFirst.map((r) => {
-              const rows = (picksByRace.get(r.id) ?? [])
-                .slice()
-                .sort((a, b) => (b.score?.total ?? 0) - (a.score?.total ?? 0));
-              return (
-                <details key={r.id} className={raceBreakdownStyles.raceItem}>
-                  <summary className={raceBreakdownStyles.summary}>
-                    <div>
-                      <div className={raceBreakdownStyles.trackName}>{displayRaceName(r.trackName)}</div>
-                      <div className={raceBreakdownStyles.raceNum}>Week {r.week}</div>
-                    </div>
-                    <svg
-                      className={raceBreakdownStyles.chev}
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </summary>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Player</th>
-                        <th>Driver</th>
-                        <th>Points</th>
-                        <th>Stage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((p) => (
-                        <tr key={p.id}>
-                          <td>{nameByUserId.get(p.userId) ?? "—"}</td>
-                          <td>{p.driver.name}</td>
-                          <td>{p.score?.total}</td>
-                          <td>{(p.score?.stageBonus ?? 0) > 0 ? `+${p.score?.stageBonus}` : "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </details>
-              );
-            })}
-          </div>
-        </Card>
-      )}
     </>
   );
 }

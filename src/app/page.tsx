@@ -92,11 +92,12 @@ function ScheduleSnapshot({
         <ul className="rowList">
           {races.map((r) => (
             <li key={r.id}>
-              <span>
-                Wk {r.week} — {displayRaceName(r.trackName)}
+              <span className={styles.scheduleRace}>
+                <span className={styles.weekChip}>{r.week}</span>
+                {displayRaceName(r.trackName)}
               </span>
               <span className={styles.muted}>
-                {r.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                {r.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               </span>
             </li>
           ))}
@@ -189,42 +190,6 @@ async function HomeDashboard({
         </div>
       </div>
 
-      <div className={styles.leagueSnapshotRow}>
-        {leagueRows.map((row) => (
-          <Card key={row.id} className={styles.leagueSnapshotCard}>
-            <Link href={`/leagues/${row.id}`} className={styles.leagueSnapshotHeader}>
-              {row.iconUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- arbitrary commissioner-pasted URL, not a static/local asset
-                <img src={row.iconUrl} alt="" className={styles.avatarImg} />
-              ) : (
-                <span className={styles.avatar}>{row.name.charAt(0).toUpperCase()}</span>
-              )}
-              <span className={styles.leagueSnapshotName}>{row.name}</span>
-              {row.isCommissioner && <Badge tone="neutral">Commish</Badge>}
-            </Link>
-            <div className={styles.leagueSnapshotStats}>
-              <div className={styles.snapshotStat}>
-                <span className={styles.snapshotValue}>{row.score.toLocaleString()}</span>
-                <span className={styles.snapshotLabel}>Score</span>
-              </div>
-              <div className={styles.snapshotStat}>
-                <span className={styles.snapshotValue}>{row.rank ? ordinal(row.rank) : "—"}</span>
-                <span className={styles.snapshotLabel}>Rank</span>
-              </div>
-            </div>
-            {row.nextRaceId ? (
-              <Link href={`/leagues/${row.id}/races/${row.nextRaceId}`} className="linkButton">
-                Set Lineup
-              </Link>
-            ) : (
-              <Link href={`/leagues/${row.id}`} className="linkButtonOutline">
-                View league
-              </Link>
-            )}
-          </Card>
-        ))}
-      </div>
-
       <Card
         title="My Leagues"
         actions={
@@ -244,10 +209,11 @@ async function HomeDashboard({
           <span>Score</span>
           <span>Rank</span>
           <span>Locked</span>
+          <span />
         </div>
         {leagueRows.map((row) => (
-          <Link key={row.id} href={`/leagues/${row.id}`} className={styles.tableRow}>
-            <span className={styles.leagueCell}>
+          <div key={row.id} className={styles.tableRow}>
+            <Link href={`/leagues/${row.id}`} className={styles.leagueCell}>
               {row.iconUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- arbitrary commissioner-pasted URL, not a static/local asset
                 <img src={row.iconUrl} alt="" className={styles.avatarImg} />
@@ -258,7 +224,7 @@ async function HomeDashboard({
                 <span className={styles.leagueName}>{row.name}</span>
                 {row.isCommissioner && <Badge tone="neutral">Commish</Badge>}
               </span>
-            </span>
+            </Link>
             <span className={styles.muted}>{row.memberCount}</span>
             <span className={styles.scoreCell}>{row.score.toLocaleString()}</span>
             <span className={styles.muted}>{row.rank ? ordinal(row.rank) : "—"}</span>
@@ -269,7 +235,18 @@ async function HomeDashboard({
                 row.lockedDrivers.map((name) => <span key={name} className={styles.lockChip} title={name} />)
               )}
             </span>
-          </Link>
+            <span className={styles.actionCell}>
+              {row.nextRaceId ? (
+                <Link href={`/leagues/${row.id}/races/${row.nextRaceId}`} className="linkButton">
+                  Set Lineup
+                </Link>
+              ) : (
+                <Link href={`/leagues/${row.id}`} className="linkButtonOutline">
+                  View league
+                </Link>
+              )}
+            </span>
+          </div>
         ))}
       </Card>
     </>

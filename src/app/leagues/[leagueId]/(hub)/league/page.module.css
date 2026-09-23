@@ -31,6 +31,33 @@
   max-width: 100%;
 }
 
+.matrixRow {
+  cursor: pointer;
+}
+
+.chev {
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.chevOpen {
+  transform: rotate(90deg);
+}
+
+.matrixDetailCell {
+  background: var(--bg-surface-muted);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+
+.detailTable {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  width: max-content;
+  min-width: 320px;
+}
+
 .raceIcon {
   display: flex;
   align-items: center;
