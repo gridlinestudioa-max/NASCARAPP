@@ -57,7 +57,8 @@ export default function TrendChart({
       borderWidth: 2,
       pointRadius: 0,
       pointHoverRadius: 4,
-      tension: 0.25,
+      tension: 0.4,
+      cubicInterpolationMode: "monotone" as const,
       hidden: hidden.has(s.userId),
     }));
 
