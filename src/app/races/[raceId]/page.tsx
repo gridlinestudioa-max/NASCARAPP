@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import FactsGrid from "@/components/ui/FactsGrid";
 import RaceLogo from "@/components/ui/RaceLogo";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import RaceResultsTabs, { type ResultRow } from "@/components/race/RaceResultsTabs";
 import { normalizeTrackName } from "@/lib/nascarFeed";
 import { displayRaceName } from "@/lib/raceName";
@@ -12,7 +13,7 @@ import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
-type PastWinner = { year: number; driverName: string };
+type PastWinner = { year: number; driverName: string; driverNumber: number | null };
 
 export default async function RacePage(props: PageProps<"/races/[raceId]">) {
   const { raceId } = await props.params;
@@ -50,11 +51,11 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
   const pastWinners: PastWinner[] = [];
   for (const w of liveWinners) {
     if (normalizeTrackName(w.race.trackName) !== normalizedTrack) continue;
-    pastWinners.push({ year: w.race.season.year, driverName: w.driver.name });
+    pastWinners.push({ year: w.race.season.year, driverName: w.driver.name, driverNumber: w.driver.number });
   }
   for (const w of archivedWinners) {
     if (normalizeTrackName(w.trackName) !== normalizedTrack) continue;
-    pastWinners.push({ year: w.year, driverName: w.driver.name });
+    pastWinners.push({ year: w.year, driverName: w.driver.name, driverNumber: w.driver.number });
   }
   pastWinners.sort((a, b) => b.year - a.year);
   const past3Winners = pastWinners.slice(0, 3);
@@ -62,20 +63,24 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
   const displayName = race.venueName ?? displayRaceName(race.trackName);
   const eventName = race.venueName ? displayRaceName(race.trackName) : null;
 
-  const finalRows: ResultRow[] = race.results.map((r) => ({ pos: r.finishingPosition, driver: r.driver.name }));
+  const finalRows: ResultRow[] = race.results.map((r) => ({
+    pos: r.finishingPosition,
+    driver: r.driver.name,
+    driverNumber: r.driver.number,
+  }));
   const stage1Rows: ResultRow[] = race.stageResults
     .filter((s) => s.stageNumber === 1)
-    .map((s) => ({ pos: s.position, driver: s.driver.name }));
+    .map((s) => ({ pos: s.position, driver: s.driver.name, driverNumber: s.driver.number }));
   const stage2Rows: ResultRow[] = race.stageResults
     .filter((s) => s.stageNumber === 2)
-    .map((s) => ({ pos: s.position, driver: s.driver.name }));
+    .map((s) => ({ pos: s.position, driver: s.driver.name, driverNumber: s.driver.number }));
 
   return (
     <main>
       <Breadcrumb items={[{ label: "Schedule", href: "/races" }, { label: displayName }]} />
 
       <div className={styles.titleRow}>
-        <RaceLogo trackName={race.trackName} size={56} className={styles.titleLogo} />
+        <RaceLogo trackName={race.trackName} size={72} className={styles.titleLogo} />
         <div>
           <div className={styles.eyebrow}>Week {race.week}</div>
           <h1>{displayName}</h1>
@@ -93,7 +98,22 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
           { label: "Field Size", value: race.fieldSize },
           { label: "Season", value: `${race.season.year}` },
           ...(past3Winners.length > 0
-            ? [{ label: "Last Year's Winner", value: past3Winners[0].driverName, fullWidth: true }]
+            ? [
+                {
+                  label: "Last Year's Winner",
+                  value: (
+                    <span className={styles.driverCell}>
+                      <DriverNumberBadge
+                        number={past3Winners[0].driverNumber}
+                        name={past3Winners[0].driverName}
+                        className={styles.driverBadge}
+                      />
+                      {past3Winners[0].driverName}
+                    </span>
+                  ),
+                  fullWidth: true,
+                },
+              ]
             : []),
         ]}
       />
@@ -110,7 +130,10 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
             {past3Winners.map((w) => (
               <li key={w.year}>
                 <span>{w.year}</span>
-                <span>{w.driverName}</span>
+                <span className={styles.driverCell}>
+                  <DriverNumberBadge number={w.driverNumber} name={w.driverName} className={styles.driverBadge} />
+                  {w.driverName}
+                </span>
               </li>
             ))}
           </ul>

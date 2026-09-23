@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { getLeagueHubData } from "@/app/leagues/[leagueId]/(hub)/leagueData";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 import { computePlayerSeasonStats, computeWeeklyTotals, ordinal, scoredRacesInOrder } from "@/lib/leagueStats";
@@ -46,6 +47,12 @@ export default async function Home() {
     season ? computeSeasonPointsStandings(season.id) : Promise.resolve([]),
   ]);
 
+  const topDriverIds = pointsStandings.slice(0, 5).map((s) => s.driverId);
+  const topDriverNumbers = topDriverIds.length
+    ? await prisma.driver.findMany({ where: { id: { in: topDriverIds } }, select: { id: true, number: true } })
+    : [];
+  const numberByDriverId = new Map(topDriverNumbers.map((d) => [d.id, d.number]));
+
   return (
     <main>
       {memberships.length === 0 ? (
@@ -73,7 +80,9 @@ export default async function Home() {
 
       <div className={styles.snapshotRow}>
         <ScheduleSnapshot races={upcomingRaces} />
-        <DriverPointsSnapshot standings={pointsStandings.slice(0, 5)} />
+        <DriverPointsSnapshot
+          standings={pointsStandings.slice(0, 5).map((s) => ({ ...s, number: numberByDriverId.get(s.driverId) ?? null }))}
+        />
       </div>
     </main>
   );
@@ -110,7 +119,7 @@ function ScheduleSnapshot({
 function DriverPointsSnapshot({
   standings,
 }: {
-  standings: { driverId: string; driverName: string; points: number }[];
+  standings: { driverId: string; driverName: string; points: number; number: number | null }[];
 }) {
   return (
     <Card title="Driver Points" actions={<Link href="/stats">See all →</Link>}>
@@ -120,8 +129,10 @@ function DriverPointsSnapshot({
         <ul className="rowList">
           {standings.map((s, i) => (
             <li key={s.driverId}>
-              <span>
-                {i + 1}. {s.driverName}
+              <span className={styles.driverCell}>
+                {i + 1}.
+                <DriverNumberBadge number={s.number} name={s.driverName} className={styles.driverBadge} />
+                {s.driverName}
               </span>
               <span className={styles.muted}>{s.points.toLocaleString()} pts</span>
             </li>

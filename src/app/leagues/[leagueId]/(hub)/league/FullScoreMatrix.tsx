@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from "react";
 import RaceLogo from "@/components/ui/RaceLogo";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { displayRaceName } from "@/lib/raceName";
 import styles from "./page.module.css";
 
@@ -11,6 +12,7 @@ export type MatrixBreakdownRow = {
   userId: string;
   playerName: string;
   driverName: string;
+  driverNumber: number | null;
   points: number;
   stageBonus: number;
 };
@@ -71,7 +73,7 @@ export default function FullScoreMatrix({
                       >
                         <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <RaceLogo trackName={r.trackName} size={22} className={styles.raceIcon} />
+                      <RaceLogo trackName={r.trackName} size={30} className={styles.raceIcon} />
                       <span className={styles.raceName}>{displayRaceName(r.trackName)}</span>
                     </span>
                   </td>
@@ -97,7 +99,12 @@ export default function FullScoreMatrix({
                           {r.breakdown.map((row, i) => (
                             <tr key={`${row.userId}-${i}`}>
                               <td>{row.playerName}</td>
-                              <td>{row.driverName}</td>
+                              <td>
+                                <span className={styles.driverCell}>
+                                  <DriverNumberBadge number={row.driverNumber} name={row.driverName} className={styles.driverBadge} />
+                                  {row.driverName}
+                                </span>
+                              </td>
                               <td>{row.points}</td>
                               <td>{row.stageBonus > 0 ? `+${row.stageBonus}` : "—"}</td>
                             </tr>

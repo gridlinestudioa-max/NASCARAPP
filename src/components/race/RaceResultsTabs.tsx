@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import MiniTabs from "@/components/ui/MiniTabs";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import styles from "./RaceResultsTabs.module.css";
 
-export type ResultRow = { pos: number; driver: string };
+export type ResultRow = { pos: number; driver: string; driverNumber: number | null };
 
 const TABS = [
   { id: "stage1", label: "Stage 1" },
@@ -35,7 +36,7 @@ export default function RaceResultsTabs({
         <table>
           <thead>
             <tr>
-              <th style={{ width: 48 }}>Pos</th>
+              <th style={{ width: 48, textAlign: "center" }}>Pos</th>
               <th>Driver</th>
             </tr>
           </thead>
@@ -43,7 +44,10 @@ export default function RaceResultsTabs({
             {rows.map((r) => (
               <tr key={r.pos}>
                 <td className={styles.posCell}>{r.pos}</td>
-                <td className={styles.driverCell}>{r.driver}</td>
+                <td className={styles.driverCell}>
+                  <DriverNumberBadge number={r.driverNumber} name={r.driver} className={styles.driverBadge} />
+                  {r.driver}
+                </td>
               </tr>
             ))}
           </tbody>

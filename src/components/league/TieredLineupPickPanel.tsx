@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import UserAvatar from "@/components/ui/UserAvatar";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import {
   parseTieredDraftRuleSetConfig,
   TIERED_LINEUP_SLOTS,
@@ -94,7 +95,12 @@ export default async function TieredLineupPickPanel({
                       <td>
                         {slot ? `Tier ${slot.tier} ${slot.role === "STARTER" ? "starter" : "bench"}` : p.pickNumber}
                       </td>
-                      <td>{p.driver.name}</td>
+                      <td>
+                        <span className={lineupFormStyles.driverCell}>
+                          <DriverNumberBadge number={p.driver.number} name={p.driver.name} className={lineupFormStyles.driverBadge} />
+                          {p.driver.name}
+                        </span>
+                      </td>
                       <td>{p.score?.qualifyingPosition ?? "—"}</td>
                       <td>{p.score?.qualifyingBonus ?? "—"}</td>
                       <td>{p.score?.finishPosition ?? "—"}</td>
@@ -186,9 +192,13 @@ export default async function TieredLineupPickPanel({
     );
   }
 
-  const driverNamesByTier: Record<DriverTier, { id: string; name: string }[]> = { A: [], B: [], C: [] };
+  const driverNamesByTier: Record<DriverTier, { id: string; name: string; number: number | null }[]> = {
+    A: [],
+    B: [],
+    C: [],
+  };
   for (const a of tierAssignments) {
-    driverNamesByTier[a.tier].push({ id: a.driverId, name: a.driver.name });
+    driverNamesByTier[a.tier].push({ id: a.driverId, name: a.driver.name, number: a.driver.number });
   }
   for (const tier of ["A", "B", "C"] as const) {
     driverNamesByTier[tier].sort((a, b) => a.name.localeCompare(b.name));
@@ -209,7 +219,10 @@ export default async function TieredLineupPickPanel({
   for (const p of priorStarterPicks) {
     startsUsedByDriverId.set(p.driverId, (startsUsedByDriverId.get(p.driverId) ?? 0) + 1);
   }
-  const driversByTier: Record<DriverTier, { id: string; name: string; startsUsed: number; avgFinish: number | null }[]> = {
+  const driversByTier: Record<
+    DriverTier,
+    { id: string; name: string; number: number | null; startsUsed: number; avgFinish: number | null }[]
+  > = {
     A: driverNamesByTier.A.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0, avgFinish: avgFinishByDriverId.get(d.id) ?? null })),
     B: driverNamesByTier.B.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0, avgFinish: avgFinishByDriverId.get(d.id) ?? null })),
     C: driverNamesByTier.C.map((d) => ({ ...d, startsUsed: startsUsedByDriverId.get(d.id) ?? 0, avgFinish: avgFinishByDriverId.get(d.id) ?? null })),

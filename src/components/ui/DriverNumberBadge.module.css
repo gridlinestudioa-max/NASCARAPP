@@ -1,6 +1,15 @@
+/* White background (overriding whatever dark badge background the caller's
+   className set) so the number graphic's own colors stay readable — most
+   of these graphics are designed against a light background, not the
+   dark circular tiles used elsewhere for initial-letter avatars. */
+.imgBadge {
+  background: #fff !important;
+  overflow: hidden;
+}
+
 .img {
-  width: 78%;
-  height: 78%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   display: block;
 }

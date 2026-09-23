@@ -107,6 +107,7 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
         userId: p.userId,
         playerName: nameByUserId.get(p.userId) ?? "—",
         driverName: p.driver.name,
+        driverNumber: p.driver.number,
         points: p.score?.total ?? 0,
         stageBonus: p.score?.stageBonus ?? 0,
       })),

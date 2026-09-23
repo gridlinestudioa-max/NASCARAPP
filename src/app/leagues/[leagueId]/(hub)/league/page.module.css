@@ -62,12 +62,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
   border-radius: var(--radius-sm);
   background: var(--bg-surface-muted);
   color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.driverCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.driverBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
+  flex-shrink: 0;
 }
 
 .raceName {
@@ -87,7 +108,7 @@
 }
 
 .num {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 

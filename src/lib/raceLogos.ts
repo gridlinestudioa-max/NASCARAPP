@@ -50,6 +50,8 @@ const RACE_LOGOS: Record<string, string> = {
   "watkins glen": "/race-logos/watkins-glen.jpg",
   "go bowling at the glen": "/race-logos/watkins-glen.jpg",
 
+  dover: "/race-logos/dover.png",
+
   charlotte: "/race-logos/charlotte-spring.jpg",
   "coca-cola 600": "/race-logos/charlotte-spring.jpg",
 

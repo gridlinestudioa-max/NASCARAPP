@@ -1,9 +1,27 @@
 .posCell {
   font-weight: 800;
+  text-align: center;
 }
 
 .driverCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
+}
+
+.driverBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
+  flex-shrink: 0;
 }
 
 .empty {

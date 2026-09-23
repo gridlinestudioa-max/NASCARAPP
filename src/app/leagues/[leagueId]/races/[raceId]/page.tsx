@@ -52,7 +52,7 @@ export default async function RaceDetailPage(props: PageProps<"/leagues/[leagueI
         ]}
       />
       <div className={styles.titleRow}>
-        <RaceLogo trackName={race.trackName} size={48} className={styles.titleLogo} />
+        <RaceLogo trackName={race.trackName} size={64} className={styles.titleLogo} />
         <div>
           <h1>
             Week {race.week} — {displayRaceName(race.trackName)}

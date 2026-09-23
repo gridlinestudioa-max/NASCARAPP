@@ -279,6 +279,28 @@ p + p {
   background: var(--bg-surface-muted);
 }
 
+/* Driver name + DriverNumberBadge, used anywhere a driver's name is
+   shown outside a page that already defines its own scoped variant. */
+.driverCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.driverBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+
 /* ---------- Forms ---------- */
 
 label {

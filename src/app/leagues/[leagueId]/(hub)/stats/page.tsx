@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import UserAvatar from "@/components/ui/UserAvatar";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import TabbedPanel from "@/components/ui/TabbedPanel";
 import RaceLogo from "@/components/ui/RaceLogo";
 import TrendChart from "@/components/league/TrendChart";
@@ -24,7 +25,7 @@ import styles from "./page.module.css";
 export const dynamic = "force-dynamic";
 
 function RaceRowIcon({ trackName }: { trackName: string }) {
-  return <RaceLogo trackName={trackName} size={26} className={styles.raceIcon} />;
+  return <RaceLogo trackName={trackName} size={36} className={styles.raceIcon} />;
 }
 
 function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode {
@@ -38,12 +39,13 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
     const starterSlotNumbers = new Set(
       TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER").map((s) => s.pickNumber),
     );
-    const startsByDriver = new Map<string, number>();
+    const startsByDriver = new Map<string, { name: string; number: number | null; count: number }>();
     for (const p of myPicks) {
       if (!starterSlotNumbers.has(p.pickNumber)) continue;
-      startsByDriver.set(p.driver.name, (startsByDriver.get(p.driver.name) ?? 0) + 1);
+      const existing = startsByDriver.get(p.driverId);
+      startsByDriver.set(p.driverId, { name: p.driver.name, number: p.driver.number, count: (existing?.count ?? 0) + 1 });
     }
-    const rows = [...startsByDriver.entries()].sort((a, b) => b[1] - a[1]);
+    const rows = [...startsByDriver.values()].sort((a, b) => b.count - a.count);
     const max = config?.maxStartsPerDriverPerSeason ?? null;
 
     return (
@@ -56,13 +58,16 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
           <p>No starts recorded yet.</p>
         ) : (
           <ul className="rowList">
-            {rows.map(([name, count]) => (
-              <li key={name}>
-                {name}
-                <Badge tone={max != null && count >= max ? "warning" : "neutral"}>
-                  {count}
+            {rows.map((d) => (
+              <li key={d.name}>
+                <span className={styles.driverCell}>
+                  <DriverNumberBadge number={d.number} name={d.name} className={styles.driverBadge} />
+                  {d.name}
+                </span>
+                <Badge tone={max != null && d.count >= max ? "warning" : "neutral"}>
+                  {d.count}
                   {max != null ? ` of ${max}` : ""}
-                  {max != null && count >= max ? " — limit reached" : ""}
+                  {max != null && d.count >= max ? " — limit reached" : ""}
                 </Badge>
               </li>
             ))}
@@ -78,11 +83,12 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
   // skip this card entirely instead of showing an "unlimited" placeholder.
   if (max == null) return null;
 
-  const countByDriver = new Map<string, number>();
+  const countByDriver = new Map<string, { name: string; number: number | null; count: number }>();
   for (const p of myPicks) {
-    countByDriver.set(p.driver.name, (countByDriver.get(p.driver.name) ?? 0) + 1);
+    const existing = countByDriver.get(p.driverId);
+    countByDriver.set(p.driverId, { name: p.driver.name, number: p.driver.number, count: (existing?.count ?? 0) + 1 });
   }
-  const rows = [...countByDriver.entries()].sort((a, b) => b[1] - a[1]);
+  const rows = [...countByDriver.values()].sort((a, b) => b.count - a.count);
 
   return (
     <Card title="Your Driver Limits">
@@ -91,13 +97,16 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
         <p>You haven&apos;t made a pick yet this season.</p>
       ) : (
         <ul className="rowList">
-          {rows.map(([name, count]) => (
-            <li key={name}>
-              {name}
-              <Badge tone={max != null && count >= max ? "warning" : "neutral"}>
-                {count}
+          {rows.map((d) => (
+            <li key={d.name}>
+              <span className={styles.driverCell}>
+                <DriverNumberBadge number={d.number} name={d.name} className={styles.driverBadge} />
+                {d.name}
+              </span>
+              <Badge tone={max != null && d.count >= max ? "warning" : "neutral"}>
+                {d.count}
                 {max != null ? ` of ${max}` : ""}
-                {max != null && count >= max ? " — limit reached" : ""}
+                {max != null && d.count >= max ? " — limit reached" : ""}
               </Badge>
             </li>
           ))}
@@ -174,25 +183,37 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
       {myPicks.length === 0 ? (
         <p>You haven&apos;t made a pick yet this season.</p>
       ) : (
-        <ul className={`rowList ${styles.raceList}`}>
-          {myPicks
-            .slice()
-            .sort((a, b) => (raceByWeek.get(a.raceId)?.week ?? 0) - (raceByWeek.get(b.raceId)?.week ?? 0))
-            .map((p) => (
-              <li key={p.id}>
-                <span className={styles.raceRowMain}>
-                  <RaceRowIcon trackName={raceByWeek.get(p.raceId)?.trackName ?? ""} />
-                  <span className={styles.raceRowLabel}>
-                    {raceByWeek.get(p.raceId) ? displayRaceName(raceByWeek.get(p.raceId)!.trackName) : "—"}
+        <>
+          <div className={styles.raceRowHead}>
+            <span>Race</span>
+            <span className={styles.raceRowHeadRight}>
+              <span>Driver</span>
+              <span>Points</span>
+            </span>
+          </div>
+          <ul className={`rowList ${styles.raceList}`}>
+            {myPicks
+              .slice()
+              .sort((a, b) => (raceByWeek.get(a.raceId)?.week ?? 0) - (raceByWeek.get(b.raceId)?.week ?? 0))
+              .map((p) => (
+                <li key={p.id}>
+                  <span className={styles.raceRowMain}>
+                    <RaceRowIcon trackName={raceByWeek.get(p.raceId)?.trackName ?? ""} />
+                    <span className={styles.raceRowLabel}>
+                      {raceByWeek.get(p.raceId) ? displayRaceName(raceByWeek.get(p.raceId)!.trackName) : "—"}
+                    </span>
                   </span>
-                </span>
-                <span className={styles.raceRowRight}>
-                  <span className={styles.raceRowDriver}>{p.driver.name}</span>
-                  <strong className={styles.accentCell}>{p.score?.total ?? "—"}</strong>
-                </span>
-              </li>
-            ))}
-        </ul>
+                  <span className={styles.raceRowRight}>
+                    <span className={styles.raceRowDriver}>
+                      <DriverNumberBadge number={p.driver.number} name={p.driver.name} className={styles.driverBadge} />
+                      {p.driver.name}
+                    </span>
+                    <strong className={styles.accentCell}>{p.score?.total ?? "—"}</strong>
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </>
       )}
     </Card>
   );
@@ -465,7 +486,12 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
                   const topOwner = topOwnerByDriver.get(d.driverId);
                   return (
                     <tr key={d.driverId}>
-                      <td>{d.name}</td>
+                      <td>
+                        <span className={styles.driverCell}>
+                          <DriverNumberBadge number={d.number} name={d.name} className={styles.driverBadge} />
+                          {d.name}
+                        </span>
+                      </td>
                       <td className={styles.muted}>{topOwner ? `${topOwner.name} · ${topOwner.count}×` : "—"}</td>
                       <td className={`${styles.num} ${styles.accentCell}`}>{d.timesPicked}</td>
                       <td className={styles.num}>{d.avgPts.toFixed(1)}</td>
@@ -500,7 +526,12 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
                         const topOwner = topOwnerByDriver.get(d.driverId);
                         return (
                           <tr key={d.driverId}>
-                            <td>{d.name}</td>
+                            <td>
+                              <span className={styles.driverCell}>
+                                <DriverNumberBadge number={d.number} name={d.name} className={styles.driverBadge} />
+                                {d.name}
+                              </span>
+                            </td>
                             <td className={styles.muted}>
                               {topOwner ? `${topOwner.name} · ${topOwner.count}×` : "—"}
                             </td>
@@ -523,7 +554,10 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
                     {driverValue.map((d) => (
                       <div key={d.driverId} className={styles.barRow}>
                         <div className={styles.barLabelRow}>
-                          <span className={styles.barName}>{d.name}</span>
+                          <span className={styles.barName}>
+                            <DriverNumberBadge number={d.number} name={d.name} className={styles.driverBadge} />
+                            {d.name}
+                          </span>
                           <span className={styles.barMeta}>
                             avg {d.avgPts.toFixed(1)} · {d.totalPts} pts · picked {d.timesPicked}×
                           </span>
