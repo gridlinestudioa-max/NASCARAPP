@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
+import { CheckeredFlagIcon } from "@/components/ui/icons";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { PICK_ORDER_MODE_INFO, type PickOrderMode } from "@/lib/pickOrder";
@@ -115,7 +116,14 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
                   const byUser = scoreByRaceUser.get(r.id)!;
                   return (
                     <tr key={r.id}>
-                      <td className={styles.sticky}>Wk {r.week}</td>
+                      <td className={styles.sticky}>
+                        <span className={styles.raceCell}>
+                          <span className={styles.raceIcon}>
+                            <CheckeredFlagIcon size={14} />
+                          </span>
+                          {r.trackName}
+                        </span>
+                      </td>
                       {members.map((m) => (
                         <td key={m.userId} className={styles.num}>
                           {byUser.get(m.userId) ?? "—"}

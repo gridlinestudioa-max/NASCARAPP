@@ -23,7 +23,7 @@
 .accentCell {
   font-weight: 800;
   font-family: var(--font-heading);
-  color: var(--accent);
+  color: var(--text-accent);
 }
 
 .statGrid {
@@ -45,7 +45,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   font-family: var(--font-heading);
-  color: var(--accent);
+  color: var(--text-accent);
 }
 
 .statLabel {

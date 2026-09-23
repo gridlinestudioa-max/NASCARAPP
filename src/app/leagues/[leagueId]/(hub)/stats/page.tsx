@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import { CheckeredFlagIcon } from "@/components/ui/icons";
 import TrendChart from "@/components/league/TrendChart";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig, TIERED_LINEUP_SLOTS } from "@/lib/tieredDraft";
@@ -20,24 +21,12 @@ import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
-// Placeholder for each race row in the Personal Stats list below — a
-// stand-in for a real per-race logo/badge (not available yet). Kept as
-// its own small component so swapping in an actual <img> per race later
-// is a one-line change at the call site rather than a rewrite.
+// Wraps the shared placeholder icon in this page's badge styling — a
+// stand-in for a real per-race logo (not available yet).
 function RaceRowIcon() {
   return (
     <span className={styles.raceIcon}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M4 21V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path
-          d="M4 4h16v10H4z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <path d="M4 4h4v3H4zM12 4h4v3h-4zM8 7h4v3H8zM16 7h4v3h-4zM4 10h4v4H4zM12 10h4v4h-4z" fill="currentColor" />
-      </svg>
+      <CheckeredFlagIcon />
     </span>
   );
 }

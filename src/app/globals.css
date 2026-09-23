@@ -41,6 +41,15 @@
   --text-secondary: var(--muted);
   --text-muted: var(--faint);
   --text-on-ink: #ffffff;
+  /* --accent used AS TEXT (a bolded number, an eyebrow label, an active
+     tab) sitting directly on a card/page background — unlike a solid
+     "ink chip" (a button, badge, or pill fill, which pairs --accent as a
+     background with explicit white text and stays legible regardless of
+     theme), bare accent-colored text has no such pairing: it was
+     rendering pure black on the dark theme's near-black surfaces,
+     effectively invisible. This token exists so that case can track the
+     theme instead. */
+  --text-accent: var(--accent);
 
   /* Semantic accents (used sparingly, functional only) — intentionally
      fixed, not themed: an error/success color shouldn't shift just
@@ -88,8 +97,10 @@
    always wins over a class/attribute selector, so redeclaring them here
    would silently do nothing. --ink/--color-ink/--accent are also left
    alone so "solid ink chip" backgrounds (buttons, badges, avatars — which
-   pair a dark fill with white text) keep working unchanged in both modes,
-   the same treatment --accent already gets. */
+   pair a dark fill with white text) keep working unchanged in both modes.
+   --text-accent is the deliberate exception: it's --accent used bare as
+   text color, which does need to flip per theme — see its definition
+   above. */
 :root[data-theme="dark"] {
   --muted: #b9b8b4;
   --faint: #8b8a86;
@@ -104,6 +115,7 @@
   --text-primary: #f2f1ee;
   --text-secondary: var(--muted);
   --text-muted: var(--faint);
+  --text-accent: var(--text-primary);
 
   --shadow-card: 0 14px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-shell: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);

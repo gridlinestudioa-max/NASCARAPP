@@ -24,6 +24,24 @@
   white-space: nowrap;
 }
 
+.raceCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.raceIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
+}
+
 .num {
   text-align: right;
   white-space: nowrap;
@@ -36,7 +54,7 @@
 
 .accentCell {
   font-family: var(--font-heading);
-  color: var(--accent);
+  color: var(--text-accent);
 }
 
 .rulesList {
@@ -58,7 +76,7 @@
 }
 
 .ruleDash {
-  color: var(--accent);
+  color: var(--text-accent);
   font-weight: 800;
   flex-shrink: 0;
 }

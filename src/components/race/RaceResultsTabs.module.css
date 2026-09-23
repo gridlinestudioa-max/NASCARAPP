@@ -24,8 +24,8 @@
 
 .tabRow .tabActive,
 .tabRow .tabActive:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  color: var(--text-accent);
+  border-bottom-color: var(--text-accent);
 }
 
 .posCell {

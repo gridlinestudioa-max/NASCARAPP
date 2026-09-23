@@ -34,6 +34,14 @@
   color: #8a7d3f;
 }
 
+/* .points normally uses --text-accent (theme-aware — see globals.css),
+   but inside a chase row that would flip to near-white in dark mode and
+   disappear against this row's always-light gold background, same as
+   the .team/.rank case above. */
+.chaseRow .points {
+  color: #4a4220;
+}
+
 .num {
   text-align: right;
 }
@@ -80,7 +88,7 @@
   font-weight: 800;
   font-family: var(--font-heading);
   font-size: 1rem;
-  color: var(--accent);
+  color: var(--text-accent);
 }
 
 /* ---------- Modal ---------- */
@@ -173,7 +181,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   font-family: var(--font-heading);
-  color: var(--accent);
+  color: var(--text-accent);
 }
 
 .statValue {
