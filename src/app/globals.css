@@ -102,6 +102,14 @@
    text color, which does need to flip per theme — see its definition
    above. */
 :root[data-theme="dark"] {
+  /* Tells the browser to use its dark native-control chrome — select
+     dropdown popups, scrollbars, date/time pickers — instead of defaulting
+     to a light popup with dark text that clashes with everything around
+     it. Every *styled* form element already follows --bg-surface/
+     --text-primary above; this only affects the OS-drawn parts CSS can't
+     reach directly. */
+  color-scheme: dark;
+
   --muted: #b9b8b4;
   --faint: #8b8a86;
 

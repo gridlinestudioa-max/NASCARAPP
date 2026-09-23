@@ -98,7 +98,7 @@ export default async function PickemPickPanel({
   for (const p of myAllPicks) {
     topDriverCounts.set(p.driver.name, (topDriverCounts.get(p.driver.name) ?? 0) + 1);
   }
-  const topDrivers = [...topDriverCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const topDrivers = [...topDriverCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   const maxTopDriverCount = Math.max(0, ...topDrivers.map(([, count]) => count));
   // Once this week's entry list is known (from a NASCAR sync), scope
   // picks to who's actually racing instead of every driver ever seen.
