@@ -152,9 +152,26 @@
   max-width: 420px;
 }
 
-.topDriversList {
+/* Stretched to match the pick form card's height (.pickRow's align-items:
+   stretch) — without this, a short list (few or no top picks yet) leaves
+   a large dead gap below the rows instead of the rows/empty-state message
+   spreading out to use the space. */
+.topPicksCard {
   display: flex;
   flex-direction: column;
+}
+
+.topPicksEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.topDriversList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
   gap: var(--space-3);
 }
 

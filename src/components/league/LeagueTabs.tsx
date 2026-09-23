@@ -7,8 +7,8 @@ import styles from "./LeagueTabs.module.css";
 const TABS = [
   { href: "", label: "Pick" },
   { href: "/standings", label: "Standings" },
-  { href: "/league", label: "League" },
   { href: "/stats", label: "Stats" },
+  { href: "/league", label: "League" },
 ];
 
 export default function LeagueTabs({ leagueId }: { leagueId: string }) {

@@ -55,17 +55,6 @@
   padding: 5px 10px;
 }
 
-.twoCol {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
-
-@media (max-width: 760px) {
-  .twoCol {
-    grid-template-columns: 1fr;
-  }
-}
 
 .barRow + .barRow {
   margin-top: var(--space-2);

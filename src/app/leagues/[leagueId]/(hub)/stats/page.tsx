@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import UserAvatar from "@/components/ui/UserAvatar";
+import TabbedPanel from "@/components/ui/TabbedPanel";
 import { CheckeredFlagIcon } from "@/components/ui/icons";
 import TrendChart from "@/components/league/TrendChart";
 import { displayRaceName } from "@/lib/raceName";
@@ -298,146 +299,185 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
         </div>
       )}
 
-      {momentumSorted.length > 0 && (
-        <Card title="Momentum">
-          <table className={styles.compactTable}>
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Momentum</th>
-              </tr>
-            </thead>
-            <tbody>
-              {momentumSorted.map((p) => (
-                <tr key={p.userId}>
-                  <td>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                      <UserAvatar name={p.name} avatarUrl={avatarByUserId.get(p.userId)} />
-                      {p.name}
-                    </span>
-                  </td>
-                  <td>
-                    <Badge tone={(p.momentum ?? 0) >= 0 ? "success" : "danger"}>
-                      {(p.momentum ?? 0) >= 0 ? "+" : ""}
-                      {p.momentum}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      )}
+      <Card title="Player Stats">
+        <TabbedPanel
+          tabs={[
+            momentumSorted.length > 0 && {
+              id: "momentum",
+              label: "Momentum",
+              content: (
+                <table key="momentum" className={styles.compactTable}>
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Momentum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {momentumSorted.map((p) => (
+                      <tr key={p.userId}>
+                        <td>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                            <UserAvatar name={p.name} avatarUrl={avatarByUserId.get(p.userId)} />
+                            {p.name}
+                          </span>
+                        </td>
+                        <td>
+                          <Badge tone={(p.momentum ?? 0) >= 0 ? "success" : "danger"}>
+                            {(p.momentum ?? 0) >= 0 ? "+" : ""}
+                            {p.momentum}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ),
+            },
+            {
+              id: "consistency",
+              label: "Consistency",
+              content:
+                consistencySorted.length === 0 || scoredRaces.length === 0 ? (
+                  <p key="consistency">No scored races yet this season.</p>
+                ) : (
+                  <table key="consistency" className={styles.compactTable}>
+                    <thead>
+                      <tr>
+                        <th>Player</th>
+                        <th className={styles.num}>Consistency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {consistencySorted.map((p) => (
+                        <tr key={p.userId}>
+                          <td>{p.name}</td>
+                          <td className={`${styles.num} ${styles.accentCell}`}>{p.consistencyScore.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ),
+            },
+            {
+              id: "stage",
+              label: "Stage Points",
+              content:
+                stageSorted.length === 0 ? (
+                  <p key="stage">No scored picks yet this season.</p>
+                ) : (
+                  <table key="stage" className={styles.compactTable}>
+                    <thead>
+                      <tr>
+                        <th>Player</th>
+                        <th className={styles.num}>Stage Points</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stageSorted.map((p) => (
+                        <tr key={p.userId}>
+                          <td>{p.name}</td>
+                          <td className={`${styles.num} ${styles.accentCell}`}>{p.stagePts}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ),
+            },
+            {
+              id: "diversity",
+              label: "Diversity",
+              content: (
+                <table key="diversity" className={styles.compactTable}>
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th className={styles.num}>Unique Drivers</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {diversity.map((d) => (
+                      <tr key={d.userId}>
+                        <td>{d.name}</td>
+                        <td className={styles.num}>{d.uniqueDrivers}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ),
+            },
+          ].filter(Boolean) as { id: string; label: string; content: ReactNode }[]}
+        />
+      </Card>
 
       {renderPersonalStatsCard(data, userId)}
 
-      <div className={styles.twoCol}>
-        <Card title="Consistency">
-          {consistencySorted.length === 0 || scoredRaces.length === 0 ? (
-            <p>No scored races yet this season.</p>
-          ) : (
-            <table className={styles.compactTable}>
-              <tbody>
-                {consistencySorted.map((p) => (
-                  <tr key={p.userId}>
-                    <td>{p.name}</td>
-                    <td className={`${styles.num} ${styles.accentCell}`}>{p.consistencyScore.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-
-        <Card title="Stage Points">
-          {stageSorted.length === 0 ? (
-            <p>No scored picks yet this season.</p>
-          ) : (
-            <table className={styles.compactTable}>
-              <tbody>
-                {stageSorted.map((p) => (
-                  <tr key={p.userId}>
-                    <td>{p.name}</td>
-                    <td className={`${styles.num} ${styles.accentCell}`}>{p.stagePts}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-      </div>
-
       {renderPersonalLimitCard(data, userId)}
 
-      <Card title="Most Picked Drivers — League Wide">
-        {driverStats.length === 0 ? (
-          <p>No picks made yet this season.</p>
-        ) : (
-          <table className={styles.compactTable}>
-            <thead>
-              <tr>
-                <th>Driver</th>
-                <th>Picked most by</th>
-                <th className={styles.num}>Times picked</th>
-              </tr>
-            </thead>
-            <tbody>
-              {driverStats.map((d) => {
-                const topOwner = topOwnerByDriver.get(d.driverId);
-                return (
-                  <tr key={d.driverId}>
-                    <td>{d.name}</td>
-                    <td className={styles.muted}>
-                      {topOwner ? `${topOwner.name} · ${topOwner.count}×` : "—"}
-                    </td>
-                    <td className={`${styles.num} ${styles.accentCell}`}>{d.timesPicked}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </Card>
-
-      <Card title="Driver Value">
-        {driverValue.length === 0 ? (
-          <p>No scored picks yet this season.</p>
-        ) : (
-          <div>
-            {driverValue.map((d) => (
-              <div key={d.driverId} className={styles.barRow}>
-                <div className={styles.barLabelRow}>
-                  <span className={styles.barName}>{d.name}</span>
-                  <span className={styles.barMeta}>
-                    avg {d.avgPts.toFixed(1)} · {d.totalPts} pts · picked {d.timesPicked}×
-                  </span>
-                </div>
-                <div className={styles.barTrack}>
-                  <div className={styles.barFill} style={{ width: `${maxAvg > 0 ? (d.avgPts / maxAvg) * 100 : 0}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card title="Driver Diversity">
-        <table className={styles.compactTable}>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th className={styles.num}>Unique Drivers</th>
-            </tr>
-          </thead>
-          <tbody>
-            {diversity.map((d) => (
-              <tr key={d.userId}>
-                <td>{d.name}</td>
-                <td className={styles.num}>{d.uniqueDrivers}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <Card title="Drivers">
+        <TabbedPanel
+          tabs={[
+            {
+              id: "most-picked",
+              label: "Most Picked",
+              content:
+                driverStats.length === 0 ? (
+                  <p key="most-picked">No picks made yet this season.</p>
+                ) : (
+                  <table key="most-picked" className={styles.compactTable}>
+                    <thead>
+                      <tr>
+                        <th>Driver</th>
+                        <th>Picked most by</th>
+                        <th className={styles.num}>Times picked</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {driverStats.map((d) => {
+                        const topOwner = topOwnerByDriver.get(d.driverId);
+                        return (
+                          <tr key={d.driverId}>
+                            <td>{d.name}</td>
+                            <td className={styles.muted}>
+                              {topOwner ? `${topOwner.name} · ${topOwner.count}×` : "—"}
+                            </td>
+                            <td className={`${styles.num} ${styles.accentCell}`}>{d.timesPicked}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ),
+            },
+            {
+              id: "value",
+              label: "Value",
+              content:
+                driverValue.length === 0 ? (
+                  <p key="value">No scored picks yet this season.</p>
+                ) : (
+                  <div key="value">
+                    {driverValue.map((d) => (
+                      <div key={d.driverId} className={styles.barRow}>
+                        <div className={styles.barLabelRow}>
+                          <span className={styles.barName}>{d.name}</span>
+                          <span className={styles.barMeta}>
+                            avg {d.avgPts.toFixed(1)} · {d.totalPts} pts · picked {d.timesPicked}×
+                          </span>
+                        </div>
+                        <div className={styles.barTrack}>
+                          <div
+                            className={styles.barFill}
+                            style={{ width: `${maxAvg > 0 ? (d.avgPts / maxAvg) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ),
+            },
+          ]}
+        />
       </Card>
     </>
   );
