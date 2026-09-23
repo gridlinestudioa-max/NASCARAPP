@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { LATE_SWAP_GROUPS, TIERED_LINEUP_SLOTS, type DriverTier } from "@/lib/tieredDraft";
 import { submitTieredLineup } from "./actions";
 import styles from "./TieredLineupForm.module.css";
 
-type DriverOption = { id: string; name: string; startsUsed: number; avgFinish: number | null };
+type DriverOption = { id: string; name: string; number: number | null; startsUsed: number; avgFinish: number | null };
 
 const TIER_LABEL: Record<DriverTier, string> = { A: "Tier A", B: "Tier B", C: "Tier C" };
 const TIER_CLASS: Record<DriverTier, string> = { A: styles.slotA, B: styles.slotB, C: styles.slotC };
@@ -100,7 +101,10 @@ export default function TieredLineupForm({
         <span className={styles.tierTag}>{TIER_LABEL[tier]}</span>
         {driver ? (
           <>
-            <span className={styles.driverName}>{driver.name}</span>
+            <span className={styles.driverName}>
+              <DriverNumberBadge number={driver.number} name={driver.name} className={styles.driverBadge} />
+              {driver.name}
+            </span>
             <span className={styles.tapHint}>{role === "STARTER" ? "Starter" : "Bench"} · tap to change</span>
           </>
         ) : (
@@ -218,6 +222,7 @@ export default function TieredLineupForm({
                       onClick={() => pick(d.id)}
                     >
                       <span className={styles.dName}>
+                        <DriverNumberBadge number={d.number} name={d.name} className={styles.driverBadge} />
                         {d.name}
                         {isCurrent && <span className={styles.curTag}>Current</span>}
                         {usedElsewhere && (

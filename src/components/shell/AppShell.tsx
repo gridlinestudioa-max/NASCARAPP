@@ -89,7 +89,7 @@ export default function AppShell({
 }: {
   user: { name?: string | null; email: string };
   isAdmin: boolean;
-  leagues: { id: string; name: string; color: string | null }[];
+  leagues: { id: string; name: string; color: string | null; iconUrl: string | null }[];
   logoUrl?: string | null;
   children: ReactNode;
 }) {
@@ -183,10 +183,15 @@ export default function AppShell({
                   className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
                   style={{ justifyContent: hovered ? "flex-start" : "center" }}
                 >
-                  <span
-                    className={styles.leagueDot}
-                    style={{ background: league.color ?? DOT_COLORS[i % DOT_COLORS.length] }}
-                  />
+                  {league.iconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- commissioner-pasted URL, not a static/local asset
+                    <img src={league.iconUrl} alt="" className={styles.leagueIcon} />
+                  ) : (
+                    <span
+                      className={styles.leagueDot}
+                      style={{ background: league.color ?? DOT_COLORS[i % DOT_COLORS.length] }}
+                    />
+                  )}
                   {hovered && <span className={styles.navLabel}>{league.name}</span>}
                 </Link>
               );

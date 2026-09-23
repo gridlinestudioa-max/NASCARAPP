@@ -46,10 +46,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       ? prisma.leagueMembership
           .findMany({
             where: { userId: user.id },
-            include: { league: { select: { id: true, name: true } } },
+            include: { league: { select: { id: true, name: true, iconUrl: true } } },
             orderBy: { league: { name: "asc" } },
           })
-          .then((rows) => rows.map((m) => ({ id: m.league.id, name: m.league.name, color: m.color })))
+          .then((rows) =>
+            rows.map((m) => ({ id: m.league.id, name: m.league.name, color: m.color, iconUrl: m.league.iconUrl })),
+          )
       : Promise.resolve([]),
     getAppTheme(),
   ]);

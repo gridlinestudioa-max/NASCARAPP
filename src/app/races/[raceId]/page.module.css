@@ -9,6 +9,26 @@
   border: 1px solid var(--border-color);
 }
 
+.driverCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.driverBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+
 .eyebrow {
   font-size: 0.78rem;
   font-weight: 800;

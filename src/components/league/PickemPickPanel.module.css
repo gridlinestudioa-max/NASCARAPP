@@ -104,12 +104,40 @@
 }
 
 .turnRowPick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.85);
   max-width: 40vw;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.turnRowPickDriver {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   white-space: nowrap;
+}
+
+.driverCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.driverBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
+  flex-shrink: 0;
 }
 
 .turnStatusPicked,
@@ -184,6 +212,9 @@
 }
 
 .topDriverName {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   font-size: 0.9rem;
 }

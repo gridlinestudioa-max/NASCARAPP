@@ -23,7 +23,7 @@ export default function DriverNumberBadge({
 }) {
   if (number != null && AVAILABLE_NUMBERS.has(number)) {
     return (
-      <span className={className}>
+      <span className={className ? `${className} ${styles.imgBadge}` : styles.imgBadge}>
         {/* eslint-disable-next-line @next/next/no-img-element -- small fixed set of bundled per-number graphics */}
         <img src={`/driver-numbers/${number}.png`} alt={`#${number}`} className={styles.img} />
       </span>

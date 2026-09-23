@@ -24,7 +24,13 @@ export function ordinal(n: number): string {
 type RaceLite = { id: string; week: number; trackName: string };
 type MemberLite = { userId: string; user: { name: string | null; email: string } };
 type ScoreLite = { total: number; stageBonus: number } | null;
-type PickLite = { raceId: string; userId: string; driverId: string; driver: { name: string }; score: ScoreLite };
+type PickLite = {
+  raceId: string;
+  userId: string;
+  driverId: string;
+  driver: { name: string; number: number | null };
+  score: ScoreLite;
+};
 
 // raceId -> userId -> summed score.total across that player's picks that race
 export type WeeklyTotals = Map<string, Map<string, number>>;
@@ -168,14 +174,30 @@ export function computeTrendSeries(
   return { labels, totals, diffs, places };
 }
 
-export type DriverPickStat = { driverId: string; name: string; timesPicked: number; totalPts: number; avgPts: number };
+export type DriverPickStat = {
+  driverId: string;
+  name: string;
+  number: number | null;
+  timesPicked: number;
+  totalPts: number;
+  avgPts: number;
+};
 
 // Every driver anyone in this league has picked, with how often and how
 // well they've scored — "driver value" is avg points per scored pick.
 export function computeDriverStats(picks: PickLite[]): DriverPickStat[] {
-  const byDriver = new Map<string, { name: string; timesPicked: number; totalPts: number; scoredCount: number }>();
+  const byDriver = new Map<
+    string,
+    { name: string; number: number | null; timesPicked: number; totalPts: number; scoredCount: number }
+  >();
   for (const p of picks) {
-    const existing = byDriver.get(p.driverId) ?? { name: p.driver.name, timesPicked: 0, totalPts: 0, scoredCount: 0 };
+    const existing = byDriver.get(p.driverId) ?? {
+      name: p.driver.name,
+      number: p.driver.number,
+      timesPicked: 0,
+      totalPts: 0,
+      scoredCount: 0,
+    };
     existing.timesPicked += 1;
     if (p.score) {
       existing.totalPts += p.score.total;
@@ -186,6 +208,7 @@ export function computeDriverStats(picks: PickLite[]): DriverPickStat[] {
   return [...byDriver.entries()].map(([driverId, d]) => ({
     driverId,
     name: d.name,
+    number: d.number,
     timesPicked: d.timesPicked,
     totalPts: d.totalPts,
     avgPts: d.scoredCount > 0 ? d.totalPts / d.scoredCount : 0,

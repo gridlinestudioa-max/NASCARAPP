@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { displayRaceName } from "@/lib/raceName";
 import ScheduleEditForm from "./ScheduleEditForm";
 
@@ -62,7 +63,12 @@ export default async function AdminRacePage(props: PageProps<"/admin/races/[race
               {race.results.map((r) => (
                 <tr key={r.id}>
                   <td>{r.finishingPosition}</td>
-                  <td>{r.driver.name}</td>
+                  <td>
+                    <span className="driverCell">
+                      <DriverNumberBadge number={r.driver.number} name={r.driver.name} className="driverBadge" />
+                      {r.driver.name}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

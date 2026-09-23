@@ -88,8 +88,31 @@
 }
 
 .driverName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
   font-size: 0.95rem;
+}
+
+.driverCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.driverBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
+  flex-shrink: 0;
 }
 
 .placeholder {
@@ -238,7 +261,7 @@
 
 .modalListHead span:nth-child(2),
 .modalListHead span:nth-child(3) {
-  text-align: right;
+  text-align: center;
 }
 
 .modalList {
@@ -293,7 +316,7 @@
 }
 
 .avgFinish {
-  text-align: right;
+  text-align: center;
   font-size: 0.82rem;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
@@ -302,7 +325,7 @@
 .capWrap {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 3px;
 }
 

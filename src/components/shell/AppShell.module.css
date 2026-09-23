@@ -184,6 +184,14 @@
   flex-shrink: 0;
 }
 
+.leagueIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .sidebar .settingsToggle {
   display: flex;
   align-items: center;
