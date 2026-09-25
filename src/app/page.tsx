@@ -103,11 +103,11 @@ function ScheduleSnapshot({
         <ul className="rowList">
           {races.map((r) => (
             <li key={r.id}>
-              <span className={styles.scheduleRace}>
+              <Link href={`/races/${r.id}`} className={styles.scheduleRace}>
                 <span className={styles.weekChip}>{r.week}</span>
                 <RaceLogo trackName={r.trackName} size={28} className={styles.scheduleLogo} />
                 {displayRaceName(r.trackName)}
-              </span>
+              </Link>
               <span className={styles.muted}>
                 {r.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               </span>
@@ -132,11 +132,11 @@ function DriverPointsSnapshot({
         <ul className="rowList">
           {standings.map((s, i) => (
             <li key={s.driverId}>
-              <span className={styles.driverCell}>
+              <Link href={`/stats?driver=${s.driverId}`} className={styles.driverCell}>
                 {i + 1}.
                 <DriverNumberBadge number={s.number} name={s.driverName} className={styles.driverBadge} />
                 {s.driverName}
-              </span>
+              </Link>
               <span className={styles.muted}>{s.points.toLocaleString()} pts</span>
             </li>
           ))}
