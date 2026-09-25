@@ -114,6 +114,21 @@ const RACE_LOGOS: Record<string, string> = {
 
   "nascar cup series championship race": "/race-logos/championship.png",
   "championship race": "/race-logos/championship.png",
+
+  "autotrader 400": "/race-logos/autotrader-400.webp",
+
+  "duramax grand prix": "/race-logos/duramax-grand-prix.webp",
+
+  "wurth 400": "/race-logos/wurth-400.png",
+
+  "all-star race": "/race-logos/all-star-race.png",
+  "nascar all-star race": "/race-logos/all-star-race.png",
+
+  "cracker barrel 400": "/race-logos/cracker-barrel-400.png",
+
+  "anduril 250": "/race-logos/anduril-250.png",
+
+  "eero 400": "/race-logos/eero-400.png",
 };
 
 // Strips whitespace/punctuation so a real NASCAR-synced race name (which
@@ -121,8 +136,14 @@ const RACE_LOGOS: Record<string, string> = {
 // this dictionary's keys were written) still matches — e.g. "YellaWood
 // 500" vs "Yellawood  500". Never strips words, so two real races still
 // can't collide on a shared venue nickname.
+// NFD-normalizes first so an accented official name (e.g. "Würth 400")
+// matches the plain-ASCII key above instead of losing the "u" entirely.
 function normalizeKey(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 const NORMALIZED_RACE_LOGOS = new Map(

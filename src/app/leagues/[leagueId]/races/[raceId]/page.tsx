@@ -7,6 +7,7 @@ import PickemPickPanel from "@/components/league/PickemPickPanel";
 import TieredLineupPickPanel from "@/components/league/TieredLineupPickPanel";
 import RaceLogo from "@/components/ui/RaceLogo";
 import { displayRaceName } from "@/lib/raceName";
+import { getTrackCity } from "@/lib/trackCities";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +60,7 @@ export default async function RaceDetailPage(props: PageProps<"/leagues/[leagueI
           </h1>
           <p>
             {race.venueName && <>{race.venueName} · </>}
+            {getTrackCity(race.trackName, race.venueName) && <>{getTrackCity(race.trackName, race.venueName)} · </>}
             {new Date(race.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
