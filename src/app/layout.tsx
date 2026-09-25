@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
   const user = session?.user;
 
-  const [leagues, theme] = await Promise.all([
+  const [leagues, theme, currentUser] = await Promise.all([
     user?.id
       ? prisma.leagueMembership
           .findMany({
@@ -54,6 +54,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           )
       : Promise.resolve([]),
     getAppTheme(),
+    user?.id ? prisma.user.findUnique({ where: { id: user.id }, select: { avatarUrl: true } }) : Promise.resolve(null),
   ]);
 
   const themeVars = themeToCssVars(theme);
@@ -80,7 +81,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         {user?.id ? (
           <AppShell
-            user={{ name: user.name, email: user.email ?? "" }}
+            user={{ name: user.name, email: user.email ?? "", avatarUrl: currentUser?.avatarUrl ?? null }}
             isAdmin={isSiteAdmin(user.email)}
             leagues={leagues}
             logoUrl={theme.logoUrl}

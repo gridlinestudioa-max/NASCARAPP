@@ -10,7 +10,7 @@ import RaceLogo from "@/components/ui/RaceLogo";
 import TrendChart from "@/components/league/TrendChart";
 import { displayRaceName } from "@/lib/raceName";
 import { parseRuleSetConfig } from "@/lib/scoring";
-import { parseTieredDraftRuleSetConfig, TIERED_LINEUP_SLOTS } from "@/lib/tieredDraft";
+import { parseTieredDraftRuleSetConfig, buildTieredLineupSlots, DEFAULT_TIER_COMPOSITION } from "@/lib/tieredDraft";
 import {
   computeWeeklyTotals,
   scoredRacesInOrder,
@@ -36,9 +36,8 @@ function renderPersonalLimitCard(data: LeagueHubData, userId: string): ReactNode
     // Tiered Lineup always has a starts cap (it's a required config field,
     // never null), so this card is always relevant for that league type.
     const config = leagueSeason ? parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config) : null;
-    const starterSlotNumbers = new Set(
-      TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER").map((s) => s.pickNumber),
-    );
+    const tieredSlots = buildTieredLineupSlots(config?.tierComposition ?? DEFAULT_TIER_COMPOSITION);
+    const starterSlotNumbers = new Set(tieredSlots.filter((s) => s.role === "STARTER").map((s) => s.pickNumber));
     const startsByDriver = new Map<string, { name: string; number: number | null; count: number }>();
     for (const p of myPicks) {
       if (!starterSlotNumbers.has(p.pickNumber)) continue;

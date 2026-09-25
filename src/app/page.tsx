@@ -167,7 +167,7 @@ async function HomeDashboard({
         memberCount: 0,
         score: 0,
         rank: null as number | null,
-        lockedDrivers: [] as string[],
+        lockedDrivers: [] as { name: string; number: number | null }[],
         nextRaceId: null as string | null,
       };
     }
@@ -176,9 +176,13 @@ async function HomeDashboard({
     const stats = computePlayerSeasonStats(hub.members, scoredRaces, weekly, hub.picks);
     const mine = stats.find((s) => s.userId === userId);
     const nextRace = hub.nextOpenRace;
-    const lockedDrivers = nextRace
-      ? [...new Set(hub.picks.filter((p) => p.raceId === nextRace.id).map((p) => p.driver.name))].slice(0, 3)
-      : [];
+    const lockedDriversByDriverId = new Map<string, { name: string; number: number | null }>();
+    if (nextRace) {
+      for (const p of hub.picks) {
+        if (p.raceId === nextRace.id) lockedDriversByDriverId.set(p.driverId, { name: p.driver.name, number: p.driver.number });
+      }
+    }
+    const lockedDrivers = [...lockedDriversByDriverId.values()].slice(0, 3);
     return {
       id: m.leagueId,
       name: m.league.name,
@@ -243,7 +247,9 @@ async function HomeDashboard({
               {row.lockedDrivers.length === 0 ? (
                 <span className={styles.muted}>—</span>
               ) : (
-                row.lockedDrivers.map((name) => <span key={name} className={styles.lockChip} title={name} />)
+                row.lockedDrivers.map((d) => (
+                  <DriverNumberBadge key={d.name} number={d.number} name={d.name} className={styles.lockChip} />
+                ))
               )}
             </span>
             <span className={styles.actionCell}>

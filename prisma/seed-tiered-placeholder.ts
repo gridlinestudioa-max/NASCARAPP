@@ -9,7 +9,7 @@ import "dotenv/config";
 import { PrismaClient, type DriverTier } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { generateInviteCode } from "../src/lib/inviteCode";
-import { buildTieredDraftDefaultConfig, TIERED_LINEUP_SLOTS } from "../src/lib/tieredDraft";
+import { buildTieredDraftDefaultConfig, buildTieredLineupSlots } from "../src/lib/tieredDraft";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -95,17 +95,19 @@ async function main() {
   drivers.forEach((d, i) => driversByTier[tierOf(i)].push(d));
   console.log(`Assigned tiers: A=${driversByTier.A.length}, B=${driversByTier.B.length}, C=${driversByTier.C.length}`);
 
+  const tieredSlots = buildTieredLineupSlots(buildTieredDraftDefaultConfig().tierComposition);
+
   // ---------- Placeholder lineups (one per test player, offset so nobody's identical) ----------
   let pickCount = 0;
   for (let userIndex = 0; userIndex < users.length; userIndex++) {
     const user = users[userIndex];
-    for (const slot of TIERED_LINEUP_SLOTS) {
+    for (const slot of tieredSlots) {
       const pool = driversByTier[slot.tier];
       // Offsetting by role (STARTER vs BENCH) and userIndex keeps each
       // slot's driver distinct within a lineup and varies lineups player
       // to player, without needing real randomness for placeholder data.
       const roleOffset = slot.role === "BENCH" ? 1 : 0;
-      const tierSlotIndex = TIERED_LINEUP_SLOTS.filter((s) => s.tier === slot.tier).indexOf(slot);
+      const tierSlotIndex = tieredSlots.filter((s) => s.tier === slot.tier).indexOf(slot);
       const driver = pool[(userIndex * 3 + tierSlotIndex + roleOffset) % pool.length];
 
       await prisma.pick.upsert({
@@ -129,7 +131,7 @@ async function main() {
       pickCount++;
     }
   }
-  console.log(`Upserted ${pickCount} picks (${TIERED_LINEUP_SLOTS.length} per player).`);
+  console.log(`Upserted ${pickCount} picks (${tieredSlots.length} per player).`);
 
   console.log("\n✅ Tiered Lineup placeholder data ready.");
   console.log(`   Invite code: ${league.inviteCode}`);

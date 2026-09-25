@@ -5,7 +5,8 @@ import UserAvatar from "@/components/ui/UserAvatar";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import {
   parseTieredDraftRuleSetConfig,
-  TIERED_LINEUP_SLOTS,
+  buildTieredLineupSlots,
+  buildLateSwapGroups,
   lineupLockPhase,
   entryListUnlockAt,
   type DriverTier,
@@ -46,6 +47,7 @@ export default async function TieredLineupPickPanel({
   leagueSeason: { ruleSet: { config: unknown }; league: { name: string } };
 }) {
   const config = parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config);
+  const tieredSlots = buildTieredLineupSlots(config.tierComposition);
   const phase = lineupLockPhase(race, currentTimestamp());
   // A race can be scored before its natural lock time passes (results
   // entered early, or a race rescheduled after the fact) — show the
@@ -65,7 +67,7 @@ export default async function TieredLineupPickPanel({
       totalByUserId.set(p.userId, (totalByUserId.get(p.userId) ?? 0) + (p.score?.total ?? 0));
     }
     const myPicks = picks.filter((p) => p.userId === userId).sort((a, b) => a.pickNumber - b.pickNumber);
-    const slotByPickNumber = new Map(TIERED_LINEUP_SLOTS.map((s) => [s.pickNumber, s]));
+    const slotByPickNumber = new Map(tieredSlots.map((s) => [s.pickNumber, s]));
 
     return (
       <>
@@ -159,8 +161,8 @@ export default async function TieredLineupPickPanel({
           hour: "numeric",
           minute: "2-digit",
         });
-    const starterSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER");
-    const benchSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "BENCH");
+    const starterSlots = tieredSlots.filter((s) => s.role === "STARTER");
+    const benchSlots = tieredSlots.filter((s) => s.role === "BENCH");
     const renderLockedSlot = (tier: DriverTier) => (
       <div className={`${lineupFormStyles.slot} ${TIER_SLOT_CLASS[tier]} ${lineupFormStyles.slotLocked}`}>
         <span className={lineupFormStyles.tierTag}>Tier {tier}</span>
@@ -211,7 +213,7 @@ export default async function TieredLineupPickPanel({
     computeRecentFormAvgFinish(tierAssignments.map((a) => a.driverId), race.seasonId, race.week),
   ]);
 
-  const starterSlotNumbers = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER").map((s) => s.pickNumber);
+  const starterSlotNumbers = tieredSlots.filter((s) => s.role === "STARTER").map((s) => s.pickNumber);
   const priorStarterPicks = await prisma.pick.findMany({
     where: { leagueId, userId, raceId: { in: seasonRaces.map((r) => r.id) }, pickNumber: { in: starterSlotNumbers } },
   });
@@ -229,7 +231,7 @@ export default async function TieredLineupPickPanel({
   };
 
   let currentDriverIdByPickNumber: (string | null)[] = Array.from(
-    { length: 8 },
+    { length: tieredSlots.length },
     (_, i) => myPicks.find((p) => p.pickNumber === i + 1)?.driverId ?? null,
   );
   let usingCarriedOverPreview = false;
@@ -244,9 +246,9 @@ export default async function TieredLineupPickPanel({
     if (mostRecentWeek != null) {
       const priorPicks = priorPicksAll.filter((p) => p.race.week === mostRecentWeek);
       const tierByDriverId = new Map(tierAssignments.map((a) => [a.driverId, a.tier]));
-      const preview = Array.from({ length: 8 }, (_, i) => {
+      const preview = Array.from({ length: tieredSlots.length }, (_, i) => {
         const pickNumber = i + 1;
-        const slot = TIERED_LINEUP_SLOTS.find((s) => s.pickNumber === pickNumber)!;
+        const slot = tieredSlots.find((s) => s.pickNumber === pickNumber)!;
         const prior = priorPicks.find((p) => p.pickNumber === pickNumber);
         if (prior && tierByDriverId.get(prior.driverId) === slot.tier) return prior.driverId;
         return null;
@@ -270,6 +272,8 @@ export default async function TieredLineupPickPanel({
           raceId={raceId}
           lockPhase={phase}
           maxStartsPerDriverPerSeason={config.maxStartsPerDriverPerSeason}
+          slots={tieredSlots}
+          lateSwapGroups={buildLateSwapGroups(tieredSlots)}
           driversByTier={driversByTier}
           currentDriverIdByPickNumber={currentDriverIdByPickNumber}
           usingCarriedOverPreview={usingCarriedOverPreview}

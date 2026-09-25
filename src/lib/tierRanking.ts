@@ -12,19 +12,16 @@ import { prisma } from "@/lib/prisma";
 import { normalizeTrackName } from "@/lib/nascarFeed";
 import { initialLockAt } from "@/lib/tieredDraft";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
+// Field-relative tier sizes, defined in tierSizes.ts (kept separate from
+// this file's prisma/DB imports so client-safe code can use them too).
+import { TIER_A_SIZE, TIER_B_SIZE } from "./tierSizes";
+export { TIER_A_SIZE, TIER_B_SIZE };
 
 export const AUTO_TIER_WEIGHTS = { seasonPoints: 0.65, recentForm: 0.25, trackHistory: 0.1 };
 
 // How many of the most recent (already-synced) races count toward a
 // driver's "recent form" component.
 const RECENT_FORM_RACE_WINDOW = 5;
-
-// Field-relative tier sizes — deliberately generous on Tier B, since a
-// Tiered Lineup roster needs 4 Tier B slots (2 starters + 2 bench) per
-// team vs. 2 each for A and C. Tune freely; nothing else depends on these
-// being any particular size.
-const TIER_A_SIZE = 8;
-const TIER_B_SIZE = 20;
 
 function minMaxNormalize(values: Map<string, number>, invert = false): Map<string, number> {
   const nums = [...values.values()];

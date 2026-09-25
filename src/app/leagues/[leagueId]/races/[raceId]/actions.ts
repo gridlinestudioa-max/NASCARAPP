@@ -5,8 +5,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseRuleSetConfig, pickemLockAt } from "@/lib/scoring";
 import {
-  LATE_SWAP_GROUPS,
-  TIERED_LINEUP_SLOTS,
+  buildLateSwapGroups,
+  buildTieredLineupSlots,
   lineupLockPhase,
   parseTieredDraftRuleSetConfig,
 } from "@/lib/tieredDraft";
@@ -204,6 +204,8 @@ export async function submitTieredLineup(
     return "Race not found.";
   }
   const config = parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config);
+  const tieredSlots = buildTieredLineupSlots(config.tierComposition);
+  const lateSwapGroups = buildLateSwapGroups(tieredSlots);
 
   const phase = lineupLockPhase(race, Date.now());
   if (phase === "locked") {
@@ -214,7 +216,7 @@ export async function submitTieredLineup(
   }
 
   const submitted = new Map<number, string>();
-  for (const slot of TIERED_LINEUP_SLOTS) {
+  for (const slot of tieredSlots) {
     const driverId = formData.get(`driverId-${slot.pickNumber}`);
     if (typeof driverId !== "string" || !driverId) {
       return `Pick a ${slot.role === "STARTER" ? "starter" : "bench"} driver for Tier ${slot.tier}.`;
@@ -236,7 +238,7 @@ export async function submitTieredLineup(
     where: { raceId, driverId: { in: allDriverIds } },
   });
   const tierByDriverId = new Map(tierAssignments.map((a) => [a.driverId, a.tier]));
-  for (const slot of TIERED_LINEUP_SLOTS) {
+  for (const slot of tieredSlots) {
     const driverId = submitted.get(slot.pickNumber)!;
     if (tierByDriverId.get(driverId) !== slot.tier) {
       return `${driverNameById.get(driverId)} isn't assigned to Tier ${slot.tier} this week.`;
@@ -249,9 +251,9 @@ export async function submitTieredLineup(
       return "You didn't set a lineup before it locked, so there's nothing left to swap.";
     }
     const existingByPickNumber = new Map(existingPicks.map((p) => [p.pickNumber, p.driverId]));
-    for (const group of LATE_SWAP_GROUPS) {
-      const before = group.pickNumbers.map((pn) => existingByPickNumber.get(pn)).sort();
-      const after = group.pickNumbers.map((pn) => submitted.get(pn)).sort();
+    for (const group of lateSwapGroups) {
+      const before = group.pickNumbers.map((pn: number) => existingByPickNumber.get(pn)).sort();
+      const after = group.pickNumbers.map((pn: number) => submitted.get(pn)).sort();
       if (JSON.stringify(before) !== JSON.stringify(after)) {
         return `During the late-swap window you can only swap Tier ${group.tier}'s starter(s) with its own bench driver(s) — not bring in a new driver.`;
       }
@@ -259,7 +261,7 @@ export async function submitTieredLineup(
   }
 
   // Season starts cap (starter slots only — benching a driver doesn't count).
-  const starterSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER");
+  const starterSlots = tieredSlots.filter((s) => s.role === "STARTER");
   const starterDriverIds = starterSlots.map((s) => submitted.get(s.pickNumber)!);
   const seasonRaces = await prisma.race.findMany({
     where: { seasonId: race.seasonId, id: { not: raceId } },
@@ -286,7 +288,7 @@ export async function submitTieredLineup(
   }
 
   await prisma.$transaction(
-    TIERED_LINEUP_SLOTS.map((slot) =>
+    tieredSlots.map((slot) =>
       prisma.pick.upsert({
         where: { leagueId_userId_raceId_pickNumber: { leagueId, userId, raceId, pickNumber: slot.pickNumber } },
         update: { driverId: submitted.get(slot.pickNumber)! },

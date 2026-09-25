@@ -8,11 +8,14 @@ import {
   PRESETS,
   type PickemRuleSetConfig,
 } from "@/lib/scoring";
-import { buildTieredDraftDefaultConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
+import { buildTieredDraftDefaultConfig, TIERS, type DriverTier, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
+import { checkPickemCapacity, checkTieredCapacity } from "@/lib/leagueCapacity";
 import { createLeague, previewRules, type PreviewRow } from "@/app/leagues/new/actions";
 import { updateLeagueRules } from "@/app/leagues/[leagueId]/commissioner/actions";
 import Card from "@/components/ui/Card";
 import styles from "./LeagueRulesForm.module.css";
+
+const TIER_LABEL: Record<DriverTier, string> = { A: "Tier A", B: "Tier B", C: "Tier C" };
 
 type RaceOption = { id: string; label: string };
 
@@ -86,9 +89,15 @@ function PointsMatrix({
 
 export default function LeagueRulesForm({
   completedRaces,
+  driverPoolSize,
+  seasonRaceCount,
+  seasonNonPointsRaceCount,
   editingLeague,
 }: {
   completedRaces: RaceOption[];
+  driverPoolSize: number;
+  seasonRaceCount: number;
+  seasonNonPointsRaceCount: number;
   editingLeague?: EditingLeague;
 }) {
   const [name, setName] = useState("");
@@ -147,6 +156,27 @@ export default function LeagueRulesForm({
       return { ...c, finishPositionPoints };
     });
   }
+
+  function updateTierStarters(tier: DriverTier, starters: number) {
+    setTieredConfig((c) => ({
+      ...c,
+      tierComposition: c.tierComposition.map((t) => (t.tier === tier ? { ...t, starters } : t)),
+    }));
+  }
+
+  function updateQualifyingScoredCount(count: number) {
+    setTieredConfig((c) => ({
+      ...c,
+      qualifyingScoredCount: count,
+      qualifyingPositionPoints: Array.from({ length: count }, (_, i) => c.qualifyingPositionPoints[i] ?? 0),
+    }));
+  }
+
+  const pickemScorableWeeks = config.includeNonPointsRaces
+    ? seasonRaceCount
+    : Math.max(0, seasonRaceCount - seasonNonPointsRaceCount);
+  const pickemCapacity = checkPickemCapacity(config, { driverPoolSize, scorableWeeks: pickemScorableWeeks });
+  const tieredCapacity = checkTieredCapacity(tieredConfig, { driverPoolSize, scorableWeeks: seasonRaceCount });
 
   function handlePreview() {
     setPreviewError(undefined);
@@ -236,8 +266,8 @@ export default function LeagueRulesForm({
           <Card title="How Tiered Lineup works">
             <p className={styles.intro}>
               Every week, drivers are sorted into three tiers (A, B, C) based on that week&apos;s performance/ranking.
-              Each player drafts a lineup of 8 drivers: 1 starter + 1 bench from Tier A, 2 starters + 2 bench from
-              Tier B, and 1 starter + 1 bench from Tier C.
+              Each player drafts a lineup with a bench backup for every starter — how many starters come from each
+              tier is set below.
             </p>
             <p className={styles.intro}>
               <strong>Lineup lock:</strong> your lineup locks at 2:00 AM Pacific on qualifying day. After that, you
@@ -245,11 +275,38 @@ export default function LeagueRulesForm({
               race starts. If you never touch your lineup for a week, last week&apos;s carries over.
             </p>
             <p className={styles.intro}>
-              <strong>Scoring:</strong> every rostered driver, starter or bench, scores qualifying points (only the
-              top 4 qualifiers ever score). Starters additionally score finishing points; bench drivers never score
-              finishing points, win or lose. The tier structure and lock timing aren&apos;t editable, but every point
-              value below is — the defaults shown match the classic Yahoo Fantasy NASCAR payouts.
+              <strong>Scoring:</strong> every rostered driver, starter or bench, scores qualifying points. Starters
+              additionally score finishing points; bench drivers never score finishing points, win or lose. Tier
+              bucket sizes and lock timing aren&apos;t editable, but the roster shape and every point value below
+              are — the defaults shown match the classic Yahoo Fantasy NASCAR payouts.
             </p>
+          </Card>
+
+          <Card title="Roster structure">
+            <div className={styles.fieldBlock}>
+              <div className={styles.fieldLabel}>Starters per tier (bench mirrors this 1:1)</div>
+              <div className={styles.matrix}>
+                {TIERS.map((tier) => (
+                  <div key={tier} className={styles.matrixCell}>
+                    <span className={styles.matrixPos}>{TIER_LABEL[tier]}</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      aria-label={`${TIER_LABEL[tier]} starters`}
+                      value={tieredConfig.tierComposition.find((t) => t.tier === tier)?.starters ?? 0}
+                      onChange={(e) => updateTierStarters(tier, Math.max(0, parseDigits(e.target.value, 0)))}
+                      className={styles.matrixInput}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className={styles.fieldHelper}>
+                Weekly roster: {tieredConfig.tierComposition.reduce((sum, t) => sum + t.starters, 0)} starter(s) +{" "}
+                {tieredConfig.tierComposition.reduce((sum, t) => sum + t.starters, 0)} bench ={" "}
+                {tieredConfig.tierComposition.reduce((sum, t) => sum + t.starters, 0) * 2} drivers total.
+              </div>
+            </div>
           </Card>
 
           <Card title="Rules">
@@ -273,12 +330,73 @@ export default function LeagueRulesForm({
               />
               <div className={styles.fieldHelper}>Benching a driver doesn&apos;t count against this cap — only starting them does.</div>
             </div>
+
+            <div className={styles.fieldBlock}>
+              <label htmlFor="qualScoredCount" className={styles.fieldLabel}>
+                How many top qualifiers score qualifying points
+              </label>
+              <input
+                id="qualScoredCount"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className={styles.numberInputSmall}
+                value={tieredConfig.qualifyingScoredCount}
+                onChange={(e) => updateQualifyingScoredCount(Math.max(1, parseDigits(e.target.value, 1)))}
+              />
+            </div>
           </Card>
+
+          {seasonRaceCount > 0 && (
+            <Card title="Season capacity check">
+              {tieredCapacity.feasible ? (
+                <p className={styles.intro}>
+                  This roster shape and starts cap are mathematically sustainable across the {seasonRaceCount}-race
+                  season with roughly {driverPoolSize} drivers in the pool.
+                </p>
+              ) : (
+                <p role="alert">
+                  This roster shape can&apos;t be filled all season under the current starts cap — see the tier(s)
+                  flagged below. Lower the starters required, raise the starts cap, or the pool needs more drivers.
+                </p>
+              )}
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tier</th>
+                    <th>Starters/wk</th>
+                    <th>Est. pool</th>
+                    <th>Starts needed (season)</th>
+                    <th>Starts available</th>
+                    <th>Leftover</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tieredCapacity.rows.map((r) => (
+                    <tr key={r.tier}>
+                      <td>{TIER_LABEL[r.tier]}</td>
+                      <td>{r.starters}</td>
+                      <td>{r.poolSize}</td>
+                      <td>{r.slotsNeeded}</td>
+                      <td>{r.slotsAvailable}</td>
+                      <td style={{ color: r.leftover < 0 ? "var(--danger, crimson)" : undefined }}>
+                        {r.leftover >= 0 ? `+${r.leftover}` : r.leftover}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className={styles.fieldHelper} style={{ marginTop: 10 }}>
+                Estimate, not a guarantee — a driver&apos;s tier can shift week to week with performance, so this
+                assumes roughly this many distinct drivers cycle through each tier all season.
+              </div>
+            </Card>
+          )}
 
           <Card title="Qualifying points">
             <PointsMatrix
               label="Every rostered driver earns these"
-              helper="Only the top 4 qualifiers score anything."
+              helper={`Only the top ${tieredConfig.qualifyingScoredCount} qualifier(s) score anything.`}
               values={tieredConfig.qualifyingPositionPoints}
               onChange={updateTieredQualifyingPoint}
             />
@@ -416,6 +534,14 @@ export default function LeagueRulesForm({
               </div>
             </div>
           </Card>
+
+          {seasonRaceCount > 0 && (
+            <Card title="Season capacity check">
+              <p className={pickemCapacity.feasible ? styles.intro : undefined} role={pickemCapacity.feasible ? undefined : "alert"}>
+                {pickemCapacity.message}
+              </p>
+            </Card>
+          )}
 
           <Card title="Points rules">
             <div className={styles.fieldBlock}>

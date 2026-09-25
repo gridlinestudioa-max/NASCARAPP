@@ -123,8 +123,13 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background-image: repeating-linear-gradient(45deg, var(--border-color) 0 4px, var(--bg-surface) 4px 8px);
-  border: 1px solid var(--border-color);
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
   flex-shrink: 0;
 }
 
