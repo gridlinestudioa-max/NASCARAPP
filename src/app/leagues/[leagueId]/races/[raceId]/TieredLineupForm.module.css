@@ -1,9 +1,20 @@
+/* Matches Pick'em's black turn-order box (PickemPickPanel's .turnBanner) —
+   applied to the outer Card via className, so every descendant here that
+   relied on light-background text tokens gets a white-on-black override
+   below. The driver-picker modal opts back out (see .modal) since it's a
+   fixed-position overlay with its own light background, not part of this
+   card's black surface. */
+.lineupCard {
+  background: var(--accent) !important;
+  color: #fafafa;
+}
+
 .roleLabel {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.75);
   display: block;
   margin-bottom: var(--space-2);
 }
@@ -29,8 +40,8 @@
   box-sizing: border-box;
   width: 100%;
   border-radius: var(--radius-sm);
-  border: 1.5px dashed var(--border-color);
-  background: var(--bg-surface-muted);
+  border: 1.5px dashed rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.07);
   padding: var(--space-3);
   min-height: 84px;
   display: flex;
@@ -42,7 +53,7 @@
 }
 
 .slot:hover {
-  border-color: var(--text-muted);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .slot:focus-visible {
@@ -75,7 +86,7 @@
 
 .slotFilled {
   border-style: solid;
-  background: var(--bg-surface);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .slotLocked {
@@ -84,7 +95,7 @@
 }
 
 .slotLocked:hover {
-  border-color: var(--border-color);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .driverName {
@@ -116,13 +127,13 @@
 }
 
 .placeholder {
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.55);
   font-size: 0.85rem;
 }
 
 .tapHint {
   font-size: 0.73rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .saveBar {
@@ -134,13 +145,25 @@
   margin-top: var(--space-4);
 }
 
+/* The default submit-button styling is black-on-black against this card —
+   invert it so it reads as a button rather than disappearing. */
+.saveBar button[type="submit"] {
+  background: #fafafa;
+  color: var(--accent);
+  border-color: #fafafa;
+}
+
+.saveBar button[type="submit"]:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
 .status {
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .status strong {
-  color: var(--text-primary);
+  color: #fafafa;
 }
 
 /* ---------- Driver picker modal ---------- */
@@ -164,6 +187,7 @@
 
 .modal {
   background: var(--bg-surface);
+  color: var(--text-primary);
   width: 100%;
   max-width: 460px;
   max-height: 82vh;
