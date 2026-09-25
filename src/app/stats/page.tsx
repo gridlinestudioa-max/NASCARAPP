@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import DriverStatsTable, { type DriverStatRow } from "@/components/stats/DriverStatsTable";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
+import { getCurrentSeason } from "@/lib/season";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function StatsPage() {
     redirect("/login");
   }
 
-  const season = await prisma.season.findFirst({ orderBy: { year: "desc" } });
+  const season = await getCurrentSeason();
   const pointsStandings = season ? await computeSeasonPointsStandings(season.id) : [];
 
   const driverProfiles = pointsStandings.length

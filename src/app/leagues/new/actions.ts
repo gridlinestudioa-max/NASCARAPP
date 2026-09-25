@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { generateInviteCode } from "@/lib/inviteCode";
 import { computeScore, parseRuleSetConfig, type PickemRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
+import { getCurrentSeason } from "@/lib/season";
 
 export async function createLeague(
   name: string,
@@ -34,7 +35,7 @@ export async function createLeague(
   // The league takes part in whatever the current shared season is, if one
   // exists yet — a brand-new deployment with no season seeded still lets a
   // league get created, it just won't show any races until one is.
-  const currentSeason = await prisma.season.findFirst({ orderBy: { year: "desc" } });
+  const currentSeason = await getCurrentSeason();
 
   const league = await prisma.$transaction(async (tx) => {
     // Collisions are astronomically unlikely at this keyspace (32^6), but

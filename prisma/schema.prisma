@@ -188,6 +188,23 @@ model Season {
 
   races         Race[]
   leagueSeasons LeagueSeason[]
+  siteSettings  SiteSettings[]
+}
+
+// Singleton row (fixed id) pointing at the site-wide "current" Season.
+// Every season-scoped page that isn't inside a specific league (home,
+// schedule, driver stats, new-league signup) reads this instead of always
+// taking the newest Season by year, so next year's schedule and driver
+// roster can be prepped ahead of time from /admin/season-setup without
+// going live until advanceToNextSeason (see src/lib/season.ts) flips this
+// pointer. Falls back to the newest Season by year — and self-heals this
+// row to match — when unset, so a database with only one Season (every
+// deployment before this model existed) keeps working with no backfill.
+model SiteSettings {
+  id              String  @id @default("singleton")
+  currentSeasonId String?
+
+  currentSeason Season? @relation(fields: [currentSeasonId], references: [id])
 }
 
 // Join record: one league's participation in one shared Season, scored

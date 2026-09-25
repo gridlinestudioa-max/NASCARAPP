@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 import { displayRaceName } from "@/lib/raceName";
+import { getCurrentSeason } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function NewLeaguePage() {
 
   const [racesWithResults, season, driverPoolSize] = await Promise.all([
     prisma.race.findMany({ where: { results: { some: {} } }, orderBy: { week: "asc" } }),
-    prisma.season.findFirst({ orderBy: { year: "desc" } }),
+    getCurrentSeason(),
     prisma.driver.count(),
   ]);
   const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${displayRaceName(r.trackName)}` }));

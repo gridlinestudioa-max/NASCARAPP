@@ -6,6 +6,7 @@ import Badge from "@/components/ui/Badge";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import RaceLogo from "@/components/ui/RaceLogo";
 import { displayRaceName } from "@/lib/raceName";
+import { getCurrentSeason } from "@/lib/season";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export default async function SchedulePage() {
     redirect("/login");
   }
 
-  const season = await prisma.season.findFirst({ orderBy: { year: "desc" } });
+  const season = await getCurrentSeason();
   const races = season
     ? await prisma.race.findMany({ where: { seasonId: season.id }, orderBy: { week: "asc" } })
     : [];
