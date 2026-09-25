@@ -145,3 +145,21 @@ export function getRaceLogo(trackName: string): string | null {
   }
   return null;
 }
+
+// The bundled logo assets, for an admin <select> (see
+// /admin/season-setup's race schedule editor) that lets a race's logo be
+// pinned explicitly instead of auto-matched by trackName — useful for a
+// next-year race whose real trackName isn't known/synced yet. Deduped by
+// asset path (several trackName keys above share one logo) and labeled
+// from the filename.
+export const RACE_LOGO_OPTIONS: { value: string; label: string }[] = [...new Set(Object.values(RACE_LOGOS))]
+  .map((src) => ({
+    value: src,
+    label: src
+      .replace(/^\/race-logos\//, "")
+      .replace(/\.[a-z0-9]+$/i, "")
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" "),
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));

@@ -52,7 +52,7 @@ export default async function RaceDetailPage(props: PageProps<"/leagues/[leagueI
         ]}
       />
       <div className={styles.titleRow}>
-        <RaceLogo trackName={race.trackName} size={64} className={styles.titleLogo} />
+        <RaceLogo trackName={race.trackName} size={64} className={styles.titleLogo} overrideSrc={race.logoOverride} />
         <div>
           <h1>
             Week {race.week} — {displayRaceName(race.trackName)}

@@ -72,7 +72,12 @@ export default async function SchedulePage() {
                 return (
                   <Link key={r.id} href={`/races/${r.id}`} className={styles.raceRow}>
                     <span className={styles.weekChip}>{r.week}</span>
-                    <RaceLogo trackName={r.trackName} size={48} className={styles.raceLogo} />
+                    <RaceLogo
+                      trackName={r.trackName}
+                      size={48}
+                      className={styles.raceLogo}
+                      overrideSrc={r.logoOverride}
+                    />
                     <span className={styles.raceInfo}>
                       <span className={styles.trackName}>{r.venueName ?? displayRaceName(r.trackName)}</span>
                       {r.venueName && <span className={styles.venueName}>{displayRaceName(r.trackName)}</span>}

@@ -189,6 +189,7 @@ model Season {
   races         Race[]
   leagueSeasons LeagueSeason[]
   siteSettings  SiteSettings[]
+  seasonDrivers SeasonDriver[]
 }
 
 // Singleton row (fixed id) pointing at the site-wide "current" Season.
@@ -205,6 +206,26 @@ model SiteSettings {
   currentSeasonId String?
 
   currentSeason Season? @relation(fields: [currentSeasonId], references: [id])
+}
+
+// Per-season override of a driver's roster membership, so a commissioner
+// can duplicate one season's active roster into the next (see
+// duplicateRoster in season-setup/actions.ts) and then edit next year's
+// roster — adding a rookie, retiring someone — without that touching the
+// still-in-progress current season. A season with no rows here for a given
+// driver just falls back to that Driver's own isActive flag (see
+// getActiveDriversForSeason/getAllDriversForSeasonAdmin in lib/season.ts),
+// which is how every season behaved before this model existed.
+model SeasonDriver {
+  id       String  @id @default(cuid())
+  seasonId String
+  driverId String
+  isActive Boolean @default(true)
+
+  season Season @relation(fields: [seasonId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  @@unique([seasonId, driverId])
 }
 
 // Join record: one league's participation in one shared Season, scored
@@ -244,6 +265,7 @@ model Driver {
   raceEntries           RaceEntry[]
   picks                 Pick[]
   historicalRaceResults HistoricalRaceResult[]
+  seasonDrivers         SeasonDriver[]
 }
 
 // Archival, pre-app-history results — imported once from NASCAR's feed to
@@ -306,6 +328,11 @@ model Race {
   // True for exhibition races (e.g. the All-Star race) that don't count toward
   // the standard scoring formula.
   isNonPoints  Boolean    @default(false)
+
+  // Explicit admin pick of a bundled /public/race-logos asset (see
+  // RACE_LOGO_OPTIONS in raceLogos.ts), set from /admin/season-setup.
+  // Null (the default) means "auto-match by trackName" — see getRaceLogo.
+  logoOverride String?
 
   // cf.nascar.com's own numeric id for this race, once matched — lets
   // entries/qualifying/results be pulled automatically instead of entered
