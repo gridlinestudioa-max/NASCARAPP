@@ -4,6 +4,7 @@ import Badge from "@/components/ui/Badge";
 import UserAvatar from "@/components/ui/UserAvatar";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { parseRuleSetConfig, pickemLockAt } from "@/lib/scoring";
+import { getActiveDriversForSeason } from "@/lib/season";
 import { PICK_ORDER_MODE_INFO, computePickOrderSeats, computeWeekPickOrder, sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import PickForm from "@/app/leagues/[leagueId]/races/[raceId]/PickForm";
 import styles from "./PickemPickPanel.module.css";
@@ -95,7 +96,7 @@ export default async function PickemPickPanel({
   const [members, entries, allActiveDrivers, joinOrderMemberships, myAllPicks] = await Promise.all([
     prisma.leagueMembership.findMany({ where: { leagueId }, include: { user: true } }),
     prisma.raceEntry.findMany({ where: { raceId }, include: { driver: true }, orderBy: { driver: { name: "asc" } } }),
-    prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+    getActiveDriversForSeason(race.seasonId),
     prisma.leagueMembership.findMany({ where: { leagueId }, orderBy: { createdAt: "asc" }, select: { userId: true } }),
     prisma.pick.findMany({ where: { leagueId, userId, race: { seasonId: race.seasonId } }, include: { driver: true } }),
   ]);

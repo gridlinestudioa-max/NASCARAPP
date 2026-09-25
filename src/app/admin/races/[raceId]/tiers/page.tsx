@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { displayRaceName } from "@/lib/raceName";
+import { getActiveDriversForSeason } from "@/lib/season";
 import TiersForm from "./TiersForm";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export default async function AssignTiersPage(props: PageProps<"/admin/races/[ra
 
   const [entries, allActiveDrivers, assignments] = await Promise.all([
     prisma.raceEntry.findMany({ where: { raceId }, include: { driver: true }, orderBy: { driver: { name: "asc" } } }),
-    prisma.driver.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+    getActiveDriversForSeason(race.seasonId),
     prisma.driverTierAssignment.findMany({ where: { raceId } }),
   ]);
   const assignmentByDriverId = new Map(assignments.map((a) => [a.driverId, a]));

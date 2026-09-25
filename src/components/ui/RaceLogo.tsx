@@ -9,12 +9,16 @@ export default function RaceLogo({
   trackName,
   size = 32,
   className,
+  overrideSrc,
 }: {
   trackName: string;
   size?: number;
   className?: string;
+  // An admin-pinned logo (Race.logoOverride) — bypasses trackName matching
+  // entirely when set. See RACE_LOGO_OPTIONS in lib/raceLogos.ts.
+  overrideSrc?: string | null;
 }) {
-  const src = getRaceLogo(trackName);
+  const src = overrideSrc ?? getRaceLogo(trackName);
   const wrapClassName = className ? `${styles.wrap} ${className}` : styles.wrap;
 
   if (!src) {

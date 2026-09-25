@@ -1,20 +1,29 @@
 "use client";
 
 import { useActionState, useId } from "react";
-import { addDriver, updateDriver } from "@/app/admin/season-setup/actions";
+import { addDriver, duplicateRoster, updateDriverForSeason } from "@/app/admin/season-setup/actions";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 
 type DriverRow = { id: string; name: string; number: number | null; team: string | null; isActive: boolean };
 
-// The driver roster is one site-wide list (Driver.isActive), not a
-// separate copy per season — there's no per-year snapshot of who's
-// racing. The "This Year" tab shows it read-only (just the active
-// drivers, as a reference); the "Next Year" tab is where a commissioner
-// actually edits it — add a rookie, retire someone — ahead of the
-// rollover. Editing here does take effect immediately site-wide (there's
-// no scoping mechanism to delay it), which only matters if you flip a
-// driver still racing this season.
-export default function DriverRosterPanel({ drivers, editable }: { drivers: DriverRow[]; editable: boolean }) {
+// isActive here is already season-scoped (see getAllDriversForSeasonAdmin
+// in lib/season.ts): a SeasonDriver override for `seasonId` if one
+// exists, else the driver's own site-wide default. The "This Year" tab
+// shows it read-only; "Next Year" is where a commissioner edits it —
+// "Duplicate {prevYear}'s roster" snapshots this year's roster as
+// explicit, independent rows for next year, and every edit after that
+// (including adding a new driver) only ever touches next year's rows.
+export default function DriverRosterPanel({
+  drivers,
+  editable,
+  seasonId,
+  previousSeasonId,
+}: {
+  drivers: DriverRow[];
+  editable: boolean;
+  seasonId: string;
+  previousSeasonId?: string | null;
+}) {
   if (!editable) {
     const active = drivers.filter((d) => d.isActive).sort((a, b) => a.name.localeCompare(b.name));
     return (
@@ -40,9 +49,13 @@ export default function DriverRosterPanel({ drivers, editable }: { drivers: Driv
   return (
     <div>
       <p>
-        <small>Changes here apply site-wide right away — including to the current season&apos;s pick lists.</small>
+        <small>
+          Number/team edits apply site-wide right away. The active checkbox only affects this season — see
+          &ldquo;Duplicate&rdquo; below to start from a copy of the other season&apos;s roster.
+        </small>
       </p>
-      <AddDriverForm />
+      {previousSeasonId && <DuplicateRosterForm fromSeasonId={previousSeasonId} toSeasonId={seasonId} />}
+      <AddDriverForm seasonId={seasonId} pinOutOfSeasonId={previousSeasonId ?? undefined} />
       <table>
         <thead>
           <tr>
@@ -55,7 +68,11 @@ export default function DriverRosterPanel({ drivers, editable }: { drivers: Driv
         </thead>
         <tbody>
           {sorted.map((d) => (
-            <DriverRow key={d.id} driver={d} />
+            // Keyed on every field, not just id — see SeasonScheduleCard's
+            // RaceEditRow for why: a change from outside this row's own
+            // form (duplicateRoster overwriting isActive, say) needs to
+            // reset these uncontrolled inputs, not leave them stale.
+            <DriverRow key={`${d.id}:${d.number}:${d.team}:${d.isActive}`} driver={d} seasonId={seasonId} />
           ))}
         </tbody>
       </table>
@@ -63,10 +80,26 @@ export default function DriverRosterPanel({ drivers, editable }: { drivers: Driv
   );
 }
 
-function AddDriverForm() {
+function DuplicateRosterForm({ fromSeasonId, toSeasonId }: { fromSeasonId: string; toSeasonId: string }) {
+  const [message, formAction, pending] = useActionState(duplicateRoster, undefined);
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="fromSeasonId" value={fromSeasonId} />
+      <input type="hidden" name="toSeasonId" value={toSeasonId} />
+      <button type="submit" disabled={pending}>
+        {pending ? "Duplicating..." : "Duplicate the other season's roster"}
+      </button>
+      {message && <p role="status">{message}</p>}
+    </form>
+  );
+}
+
+function AddDriverForm({ seasonId, pinOutOfSeasonId }: { seasonId: string; pinOutOfSeasonId?: string }) {
   const [message, formAction, pending] = useActionState(addDriver, undefined);
   return (
     <form action={formAction}>
+      <input type="hidden" name="seasonId" value={seasonId} />
+      {pinOutOfSeasonId && <input type="hidden" name="pinOutOfSeasonId" value={pinOutOfSeasonId} />}
       <input type="text" name="name" placeholder="Driver name" required />
       <input type="number" name="number" placeholder="Car #" />
       <input type="text" name="team" placeholder="Team" />
@@ -83,14 +116,15 @@ function AddDriverForm() {
 // form lives inside the first cell, and every input/button in the row
 // associates to it by id via the `form` attribute, which works anywhere
 // in the document.
-function DriverRow({ driver }: { driver: DriverRow }) {
-  const [message, formAction, pending] = useActionState(updateDriver, undefined);
+function DriverRow({ driver, seasonId }: { driver: DriverRow; seasonId: string }) {
+  const [message, formAction, pending] = useActionState(updateDriverForSeason, undefined);
   const formId = useId();
   return (
     <tr>
       <td>
         <form id={formId} action={formAction} />
         <input type="hidden" form={formId} name="driverId" value={driver.id} />
+        <input type="hidden" form={formId} name="seasonId" value={seasonId} />
         {driver.name}
       </td>
       <td>

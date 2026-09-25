@@ -5,7 +5,7 @@ import Breadcrumb from "@/components/ui/Breadcrumb";
 import DriverRosterPanel from "@/components/admin/DriverRosterPanel";
 import SeasonScheduleCard from "@/components/admin/SeasonScheduleCard";
 import AdvanceSeasonButton from "@/components/admin/AdvanceSeasonButton";
-import { getCurrentSeason, getOrCreateNextSeason } from "@/lib/season";
+import { getAllDriversForSeasonAdmin, getCurrentSeason, getOrCreateNextSeason } from "@/lib/season";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +26,7 @@ export default async function SeasonSetupPage(props: PageProps<"/admin/season-se
   }
   const nextSeason = await getOrCreateNextSeason(currentSeason.year);
 
-  const [drivers, thisYearRaces, nextYearRaces, continuingLeagueCount] = await Promise.all([
-    prisma.driver.findMany({ orderBy: { name: "asc" } }),
+  const [thisYearRaces, nextYearRaces, continuingLeagueCount] = await Promise.all([
     prisma.race.findMany({ where: { seasonId: currentSeason.id }, orderBy: { week: "asc" } }),
     prisma.race.findMany({ where: { seasonId: nextSeason.id }, orderBy: { week: "asc" } }),
     prisma.leagueSeason.count({ where: { seasonId: currentSeason.id } }),
@@ -35,6 +34,11 @@ export default async function SeasonSetupPage(props: PageProps<"/admin/season-se
 
   const activeSeason = tab === "next" ? nextSeason : currentSeason;
   const activeRaces = tab === "next" ? nextYearRaces : thisYearRaces;
+  // "Previous" relative to whichever tab is active — Next Year duplicates
+  // from This Year; This Year is read-only and never duplicates from
+  // anything, so it's only computed for the Next Year tab.
+  const previousSeasonId = tab === "next" ? currentSeason.id : null;
+  const drivers = await getAllDriversForSeasonAdmin(activeSeason.id);
 
   return (
     <main>
@@ -61,11 +65,21 @@ export default async function SeasonSetupPage(props: PageProps<"/admin/season-se
       </nav>
 
       <Card title={`${activeSeason.year} schedule`}>
-        <SeasonScheduleCard seasonId={activeSeason.id} races={activeRaces.map(toRaceRow)} editable={tab === "next"} />
+        <SeasonScheduleCard
+          seasonId={activeSeason.id}
+          races={activeRaces.map(toRaceRow)}
+          editable={tab === "next"}
+          previousSeasonId={previousSeasonId}
+        />
       </Card>
 
       <Card title="Driver roster">
-        <DriverRosterPanel drivers={drivers} editable={tab === "next"} />
+        <DriverRosterPanel
+          drivers={drivers}
+          editable={tab === "next"}
+          seasonId={activeSeason.id}
+          previousSeasonId={previousSeasonId}
+        />
       </Card>
 
       {tab === "next" && (
@@ -90,6 +104,7 @@ function toRaceRow(r: {
   fieldSize: number;
   isNonPoints: boolean;
   status: string;
+  logoOverride: string | null;
 }) {
   return {
     id: r.id,
@@ -99,5 +114,6 @@ function toRaceRow(r: {
     fieldSize: r.fieldSize,
     isNonPoints: r.isNonPoints,
     status: r.status,
+    logoOverride: r.logoOverride,
   };
 }

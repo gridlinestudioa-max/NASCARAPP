@@ -5,7 +5,7 @@
 // is actually clicked.
 
 import { prisma } from "@/lib/prisma";
-import type { Season } from "@prisma/client";
+import type { Driver, Season } from "@prisma/client";
 
 export async function getCurrentSeason(): Promise<Season | null> {
   const settings = await prisma.siteSettings.findUnique({
@@ -37,4 +37,42 @@ export async function getOrCreateNextSeason(currentYear: number): Promise<Season
     update: {},
     create: { year: currentYear + 1 },
   });
+}
+
+// A driver's roster membership for one season: a SeasonDriver row for that
+// season overrides Driver.isActive when present, per-driver — a season
+// with zero SeasonDriver rows (every season before this model existed,
+// and any season whose roster no one has touched yet) behaves exactly as
+// it always did, driven entirely by the shared Driver.isActive flag.
+async function mergeSeasonDrivers(seasonId: string): Promise<{ driver: Driver; isActive: boolean }[]> {
+  const [drivers, overrides] = await Promise.all([
+    prisma.driver.findMany({ orderBy: { name: "asc" } }),
+    prisma.seasonDriver.findMany({ where: { seasonId } }),
+  ]);
+  const overrideById = new Map(overrides.map((o) => [o.driverId, o.isActive]));
+  return drivers.map((driver) => ({ driver, isActive: overrideById.get(driver.id) ?? driver.isActive }));
+}
+
+// The driver-eligibility list for one race week (tier assignment, Pick'em
+// picks) — every league drafts from the same season-scoped roster.
+export async function getActiveDriversForSeason(seasonId: string): Promise<Driver[]> {
+  const merged = await mergeSeasonDrivers(seasonId);
+  return merged.filter((m) => m.isActive).map((m) => m.driver);
+}
+
+// Every driver (active or not) with their effective status for this
+// season — for the /admin/season-setup roster editor, which needs to show
+// and toggle inactive drivers too (e.g. to reactivate someone for next
+// year).
+export async function getAllDriversForSeasonAdmin(
+  seasonId: string,
+): Promise<{ id: string; name: string; number: number | null; team: string | null; isActive: boolean }[]> {
+  const merged = await mergeSeasonDrivers(seasonId);
+  return merged.map(({ driver, isActive }) => ({
+    id: driver.id,
+    name: driver.name,
+    number: driver.number,
+    team: driver.team,
+    isActive,
+  }));
 }

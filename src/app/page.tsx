@@ -93,7 +93,14 @@ export default async function Home() {
 function ScheduleSnapshot({
   races,
 }: {
-  races: { id: string; week: number; trackName: string; venueName: string | null; date: Date }[];
+  races: {
+    id: string;
+    week: number;
+    trackName: string;
+    venueName: string | null;
+    date: Date;
+    logoOverride: string | null;
+  }[];
 }) {
   return (
     <Card title="Upcoming Schedule" actions={<Link href="/races">See all →</Link>}>
@@ -105,7 +112,12 @@ function ScheduleSnapshot({
             <li key={r.id}>
               <Link href={`/races/${r.id}`} className={styles.scheduleRace}>
                 <span className={styles.weekChip}>{r.week}</span>
-                <RaceLogo trackName={r.trackName} size={28} className={styles.scheduleLogo} />
+                <RaceLogo
+                  trackName={r.trackName}
+                  size={28}
+                  className={styles.scheduleLogo}
+                  overrideSrc={r.logoOverride}
+                />
                 {displayRaceName(r.trackName)}
               </Link>
               <span className={styles.muted}>

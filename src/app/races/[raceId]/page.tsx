@@ -80,7 +80,7 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
       <Breadcrumb items={[{ label: "Schedule", href: "/races" }, { label: displayName }]} />
 
       <div className={styles.titleRow}>
-        <RaceLogo trackName={race.trackName} size={72} className={styles.titleLogo} />
+        <RaceLogo trackName={race.trackName} size={72} className={styles.titleLogo} overrideSrc={race.logoOverride} />
         <div>
           <div className={styles.eyebrow}>Week {race.week}</div>
           <h1>{displayName}</h1>

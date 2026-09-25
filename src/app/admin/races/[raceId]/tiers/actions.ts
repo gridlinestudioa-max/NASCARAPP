@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { isSiteAdmin } from "@/lib/authz";
 import type { DriverTier } from "@/lib/tieredDraft";
 import { applyAutoTiers } from "@/lib/tierRanking";
+import { getActiveDriversForSeason } from "@/lib/season";
 
 function parseTier(value: FormDataEntryValue | null): DriverTier | null {
   return value === "A" || value === "B" || value === "C" ? value : null;
@@ -28,7 +29,7 @@ export async function submitTiers(_prevState: string | undefined, formData: Form
     return "Race not found.";
   }
 
-  const drivers = await prisma.driver.findMany({ where: { isActive: true }, select: { id: true } });
+  const drivers = await getActiveDriversForSeason(race.seasonId);
 
   // Saving here is a deliberate hand-edit, so every row it writes is
   // pinned MANUAL — the background auto-tier refresh (tierRanking.ts)
