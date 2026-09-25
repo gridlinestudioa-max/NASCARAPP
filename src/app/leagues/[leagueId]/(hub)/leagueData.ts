@@ -65,6 +65,13 @@ export const getLeagueHubData = cache(async (leagueId: string, userId: string) =
   const now = Date.now();
   const nextOpenRace = races.find((r) => r.date.getTime() > now) ?? null;
 
+  // A season with at least one race, all of them wrapped up — used to show
+  // a final-standings banner instead of "what's next" chrome. Every race in
+  // the shared schedule has to be COMPLETE, not just the ones this league
+  // happens to score, since the schedule (and "is the season over") is
+  // shared across every league.
+  const isSeasonComplete = races.length > 0 && races.every((r) => r.status === "COMPLETE");
+
   return {
     league,
     membership,
@@ -77,6 +84,7 @@ export const getLeagueHubData = cache(async (leagueId: string, userId: string) =
     myRank,
     myStanding,
     nextOpenRace,
+    isSeasonComplete,
   };
 });
 

@@ -84,10 +84,15 @@
 
 .stats {
   display: flex;
+  justify-content: center;
   gap: var(--space-6);
   margin-top: var(--space-4);
   padding-top: var(--space-4);
   border-top: 1px solid var(--border-color);
+}
+
+.stats > div {
+  text-align: center;
 }
 
 .statValue {

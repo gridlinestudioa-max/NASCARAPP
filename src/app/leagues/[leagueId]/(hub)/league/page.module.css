@@ -8,6 +8,27 @@
   font-size: 0.88rem;
 }
 
+.yearTabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.yearTab {
+  padding: 5px 12px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border-color);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.yearTabActive {
+  background: var(--color-ink);
+  color: var(--text-on-ink);
+  border-color: var(--color-ink);
+}
+
 .scrollX {
   overflow-x: auto;
 }

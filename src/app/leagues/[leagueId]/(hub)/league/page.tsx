@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import { parseRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
@@ -44,8 +46,37 @@ function describeTieredRules(config: ReturnType<typeof parseTieredDraftRuleSetCo
   ];
 }
 
-export default async function LeagueTabPage(props: { params: Promise<{ leagueId: string }> }) {
+// Sums every scored pick for one season into a per-user total — used both
+// for the current season (already loaded via getLeagueHubData) and for a
+// past season pulled fresh here, so "who won year X" can be answered
+// without keeping a separate standings table.
+async function computeSeasonChampion(
+  leagueId: string,
+  seasonId: string,
+  nameByUserId: Map<string, string>,
+): Promise<{ name: string; total: number } | null> {
+  const races = await prisma.race.findMany({ where: { seasonId }, select: { id: true } });
+  if (races.length === 0) return null;
+  const picks = await prisma.pick.findMany({
+    where: { leagueId, raceId: { in: races.map((r) => r.id) } },
+    include: { score: true },
+  });
+  const totalByUser = new Map<string, number>();
+  for (const p of picks) {
+    if (!p.score) continue;
+    totalByUser.set(p.userId, (totalByUser.get(p.userId) ?? 0) + p.score.total);
+  }
+  if (totalByUser.size === 0) return null;
+  const [championUserId, total] = [...totalByUser.entries()].sort((a, b) => b[1] - a[1])[0];
+  return { name: nameByUserId.get(championUserId) ?? "—", total };
+}
+
+export default async function LeagueTabPage(props: {
+  params: Promise<{ leagueId: string }>;
+  searchParams: Promise<{ season?: string }>;
+}) {
   const { leagueId } = await props.params;
+  const { season: seasonParam } = await props.searchParams;
 
   const session = await auth();
   if (!session?.user?.id) {
@@ -57,13 +88,56 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
     notFound();
   }
 
-  const { league, leagueSeason, races, members, picks } = data;
+  const { league, leagueSeason, members } = data;
+  const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
 
-  const rules = leagueSeason
-    ? league.type === "TIERED_DRAFT"
-      ? describeTieredRules(parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config))
-      : describePickemRules(parseRuleSetConfig(leagueSeason.ruleSet.config), league.pickOrderMode as PickOrderMode)
-    : [];
+  // Every season this league has ever taken part in — drives the year
+  // tabs and the previous-winners table. A league with only one season
+  // (the common case today) shows neither.
+  const leagueSeasons = await prisma.leagueSeason.findMany({
+    where: { leagueId },
+    include: { season: true },
+    orderBy: { season: { year: "desc" } },
+  });
+  const currentSeasonId = data.season?.id ?? null;
+  const requestedYear = seasonParam ? Number(seasonParam) : null;
+  const viewingSeasonRow =
+    (requestedYear != null ? leagueSeasons.find((ls) => ls.season.year === requestedYear) : null) ??
+    leagueSeasons.find((ls) => ls.seasonId === currentSeasonId) ??
+    null;
+  const isViewingCurrent = viewingSeasonRow?.seasonId === currentSeasonId;
+
+  const [races, picks] = isViewingCurrent
+    ? [data.races, data.picks]
+    : await (async () => {
+        if (!viewingSeasonRow) return [[], []] as [typeof data.races, typeof data.picks];
+        const seasonRaces = await prisma.race.findMany({
+          where: { seasonId: viewingSeasonRow.seasonId },
+          orderBy: { week: "asc" },
+        });
+        const seasonPicks = await prisma.pick.findMany({
+          where: { leagueId, raceId: { in: seasonRaces.map((r) => r.id) } },
+          include: { score: true, driver: true, user: true },
+        });
+        return [seasonRaces, seasonPicks] as [typeof data.races, typeof data.picks];
+      })();
+
+  const rules =
+    leagueSeason && isViewingCurrent
+      ? league.type === "TIERED_DRAFT"
+        ? describeTieredRules(parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config))
+        : describePickemRules(parseRuleSetConfig(leagueSeason.ruleSet.config), league.pickOrderMode as PickOrderMode)
+      : [];
+
+  const pastSeasons = leagueSeasons.filter((ls) => ls.seasonId !== currentSeasonId);
+  const previousWinners = (
+    await Promise.all(
+      pastSeasons.map(async (ls) => ({
+        year: ls.season.year,
+        champion: await computeSeasonChampion(leagueId, ls.seasonId, nameByUserId),
+      })),
+    )
+  ).filter((w) => w.champion != null) as { year: number; champion: { name: string; total: number } }[];
 
   // race -> user -> total score that week
   const scoreByRaceUser = new Map<string, Map<string, number>>();
@@ -88,7 +162,6 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
     list.push(p);
     picksByRace.set(p.raceId, list);
   }
-  const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
 
   // Every field a race row needs, plus its click-to-expand breakdown —
   // built here so FullScoreMatrix (a client component, for the expand/
@@ -117,8 +190,51 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
 
   return (
     <>
+      {previousWinners.length > 0 && (
+        <Card title="Previous Winners">
+          <table>
+            <thead>
+              <tr>
+                <th>Season</th>
+                <th>Champion</th>
+                <th>Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {previousWinners.map((w) => (
+                <tr key={w.year}>
+                  <td>{w.year}</td>
+                  <td>{w.champion.name}</td>
+                  <td className={styles.num}>{w.champion.total.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
       <Card title="Full Score Matrix" className={styles.matrixCard}>
-        <p className={styles.sub}>Every player&apos;s score, every week, this season — click a race to see the breakdown.</p>
+        {leagueSeasons.length > 1 && (
+          <div className={styles.yearTabs}>
+            {leagueSeasons.map((ls) => (
+              <Link
+                key={ls.seasonId}
+                href={
+                  ls.seasonId === currentSeasonId
+                    ? `/leagues/${leagueId}/league`
+                    : `/leagues/${leagueId}/league?season=${ls.season.year}`
+                }
+                className={`${styles.yearTab} ${ls.seasonId === viewingSeasonRow?.seasonId ? styles.yearTabActive : ""}`}
+              >
+                {ls.season.year}
+              </Link>
+            ))}
+          </div>
+        )}
+        <p className={styles.sub}>
+          Every player&apos;s score, every week, {isViewingCurrent ? "this season" : viewingSeasonRow?.season.year} —
+          click a race to see the breakdown.
+        </p>
         {scoredRaces.length === 0 ? (
           <p>No races have been scored yet this season.</p>
         ) : (
@@ -130,16 +246,18 @@ export default async function LeagueTabPage(props: { params: Promise<{ leagueId:
         )}
       </Card>
 
-      <Card title="League Rules">
-        <div className={styles.rulesList}>
-          {rules.map((rule, i) => (
-            <div key={i} className={styles.ruleRow}>
-              <span className={styles.ruleDash}>—</span>
-              <span>{rule}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {rules.length > 0 && (
+        <Card title="League Rules">
+          <div className={styles.rulesList}>
+            {rules.map((rule, i) => (
+              <div key={i} className={styles.ruleRow}>
+                <span className={styles.ruleDash}>—</span>
+                <span>{rule}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </>
   );
 }

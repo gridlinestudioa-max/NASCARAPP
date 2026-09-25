@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import LeagueHero from "@/components/league/LeagueHero";
+import SeasonChampionBanner from "@/components/league/SeasonChampionBanner";
 import LeagueTabs from "@/components/league/LeagueTabs";
 import LiveRefresh from "@/components/league/LiveRefresh";
 import { getLeagueHubData } from "./leagueData";
@@ -33,7 +34,7 @@ export default async function LeagueHubLayout({
     notFound();
   }
 
-  const { league, membership, season, standings, myRank, myStanding, races, members } = data;
+  const { league, membership, season, standings, myRank, myStanding, races, members, isSeasonComplete } = data;
   const racesCompleted = races.filter((r) => r.status === "COMPLETE").length;
 
   const leaderStanding = standings[0] ?? null;
@@ -70,6 +71,10 @@ export default async function LeagueHubLayout({
           </Link>
         )}
       </div>
+
+      {isSeasonComplete && season && leaderStanding && (
+        <SeasonChampionBanner seasonYear={season.year} championName={leaderStanding.name} total={leaderStanding.total} />
+      )}
 
       <LeagueHero
         leagueName={league.name}
