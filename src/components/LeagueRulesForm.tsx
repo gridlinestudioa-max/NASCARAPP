@@ -306,10 +306,13 @@ export default function LeagueRulesForm({
           <Card title="Presets">
             <div className={styles.presetRow}>
               <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.nascarOfficial)}>
-                NASCAR official points
+                NASCAR Official Points
               </button>
               <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.ourDefault)}>
-                Our default (1 pt/position, +10 win, +5 stage win)
+                Fantasy NASCAR HQ Points
+              </button>
+              <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.custom)}>
+                Custom Points
               </button>
             </div>
           </Card>
@@ -427,31 +430,6 @@ export default function LeagueRulesForm({
             </div>
 
             <div className={styles.fieldBlock}>
-              <label className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  checked={config.includeWinnerBonus}
-                  onChange={(e) => setConfig((c) => ({ ...c, includeWinnerBonus: e.target.checked }))}
-                />
-                Winner bonus
-              </label>
-              {config.includeWinnerBonus && (
-                <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    aria-label="Winner bonus value"
-                    className={styles.numberInputSmall}
-                    value={config.winnerBonus}
-                    onChange={(e) => setConfig((c) => ({ ...c, winnerBonus: parseDigits(e.target.value, 0) }))}
-                  />
-                  <span className={styles.fieldHelper}>points added on top of 1st place&apos;s position points</span>
-                </div>
-              )}
-            </div>
-
-            <div className={styles.fieldBlock}>
               <div className={styles.fieldLabel}>Position points</div>
               <div className={styles.radioGroup}>
                 <label className={`${styles.radioOption} ${config.pointsMode === "fixed" ? styles.radioOptionActive : ""}`}>
@@ -484,6 +462,10 @@ export default function LeagueRulesForm({
                     </div>
                   </span>
                 </label>
+              </div>
+              <div className={styles.fieldHelper} style={{ marginTop: 10 }}>
+                Want to reward 1st place extra? Switch to the fixed points matrix and set position 1&apos;s points
+                higher than position 2&apos;s — no separate winner bonus needed.
               </div>
             </div>
           </Card>

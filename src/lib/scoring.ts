@@ -71,9 +71,11 @@ function buildNascarOfficialPreset(): PickemRuleSetConfig {
 }
 
 function buildOurDefaultPreset(): PickemRuleSetConfig {
-  // This league's original formula: one point per position, scaled to
-  // each race's actual field size (fieldSize + 1 - finishPosition), +10
-  // for a win, +5 for a stage win only (not the rest of the stage top 10).
+  // This app's original formula: one point per position, scaled to each
+  // race's actual field size (fieldSize + 1 - finishPosition), +5 for a
+  // stage win only (not the rest of the stage top 10). No separate winner
+  // bonus — a league that wants extra value for 1st place adds it directly
+  // to position 1's points (switch to the fixed matrix mode to do that).
   // positionPoints is still populated (40 down to 1) as a sensible
   // starting point if the league switches to the fixed-matrix mode later.
   const positionPoints = Array.from({ length: MAX_FIELD_SIZE }, (_, i) => MAX_FIELD_SIZE - i);
@@ -86,8 +88,29 @@ function buildOurDefaultPreset(): PickemRuleSetConfig {
     lockTiming: "afterQualifying",
     pointsMode: "fieldSizeRelative",
     includeStagePoints: true,
-    includeWinnerBonus: true,
-    winnerBonus: 10,
+    includeWinnerBonus: false,
+    winnerBonus: 0,
+    positionPoints,
+    stagePositionPoints,
+  };
+}
+
+// A blank slate for a commissioner who wants to build their own points
+// system from scratch: simple 1-point-per-position matrix, no stage
+// points, nothing else baked in — every value here is meant to be edited.
+function buildCustomPreset(): PickemRuleSetConfig {
+  const positionPoints = Array.from({ length: MAX_FIELD_SIZE }, (_, i) => MAX_FIELD_SIZE - i);
+  const stagePositionPoints = Array.from({ length: MAX_STAGE_POSITIONS }, () => 0);
+
+  return {
+    picksPerWeek: 1,
+    maxPicksPerDriverPerSeason: null,
+    includeNonPointsRaces: false,
+    lockTiming: "afterQualifying",
+    pointsMode: "fixed",
+    includeStagePoints: false,
+    includeWinnerBonus: false,
+    winnerBonus: 0,
     positionPoints,
     stagePositionPoints,
   };
@@ -96,6 +119,7 @@ function buildOurDefaultPreset(): PickemRuleSetConfig {
 export const PRESETS = {
   nascarOfficial: buildNascarOfficialPreset(),
   ourDefault: buildOurDefaultPreset(),
+  custom: buildCustomPreset(),
 };
 
 export function coerceMatrix(value: unknown, length: number, fallback: number[]): number[] {

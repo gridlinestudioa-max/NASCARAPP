@@ -12,6 +12,7 @@ import { getLeagueHubData } from "../(hub)/leagueData";
 import TransferCommissionerForm from "./TransferCommissionerForm";
 import PickOrderForm from "./PickOrderForm";
 import LeagueIconForm from "./LeagueIconForm";
+import InviteCodeForm from "./InviteCodeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -57,9 +58,7 @@ export default async function CommissionerPage(props: { params: Promise<{ league
 
       <h1>Commissioner tools</h1>
 
-      <p>
-        Invite code: <code>{league.inviteCode}</code> — share it so others can join this league.
-      </p>
+      <InviteCodeForm leagueId={leagueId} inviteCode={league.inviteCode} />
 
       <Card title="League Icon">
         <LeagueIconForm leagueId={leagueId} leagueName={league.name} iconUrl={league.iconUrl} />

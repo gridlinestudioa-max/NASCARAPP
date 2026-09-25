@@ -12,3 +12,8 @@ export function generateInviteCode(): string {
   }
   return code;
 }
+
+// Same excluded-character rule as generateInviteCode, but allows a
+// commissioner-chosen custom code to run 4-10 characters rather than the
+// fixed 6 the generator produces.
+export const INVITE_CODE_PATTERN = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{4,10}$/;

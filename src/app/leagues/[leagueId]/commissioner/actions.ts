@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { parseRuleSetConfig, type PickemRuleSetConfig } from "@/lib/scoring";
 import { parseTieredDraftRuleSetConfig, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { PICK_ORDER_MODES, sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
+import { INVITE_CODE_PATTERN } from "@/lib/inviteCode";
 
 // Rules are versioned, never edited in place (see RuleSet's schema
 // comment) — changing them creates a new RuleSet row and repoints the
@@ -133,6 +134,45 @@ export async function setLeagueIcon(leagueId: string, iconUrl: string | null): P
   revalidatePath(`/leagues/${leagueId}`);
   revalidatePath("/", "layout");
   return {};
+}
+
+export async function updateInviteCode(
+  _prevState: string | undefined,
+  formData: FormData,
+): Promise<string | undefined> {
+  const leagueId = formData.get("leagueId");
+  const rawCode = formData.get("inviteCode");
+  if (typeof leagueId !== "string" || typeof rawCode !== "string") {
+    return "Missing invite code.";
+  }
+
+  const inviteCode = rawCode.trim().toUpperCase();
+  if (!INVITE_CODE_PATTERN.test(inviteCode)) {
+    return "Invite codes must be 4-10 letters/numbers (no O, 0, I, 1, or L — too easy to mix up).";
+  }
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    return "You need to be signed in.";
+  }
+  const userId = session.user.id;
+
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { leagueId_userId: { leagueId, userId } },
+  });
+  if (!membership || membership.role !== "OWNER") {
+    return "Only the league commissioner can change the invite code.";
+  }
+
+  const existing = await prisma.league.findUnique({ where: { inviteCode } });
+  if (existing && existing.id !== leagueId) {
+    return "That code is already taken by another league — try a different one.";
+  }
+
+  await prisma.league.update({ where: { id: leagueId }, data: { inviteCode } });
+
+  revalidatePath(`/leagues/${leagueId}/commissioner`);
+  return undefined;
 }
 
 export async function transferCommissioner(
