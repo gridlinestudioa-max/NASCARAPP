@@ -10,6 +10,7 @@ import NotificationsForm from "./NotificationsForm";
 import LeagueColorsForm from "./LeagueColorsForm";
 import AppearanceForm from "./AppearanceForm";
 import AvatarUploadForm from "./AvatarUploadForm";
+import InstallAppCard from "./InstallAppCard";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,13 @@ export default async function SettingsPage() {
           <small>Applies to the whole site, on this device.</small>
         </p>
         <AppearanceForm />
+      </Card>
+
+      <Card title="Install App">
+        <p>
+          <small>Add Fantasy NASCAR HQ to your home screen for a full-screen, app-like experience.</small>
+        </p>
+        <InstallAppCard />
       </Card>
 
       <Card title="Your Leagues">

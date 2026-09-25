@@ -1,11 +1,12 @@
 import type { CSSProperties } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter, Barlow, Oswald } from "next/font/google";
 import { auth } from "@/lib/auth";
 import { isSiteAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { getAppTheme, themeToCssVars } from "@/lib/theme";
 import AppShell from "@/components/shell/AppShell";
+import ServiceWorkerRegister from "@/components/shell/ServiceWorkerRegister";
 import styles from "@/components/shell/AppShell.module.css";
 import "./globals.css";
 
@@ -35,6 +36,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Fantasy NASCAR HQ",
   description: "Pick'em and Tiered Draft fantasy NASCAR leagues.",
+  appleWebApp: {
+    title: "NASCAR HQ",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+// theme_color in manifest.ts covers the installed-app chrome; this is the
+// same color for the in-browser tab/status-bar bar before install.
+export const viewport: Viewport = {
+  themeColor: "#2e2e2e",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -79,6 +90,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body>
+        <ServiceWorkerRegister />
         {user?.id ? (
           <AppShell
             user={{ name: user.name, email: user.email ?? "", avatarUrl: currentUser?.avatarUrl ?? null }}
