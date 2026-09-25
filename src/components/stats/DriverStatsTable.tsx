@@ -79,7 +79,7 @@ export default function DriverStatsTable({
       <Modal open={selected != null} onClose={() => setSelectedId(null)}>
         {selected && (
           <>
-            <div className={styles.photoSlot}>
+            <div className={selected.imageUrl ? `${styles.photoSlot} ${styles.photoSlotFilled}` : styles.photoSlot}>
               {selected.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- fixed set of bundled per-driver headshots
                 <img src={selected.imageUrl} alt={selected.driverName} className={styles.photoImg} />
