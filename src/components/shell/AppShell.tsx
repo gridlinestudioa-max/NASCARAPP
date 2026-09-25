@@ -74,7 +74,12 @@ const ADD_ICON = (
   </svg>
 );
 
-const DOT_COLORS = ["#141414", "#6b6b6b", "#9a9a97", "#c7c6c0"];
+// var(--dot-N), not literal hex — a league with no explicit color (see
+// leagueColors.ts) falls back to this neutral grayscale rotation, and
+// unlike LEAGUE_COLOR_SWATCHES's saturated picks, #141414 read as
+// essentially invisible against the dark theme's #121212 sidebar. Themed
+// in globals.css the same way --text-accent is, instead of literal hex.
+const DOT_COLORS = ["var(--dot-1)", "var(--dot-2)", "var(--dot-3)", "var(--dot-4)"];
 
 function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
