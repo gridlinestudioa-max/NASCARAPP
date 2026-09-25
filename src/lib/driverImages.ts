@@ -42,6 +42,11 @@ const DRIVER_IMAGES: Record<string, string> = {
   "carson hocevar": "/driver-photos/carson-hocevar.png",
   "connor zilisch": "/driver-photos/connor-zilisch.png",
   "shane van gisbergen": "/driver-photos/shane-van-gisbergen.png",
+  "kyle busch": "/driver-photos/kyle-busch.png",
+  "austin hill": "/driver-photos/austin-hill.png",
+  "chad finchum": "/driver-photos/chad-finchum.png",
+  "j.j. yeley": "/driver-photos/jj-yeley.png",
+  "joey gase": "/driver-photos/joey-gase.jpg",
 };
 
 // NFD-normalizes and drops suffixes like "Jr."/"Sr."/trailing periods so
