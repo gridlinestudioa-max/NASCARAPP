@@ -172,15 +172,17 @@ export default async function TieredLineupPickPanel({
     );
 
     return (
-      <Card title="Your lineup">
+      <Card title="Your lineup" className={lineupFormStyles.lineupCard}>
         <p>
           <em>Lineups unlock {unlockLabel}.</em>
         </p>
-        <span className={lineupFormStyles.roleLabel}>Starters</span>
-        <div className={lineupFormStyles.slotRow}>
-          {starterSlots.map((s) => (
-            <div key={s.pickNumber}>{renderLockedSlot(s.tier)}</div>
-          ))}
+        <div className={lineupFormStyles.roleGroup}>
+          <span className={lineupFormStyles.roleLabel}>Starters</span>
+          <div className={lineupFormStyles.slotRow}>
+            {starterSlots.map((s) => (
+              <div key={s.pickNumber}>{renderLockedSlot(s.tier)}</div>
+            ))}
+          </div>
         </div>
         <div className={lineupFormStyles.roleGroup}>
           <span className={lineupFormStyles.roleLabel}>Bench</span>
