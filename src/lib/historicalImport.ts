@@ -15,6 +15,7 @@
 import { prisma } from "@/lib/prisma";
 import { CUP_SERIES_ID, fetchSeasonRaceList, fetchWeekendFeed, parseWeekendData } from "@/lib/nascarFeed";
 import { getCurrentSeason } from "@/lib/season";
+import { findOrCreateDriverByName } from "@/lib/driverMatch";
 
 const HISTORICAL_YEARS_BACK = 8;
 const HISTORICAL_IMPORT_BATCH_SIZE = 10;
@@ -75,11 +76,7 @@ export async function importHistoricalResults(): Promise<HistoricalImportOutcome
 
       await prisma.$transaction(async (tx) => {
         for (const result of parsed.results) {
-          const driver = await tx.driver.upsert({
-            where: { name: result.driverName },
-            update: {},
-            create: { name: result.driverName, isActive: false },
-          });
+          const driver = await findOrCreateDriverByName(tx, result.driverName, { isActive: false });
           await tx.historicalRaceResult.upsert({
             where: { year_trackName_driverId: { year: item.year, trackName: item.raceName, driverId: driver.id } },
             update: { finishingPosition: result.position },
