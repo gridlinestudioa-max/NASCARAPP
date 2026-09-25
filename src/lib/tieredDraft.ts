@@ -12,47 +12,86 @@ export type PickRole = "STARTER" | "BENCH";
 
 export type TieredLineupSlot = { pickNumber: number; tier: DriverTier; role: PickRole };
 
-// The fixed meaning of Pick.pickNumber for a Tiered Lineup league: slots
-// 1-4 are the week's 4 starters (Tier A, Tier B x2, Tier C), 5-8 are the
-// matching bench slots. The two Tier B starter/bench slots are otherwise
-// interchangeable.
-export const TIERED_LINEUP_SLOTS: TieredLineupSlot[] = [
-  { pickNumber: 1, tier: "A", role: "STARTER" },
-  { pickNumber: 2, tier: "B", role: "STARTER" },
-  { pickNumber: 3, tier: "B", role: "STARTER" },
-  { pickNumber: 4, tier: "C", role: "STARTER" },
-  { pickNumber: 5, tier: "A", role: "BENCH" },
-  { pickNumber: 6, tier: "B", role: "BENCH" },
-  { pickNumber: 7, tier: "B", role: "BENCH" },
-  { pickNumber: 8, tier: "C", role: "BENCH" },
+export const TIERS: DriverTier[] = ["A", "B", "C"];
+
+// How many starters a lineup rosters from each tier — league-editable (see
+// TieredDraftRuleSetConfig.tierComposition). Bench mirrors starters 1:1
+// per tier (a bench driver is always a backup for that same tier), so this
+// alone determines the whole roster shape.
+export type TierComposition = { tier: DriverTier; starters: number };
+
+export const DEFAULT_TIER_COMPOSITION: TierComposition[] = [
+  { tier: "A", starters: 1 },
+  { tier: "B", starters: 2 },
+  { tier: "C", starters: 1 },
 ];
 
-export function slotForPickNumber(pickNumber: number): TieredLineupSlot | undefined {
-  return TIERED_LINEUP_SLOTS.find((s) => s.pickNumber === pickNumber);
+const MAX_STARTERS_PER_TIER = 10;
+
+export function sanitizeTierComposition(value: unknown): TierComposition[] {
+  const byTier = new Map<DriverTier, number>();
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const tier = (entry as Partial<TierComposition>)?.tier;
+      const starters = (entry as Partial<TierComposition>)?.starters;
+      if ((tier === "A" || tier === "B" || tier === "C") && typeof starters === "number" && starters >= 0) {
+        byTier.set(tier, Math.min(MAX_STARTERS_PER_TIER, Math.floor(starters)));
+      }
+    }
+  }
+  return TIERS.map((tier) => ({
+    tier,
+    starters: byTier.get(tier) ?? DEFAULT_TIER_COMPOSITION.find((t) => t.tier === tier)!.starters,
+  }));
+}
+
+// Derives the Pick.pickNumber -> {tier, role} mapping from a league's tier
+// composition: every tier's starters get consecutive pickNumbers first (in
+// tier order), then every tier's bench slots (same order, same counts) —
+// this exactly reproduces the app's original fixed 1-8 mapping when
+// tierComposition is DEFAULT_TIER_COMPOSITION, so existing Picks scored
+// under the old hardcoded slots stay valid.
+export function buildTieredLineupSlots(tierComposition: TierComposition[]): TieredLineupSlot[] {
+  const slots: TieredLineupSlot[] = [];
+  let pickNumber = 1;
+  for (const tc of tierComposition) {
+    for (let i = 0; i < tc.starters; i++) slots.push({ pickNumber: pickNumber++, tier: tc.tier, role: "STARTER" });
+  }
+  for (const tc of tierComposition) {
+    for (let i = 0; i < tc.starters; i++) slots.push({ pickNumber: pickNumber++, tier: tc.tier, role: "BENCH" });
+  }
+  return slots;
 }
 
 // Slot groups that a late swap must preserve as a set — you can reassign
 // which of a tier's rostered drivers is starting vs benched, but can't
 // bring in a driver who wasn't already on your roster for that tier.
-export const LATE_SWAP_GROUPS: { tier: DriverTier; pickNumbers: number[] }[] = [
-  { tier: "A", pickNumbers: [1, 5] },
-  { tier: "B", pickNumbers: [2, 3, 6, 7] },
-  { tier: "C", pickNumbers: [4, 8] },
-];
+export function buildLateSwapGroups(slots: TieredLineupSlot[]): { tier: DriverTier; pickNumbers: number[] }[] {
+  return TIERS.map((tier) => ({ tier, pickNumbers: slots.filter((s) => s.tier === tier).map((s) => s.pickNumber) }));
+}
+
+export function slotForPickNumber(pickNumber: number, slots: TieredLineupSlot[]): TieredLineupSlot | undefined {
+  return slots.find((s) => s.pickNumber === pickNumber);
+}
 
 export const DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON = 9;
 
-// Only the top 4 qualifiers ever score qualifying points — a fixed
-// structural rule, like the 3 tiers themselves — but the point VALUES for
-// those 4 spots are editable, same as finishPositionPoints below.
-export const QUALIFYING_SCORING_POSITIONS = 4;
+// How many top qualifiers score qualifying points — league-editable; every
+// rostered driver, starter or bench, earns these if they qualify inside
+// this many positions.
+export const DEFAULT_QUALIFYING_SCORED_COUNT = 4;
+const MAX_QUALIFYING_SCORED_COUNT = 40;
 
 export type TieredDraftRuleSetConfig = {
   // How many times any one driver may be started (not benched) across a
   // season by one owner.
   maxStartsPerDriverPerSeason: number;
-  // Index 0 = 1st in qualifying ... index 3 = 4th. Every rostered driver,
-  // starter or bench, earns these.
+  // How many starters (and, mirrored, bench slots) come from each tier.
+  tierComposition: TierComposition[];
+  // How many top qualifiers score qualifying points this league.
+  qualifyingScoredCount: number;
+  // Index 0 = 1st in qualifying ... index (qualifyingScoredCount-1) = last
+  // scoring spot. Every rostered driver, starter or bench, earns these.
   qualifyingPositionPoints: number[];
   // Index 0 = 1st place ... index (MAX_FIELD_SIZE-1) = last. Only starters
   // earn these — bench drivers never score finish points.
@@ -67,6 +106,8 @@ function buildDefaultFinishPositionPoints(): number[] {
 export function buildTieredDraftDefaultConfig(): TieredDraftRuleSetConfig {
   return {
     maxStartsPerDriverPerSeason: DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON,
+    tierComposition: DEFAULT_TIER_COMPOSITION.map((t) => ({ ...t })),
+    qualifyingScoredCount: DEFAULT_QUALIFYING_SCORED_COUNT,
     qualifyingPositionPoints: [10, 5, 3, 1],
     finishPositionPoints: buildDefaultFinishPositionPoints(),
   };
@@ -75,16 +116,22 @@ export function buildTieredDraftDefaultConfig(): TieredDraftRuleSetConfig {
 export function parseTieredDraftRuleSetConfig(config: unknown): TieredDraftRuleSetConfig {
   const c = config as Partial<TieredDraftRuleSetConfig> | null;
   const fallback = buildTieredDraftDefaultConfig();
+  const qualifyingScoredCount =
+    typeof c?.qualifyingScoredCount === "number" && c.qualifyingScoredCount >= 1
+      ? Math.min(MAX_QUALIFYING_SCORED_COUNT, Math.floor(c.qualifyingScoredCount))
+      : DEFAULT_QUALIFYING_SCORED_COUNT;
+  const qualifyingFallback = Array.from(
+    { length: qualifyingScoredCount },
+    (_, i) => fallback.qualifyingPositionPoints[i] ?? 0,
+  );
   return {
     maxStartsPerDriverPerSeason:
       typeof c?.maxStartsPerDriverPerSeason === "number" && c.maxStartsPerDriverPerSeason >= 1
         ? Math.floor(c.maxStartsPerDriverPerSeason)
         : DEFAULT_MAX_STARTS_PER_DRIVER_PER_SEASON,
-    qualifyingPositionPoints: coerceMatrix(
-      c?.qualifyingPositionPoints,
-      QUALIFYING_SCORING_POSITIONS,
-      fallback.qualifyingPositionPoints,
-    ),
+    tierComposition: sanitizeTierComposition(c?.tierComposition),
+    qualifyingScoredCount,
+    qualifyingPositionPoints: coerceMatrix(c?.qualifyingPositionPoints, qualifyingScoredCount, qualifyingFallback),
     finishPositionPoints: coerceMatrix(c?.finishPositionPoints, MAX_FIELD_SIZE, fallback.finishPositionPoints),
   };
 }
@@ -216,7 +263,7 @@ export async function materializeCarriedOverLineups(tx: Prisma.TransactionClient
 
   const tieredLeagueSeasons = await tx.leagueSeason.findMany({
     where: { seasonId: race.seasonId, league: { type: "TIERED_DRAFT" } },
-    include: { league: { include: { memberships: true } } },
+    include: { league: { include: { memberships: true } }, ruleSet: true },
   });
   if (tieredLeagueSeasons.length === 0) return;
 
@@ -224,6 +271,7 @@ export async function materializeCarriedOverLineups(tx: Prisma.TransactionClient
   const tierByDriverId = new Map(tierAssignments.map((a) => [a.driverId, a.tier]));
 
   for (const leagueSeason of tieredLeagueSeasons) {
+    const slots = buildTieredLineupSlots(parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config).tierComposition);
     const priorRaces = await tx.race.findMany({
       where: { seasonId: race.seasonId, week: { lt: race.week } },
       orderBy: { week: "desc" },
@@ -248,7 +296,7 @@ export async function materializeCarriedOverLineups(tx: Prisma.TransactionClient
       if (priorPicks.length === 0) continue;
 
       for (const p of priorPicks) {
-        const slot = slotForPickNumber(p.pickNumber);
+        const slot = slotForPickNumber(p.pickNumber, slots);
         if (!slot) continue;
         // Only carries into this week's lineup if the driver is still
         // eligible for that exact slot's tier this week.
@@ -315,10 +363,16 @@ export async function scoreTieredFinish(
     where: { raceId, driverId: { in: [...finishPositions.keys()] }, league: { type: "TIERED_DRAFT" } },
     include: { score: true },
   });
+  const slotsByLeagueId = new Map<string, TieredLineupSlot[]>();
   for (const pick of picks) {
     const config = configByLeagueId.get(pick.leagueId);
     if (!config) continue;
-    const slot = slotForPickNumber(pick.pickNumber);
+    let slots = slotsByLeagueId.get(pick.leagueId);
+    if (!slots) {
+      slots = buildTieredLineupSlots(config.tierComposition);
+      slotsByLeagueId.set(pick.leagueId, slots);
+    }
+    const slot = slotForPickNumber(pick.pickNumber, slots);
     const role: PickRole = slot?.role ?? "BENCH";
     const finishPosition = finishPositions.get(pick.driverId) ?? null;
     const baseScore = role === "STARTER" ? finishPoints(finishPosition, config) : 0;

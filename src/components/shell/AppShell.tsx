@@ -87,7 +87,7 @@ export default function AppShell({
   logoUrl,
   children,
 }: {
-  user: { name?: string | null; email: string };
+  user: { name?: string | null; email: string; avatarUrl?: string | null };
   isAdmin: boolean;
   leagues: { id: string; name: string; color: string | null; iconUrl: string | null }[];
   logoUrl?: string | null;
@@ -95,7 +95,6 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const [hovered, setHovered] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const activeLeagueId = pathname.match(/^\/leagues\/([^/]+)/)?.[1];
   const displayName = user.name ?? user.email;
@@ -106,10 +105,7 @@ export default function AppShell({
         <aside
           className={styles.sidebar}
           onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => {
-            setHovered(false);
-            setSettingsOpen(false);
-          }}
+          onMouseLeave={() => setHovered(false)}
           style={{
             width: hovered ? "240px" : "72px",
             padding: hovered ? "20px 16px" : "20px 12px",
@@ -142,7 +138,6 @@ export default function AppShell({
             {hovered && (
               <span className={styles.brandText}>
                 <span className={styles.brandName}>Fantasy NASCAR HQ</span>
-                <span className={styles.brandUser}>{displayName}</span>
               </span>
             )}
           </Link>
@@ -214,31 +209,29 @@ export default function AppShell({
                 {hovered && <span className={styles.navLabel}>{ADMIN_NAV_ITEM.label}</span>}
               </Link>
             )}
-            <button
-              type="button"
-              onClick={() => setSettingsOpen((open) => !open)}
-              className={settingsOpen ? `${styles.settingsToggle} ${styles.settingsToggleOpen}` : styles.settingsToggle}
+            <Link
+              href="/settings"
+              className={styles.settingsToggle}
               style={{ justifyContent: hovered ? "flex-start" : "center" }}
             >
               <span className={styles.navIcon}>{SETTINGS_ICON}</span>
               {hovered && <span className={styles.navLabel}>Settings</span>}
-            </button>
-            {settingsOpen && (
-              <div className={styles.settingsPanel}>
-                <Link href="/settings" className={styles.settingsPanelLink}>
-                  Account settings →
-                </Link>
-              </div>
-            )}
+            </Link>
           </nav>
 
           <div className={styles.userRow} style={{ justifyContent: hovered ? "flex-start" : "center" }}>
-            <span className={styles.avatar}>{(displayName || "?").charAt(0).toUpperCase()}</span>
+            <span className={styles.avatar}>
+              {user.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- arbitrary uploaded Vercel Blob URL, not a static/local asset
+                <img src={user.avatarUrl} alt="" className={styles.avatarImg} />
+              ) : (
+                (displayName || "?").charAt(0).toUpperCase()
+              )}
+            </span>
             {hovered && (
               <>
                 <span className={styles.userInfo}>
                   <span className={styles.userName}>{displayName}</span>
-                  <span className={styles.userRole}>{isAdmin ? "Commissioner" : "Member"}</span>
                 </span>
                 <form action={signOutAction}>
                   <button type="submit" className={styles.signOutButton} aria-label="Sign out" title="Sign out">

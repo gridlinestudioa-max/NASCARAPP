@@ -34,12 +34,16 @@ export default async function CommissionerPage(props: { params: Promise<{ league
   if (!data) {
     notFound();
   }
-  const { league, membership, leagueSeason, members } = data;
+  const { league, membership, leagueSeason, members, season } = data;
   if (membership.role !== "OWNER") {
     redirect(`/leagues/${leagueId}`);
   }
 
-  const racesWithResults = await prisma.race.findMany({ where: { results: { some: {} } }, orderBy: { week: "asc" } });
+  const [racesWithResults, driverPoolSize, seasonNonPointsRaceCount] = await Promise.all([
+    prisma.race.findMany({ where: { results: { some: {} } }, orderBy: { week: "asc" } }),
+    prisma.driver.count(),
+    season ? prisma.race.count({ where: { seasonId: season.id, isNonPoints: true } }) : Promise.resolve(0),
+  ]);
   const completedRaces = racesWithResults.map((r) => ({ id: r.id, label: `Week ${r.week} — ${displayRaceName(r.trackName)}` }));
 
   const pickemConfig = league.type === "PICKEM" && leagueSeason ? parseRuleSetConfig(leagueSeason.ruleSet.config) : undefined;
@@ -93,6 +97,9 @@ export default async function CommissionerPage(props: { params: Promise<{ league
       {leagueSeason ? (
         <LeagueRulesForm
           completedRaces={completedRaces}
+          driverPoolSize={driverPoolSize}
+          seasonRaceCount={data.races.length}
+          seasonNonPointsRaceCount={seasonNonPointsRaceCount}
           editingLeague={{ id: league.id, type: league.type, pickemConfig, tieredConfig }}
         />
       ) : (

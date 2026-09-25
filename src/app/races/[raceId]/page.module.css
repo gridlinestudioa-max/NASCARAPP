@@ -5,10 +5,6 @@
   margin-bottom: var(--space-1);
 }
 
-.titleLogo {
-  border: 1px solid var(--border-color);
-}
-
 .driverCell {
   display: inline-flex;
   align-items: center;

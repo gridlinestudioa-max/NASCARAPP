@@ -141,9 +141,7 @@
   height: 36px;
   flex-shrink: 0;
   border-radius: var(--radius-sm);
-  background: var(--bg-surface-muted);
   color: var(--text-secondary);
-  border: 1px solid var(--border-color);
 }
 
 .raceRowLabel {

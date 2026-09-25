@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
-import { LATE_SWAP_GROUPS, TIERED_LINEUP_SLOTS, type DriverTier } from "@/lib/tieredDraft";
+import type { DriverTier, TieredLineupSlot } from "@/lib/tieredDraft";
 import { submitTieredLineup } from "./actions";
 import styles from "./TieredLineupForm.module.css";
 
@@ -16,6 +16,8 @@ export default function TieredLineupForm({
   raceId,
   lockPhase,
   maxStartsPerDriverPerSeason,
+  slots,
+  lateSwapGroups,
   driversByTier,
   currentDriverIdByPickNumber,
   usingCarriedOverPreview,
@@ -24,6 +26,8 @@ export default function TieredLineupForm({
   raceId: string;
   lockPhase: "open" | "lateSwapOnly";
   maxStartsPerDriverPerSeason: number;
+  slots: TieredLineupSlot[];
+  lateSwapGroups: { tier: DriverTier; pickNumbers: number[] }[];
   driversByTier: Record<DriverTier, DriverOption[]>;
   currentDriverIdByPickNumber: (string | null)[];
   usingCarriedOverPreview: boolean;
@@ -31,7 +35,7 @@ export default function TieredLineupForm({
   const [error, formAction, pending] = useActionState(submitTieredLineup, undefined);
   const [selected, setSelected] = useState<Record<number, string | null>>(() => {
     const initial: Record<number, string | null> = {};
-    TIERED_LINEUP_SLOTS.forEach((slot) => {
+    slots.forEach((slot) => {
       initial[slot.pickNumber] = currentDriverIdByPickNumber[slot.pickNumber - 1] ?? null;
     });
     return initial;
@@ -41,11 +45,11 @@ export default function TieredLineupForm({
   const driverById = new Map<string, DriverOption>();
   (["A", "B", "C"] as const).forEach((tier) => driversByTier[tier].forEach((d) => driverById.set(d.id, d)));
 
-  const starterSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "STARTER");
-  const benchSlots = TIERED_LINEUP_SLOTS.filter((s) => s.role === "BENCH");
+  const starterSlots = slots.filter((s) => s.role === "STARTER");
+  const benchSlots = slots.filter((s) => s.role === "BENCH");
   const filledCount = Object.values(selected).filter(Boolean).length;
 
-  const activeSlot = TIERED_LINEUP_SLOTS.find((s) => s.pickNumber === activeSlotNumber) ?? null;
+  const activeSlot = slots.find((s) => s.pickNumber === activeSlotNumber) ?? null;
 
   useEffect(() => {
     if (activeSlotNumber == null) return;
@@ -60,7 +64,7 @@ export default function TieredLineupForm({
     if (lockPhase === "open") return driversByTier[tier];
     // Late swap: only the drivers already rostered in this tier's
     // starter/bench pair(s) can be picked — no new driver can enter.
-    const group = LATE_SWAP_GROUPS.find((g) => g.pickNumbers.includes(pickNumber));
+    const group = lateSwapGroups.find((g) => g.pickNumbers.includes(pickNumber));
     if (!group) return [];
     const rosteredIds = group.pickNumbers.map((pn) => selected[pn]).filter((id): id is string => id != null);
     return driversByTier[tier].filter((d) => rosteredIds.includes(d.id));
@@ -121,7 +125,7 @@ export default function TieredLineupForm({
     <form action={formAction}>
       <input type="hidden" name="leagueId" value={leagueId} />
       <input type="hidden" name="raceId" value={raceId} />
-      {TIERED_LINEUP_SLOTS.map((slot) => (
+      {slots.map((slot) => (
         <input key={slot.pickNumber} type="hidden" name={`driverId-${slot.pickNumber}`} value={selected[slot.pickNumber] ?? ""} />
       ))}
 
@@ -149,17 +153,17 @@ export default function TieredLineupForm({
 
       <div className={styles.saveBar}>
         <div className={styles.status}>
-          {filledCount === TIERED_LINEUP_SLOTS.length ? (
+          {filledCount === slots.length ? (
             <>
-              All 8 slots set — <strong>save whenever you&apos;re ready.</strong>
+              All {slots.length} slots set — <strong>save whenever you&apos;re ready.</strong>
             </>
           ) : (
             <>
-              {filledCount} of {TIERED_LINEUP_SLOTS.length} slots set.
+              {filledCount} of {slots.length} slots set.
             </>
           )}
         </div>
-        <button type="submit" disabled={pending || filledCount < TIERED_LINEUP_SLOTS.length}>
+        <button type="submit" disabled={pending || filledCount < slots.length}>
           {pending ? "Saving..." : "Save lineup"}
         </button>
       </div>
