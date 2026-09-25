@@ -1,0 +1,15 @@
+.status {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.installButton {
+  background: var(--accent);
+  color: var(--text-on-ink);
+  border: 1px solid var(--accent);
+}
+
+.installButton:hover:not(:disabled) {
+  opacity: 0.85;
+}
