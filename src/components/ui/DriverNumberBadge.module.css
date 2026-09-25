@@ -1,5 +1,12 @@
+/* Overrides every consumer's border-radius: 50% (each usage site defines
+   its own circular avatar class) — a circle clips the corners off a car
+   number's art, which isn't square-cropped to begin with, so part of the
+   digit was getting cut off. !important is the only reliable way to win
+   against ~15 different per-page classes without editing every one of
+   them. */
 .imgBadge {
   background: transparent !important;
+  border-radius: var(--radius-sm) !important;
   overflow: hidden;
 }
 
