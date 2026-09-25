@@ -16,7 +16,12 @@ const RACE_LOGOS: Record<string, string> = {
   "ambetter health 400": "/race-logos/atlanta-spring.png",
   "ecopark automotive 400": "/race-logos/atlanta-spring.png",
 
-  cota: "/race-logos/cota.png",
+  // COTA's Cup race name — the seeded/synced trackName is the bare
+  // venue nickname "COTA", not a sponsor name, so this key (not the
+  // "duramax grand prix" one below) is what actually resolves for
+  // today's races. Updated in place, rather than left on cota.png,
+  // now that Duramax is the title sponsor.
+  cota: "/race-logos/duramax-grand-prix.webp",
   "ecopark automotive grand prix": "/race-logos/cota.png",
 
   phoenix: "/race-logos/phoenix.png",

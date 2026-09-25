@@ -11,6 +11,7 @@ export type DriverStatRow = {
   team: string | null;
   number: number | null;
   bio: string | null;
+  imageUrl: string | null;
   points: number;
   wins: number;
   top5: number;
@@ -79,11 +80,16 @@ export default function DriverStatsTable({
         {selected && (
           <>
             <div className={styles.photoSlot}>
-              <span className={styles.photoLabel}>
-                DRIVER PHOTO
-                <br />
-                {selected.driverName}
-              </span>
+              {selected.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- fixed set of bundled per-driver headshots
+                <img src={selected.imageUrl} alt={selected.driverName} className={styles.photoImg} />
+              ) : (
+                <span className={styles.photoLabel}>
+                  DRIVER PHOTO
+                  <br />
+                  {selected.driverName}
+                </span>
+              )}
               <ModalCloseButton onClick={() => setSelectedId(null)} className={styles.photoCloseButton} />
             </div>
             <div className={styles.modalBody}>
