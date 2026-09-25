@@ -71,6 +71,14 @@
   --tier-c: #2f6b73;
   --tier-c-bg: #e6f0f1;
 
+  /* Sidebar league-dot fallback (AppShell's DOT_COLORS) for a league with
+     no explicit color — themed below since #141414 is invisible against
+     the dark theme's near-black sidebar. */
+  --dot-1: #141414;
+  --dot-2: #6b6b6b;
+  --dot-3: #9a9a97;
+  --dot-4: #c7c6c0;
+
   /* Scale — radius-md (cards) and shell-radius track the theme's radius
      knob directly (radius-md at half, per a flatter card look); radius-
      sm/btn/pill are smaller fixed steps that don't need to move with it. */
@@ -127,6 +135,13 @@
 
   --shadow-card: 0 14px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-shell: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);
+
+  /* Reversed toward light so the fallback dots stay visible against the
+     dark sidebar instead of blending into it. */
+  --dot-1: #e8e7e3;
+  --dot-2: #c7c6c0;
+  --dot-3: #9a9a97;
+  --dot-4: #6b6b6b;
 }
 
 html {

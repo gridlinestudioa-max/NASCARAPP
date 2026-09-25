@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./AppearanceForm.module.css";
 
 const COLOR_MODE_KEY = "colorMode";
@@ -8,14 +8,22 @@ const COLOR_MODE_KEY = "colorMode";
 type ColorMode = "light" | "dark";
 
 export default function AppearanceForm() {
-  // Lazy initializer (not an effect) so this matches whatever the no-flash
-  // inline script in layout.tsx already applied to <html> before this
-  // component ever mounts — see "preventing-flash-before-hydration" in the
-  // vendored Next docs.
-  const [mode, setMode] = useState<ColorMode>(() => {
-    if (typeof window === "undefined") return "light";
-    return window.localStorage.getItem(COLOR_MODE_KEY) === "dark" ? "dark" : "light";
-  });
+  // Starts at "light" on both the server render and React's first client
+  // render (which must match the server's — it can't know localStorage yet)
+  // — the no-flash inline script in layout.tsx already applied the real
+  // theme to <html> before paint, so the *page* never flashes light; only
+  // this component's own button then corrects itself a tick later via the
+  // effect below, without a hydration mismatch.
+  const [mode, setMode] = useState<ColorMode>("light");
+
+  useEffect(() => {
+    // One-time read of a client-only source (localStorage) right after
+    // mount — not syncing from a prop/state the lint rule is meant to
+    // guard against, so a plain effect (rather than useSyncExternalStore)
+    // is the right tool here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMode(window.localStorage.getItem(COLOR_MODE_KEY) === "dark" ? "dark" : "light");
+  }, []);
 
   function choose(next: ColorMode) {
     setMode(next);
