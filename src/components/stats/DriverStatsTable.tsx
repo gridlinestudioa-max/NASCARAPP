@@ -20,8 +20,14 @@ export type DriverStatRow = {
   inChase: boolean;
 };
 
-export default function DriverStatsTable({ drivers }: { drivers: DriverStatRow[] }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+export default function DriverStatsTable({
+  drivers,
+  initialSelectedId = null,
+}: {
+  drivers: DriverStatRow[];
+  initialSelectedId?: string | null;
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const selected = drivers.find((d) => d.driverId === selectedId) ?? null;
 
   return (
