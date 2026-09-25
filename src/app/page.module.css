@@ -221,3 +221,7 @@
   font-family: var(--font-heading);
   border: 1px solid var(--border-color);
 }
+
+.scheduleLogo {
+  flex-shrink: 0;
+}

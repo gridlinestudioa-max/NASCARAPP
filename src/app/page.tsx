@@ -6,10 +6,12 @@ import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
+import RaceLogo from "@/components/ui/RaceLogo";
 import { getLeagueHubData } from "@/app/leagues/[leagueId]/(hub)/leagueData";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 import { computePlayerSeasonStats, computeWeeklyTotals, ordinal, scoredRacesInOrder } from "@/lib/leagueStats";
 import { displayRaceName } from "@/lib/raceName";
+import { getCurrentSeason } from "@/lib/season";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +35,7 @@ export default async function Home() {
       include: { league: true },
       orderBy: { league: { name: "asc" } },
     }),
-    prisma.season.findFirst({ orderBy: { year: "desc" } }),
+    getCurrentSeason(),
   ]);
 
   const [upcomingRaces, pointsStandings] = await Promise.all([
@@ -103,6 +105,7 @@ function ScheduleSnapshot({
             <li key={r.id}>
               <span className={styles.scheduleRace}>
                 <span className={styles.weekChip}>{r.week}</span>
+                <RaceLogo trackName={r.trackName} size={28} className={styles.scheduleLogo} />
                 {displayRaceName(r.trackName)}
               </span>
               <span className={styles.muted}>

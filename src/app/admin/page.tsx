@@ -4,11 +4,12 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { displayRaceName } from "@/lib/raceName";
+import { getCurrentSeason } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const season = await prisma.season.findFirst({ orderBy: { year: "desc" } });
+  const season = await getCurrentSeason();
   const races = season
     ? await prisma.race.findMany({
         where: { seasonId: season.id },
@@ -26,6 +27,8 @@ export default async function AdminDashboardPage() {
         the automatic sync hasn&apos;t caught up yet.
       </p>
       <p>
+        <Link href="/admin/season-setup">Season setup (drivers, next year&apos;s schedule) &rarr;</Link>
+        {" · "}
         <Link href="/admin/historical-import">Historical results import &rarr;</Link>
       </p>
 

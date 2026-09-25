@@ -14,6 +14,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { CUP_SERIES_ID, fetchSeasonRaceList, fetchWeekendFeed, parseWeekendData } from "@/lib/nascarFeed";
+import { getCurrentSeason } from "@/lib/season";
 
 const HISTORICAL_YEARS_BACK = 8;
 const HISTORICAL_IMPORT_BATCH_SIZE = 10;
@@ -24,7 +25,7 @@ export type HistoricalImportOutcome = { ok: true; message: string } | { ok: fals
 // 2018-2025 when the current season is 2026 — recomputed from the DB
 // rather than hardcoded so this doesn't quietly go stale year to year.
 async function targetYears(): Promise<number[] | null> {
-  const currentSeason = await prisma.season.findFirst({ orderBy: { year: "desc" } });
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) return null;
   return Array.from({ length: HISTORICAL_YEARS_BACK }, (_, i) => currentSeason.year - HISTORICAL_YEARS_BACK + i);
 }
