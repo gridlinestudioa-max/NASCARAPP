@@ -5,6 +5,7 @@ import Breadcrumb from "@/components/ui/Breadcrumb";
 import DriverStatsTable, { type DriverStatRow } from "@/components/stats/DriverStatsTable";
 import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 import { getCurrentSeason } from "@/lib/season";
+import { getDriverImage } from "@/lib/driverImages";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
     team: profileById.get(e.driverId)?.team ?? null,
     number: profileById.get(e.driverId)?.number ?? null,
     bio: profileById.get(e.driverId)?.bio ?? null,
+    imageUrl: getDriverImage(e.driverName),
     points: e.points,
     wins: e.wins,
     top5: e.top5,

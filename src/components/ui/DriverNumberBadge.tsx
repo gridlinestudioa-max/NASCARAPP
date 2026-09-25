@@ -6,7 +6,7 @@ import styles from "./DriverNumberBadge.module.css";
 // initial-letter badge below.
 const AVAILABLE_NUMBERS = new Set([
   1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 16, 17, 19, 20, 21, 22, 23, 24, 34, 35, 38, 41, 42, 43, 45, 47, 48, 51, 54, 60,
-  71, 77, 88, 97,
+  62, 71, 77, 78, 84, 88, 91, 97,
 ]);
 
 // A small circular badge for a driver — shows their car number graphic
