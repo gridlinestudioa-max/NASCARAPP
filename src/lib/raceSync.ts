@@ -7,6 +7,7 @@ import type { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { computeScore, parseRuleSetConfig } from "@/lib/scoring";
+import { findOrCreateDriverByName } from "@/lib/driverMatch";
 import {
   materializeCarriedOverLineups,
   parseTieredDraftRuleSetConfig,
@@ -215,11 +216,7 @@ export async function applyRaceEntries(
 ): Promise<Map<string, string>> {
   const driverIdByName = new Map<string, string>();
   for (const entry of entries) {
-    const driver = await tx.driver.upsert({
-      where: { name: entry.driverName },
-      update: {},
-      create: { name: entry.driverName },
-    });
+    const driver = await findOrCreateDriverByName(tx, entry.driverName);
     driverIdByName.set(entry.driverName, driver.id);
     await tx.raceEntry.upsert({
       where: { raceId_driverId: { raceId, driverId: driver.id } },
