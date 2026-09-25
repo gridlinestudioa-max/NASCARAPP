@@ -153,9 +153,10 @@
 }
 
 .raceRowRight {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 170px) 36px;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: var(--space-5);
   flex-shrink: 0;
 }
 
@@ -165,7 +166,18 @@
   gap: 6px;
   font-weight: 700;
   font-size: 0.88rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.raceRowDriverName {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.raceRowPoints {
+  text-align: right;
 }
 
 .raceRowHead {
@@ -183,9 +195,14 @@
 }
 
 .raceRowHeadRight {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 170px) 36px;
   align-items: center;
   gap: var(--space-5);
+}
+
+.raceRowHeadRight > span:last-child {
+  text-align: right;
 }
 
 .driverCell {

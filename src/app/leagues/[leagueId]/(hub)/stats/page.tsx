@@ -205,9 +205,9 @@ function renderPersonalStatsCard(data: LeagueHubData, userId: string): ReactNode
                   <span className={styles.raceRowRight}>
                     <span className={styles.raceRowDriver}>
                       <DriverNumberBadge number={p.driver.number} name={p.driver.name} className={styles.driverBadge} />
-                      {p.driver.name}
+                      <span className={styles.raceRowDriverName}>{p.driver.name}</span>
                     </span>
-                    <strong className={styles.accentCell}>{p.score?.total ?? "—"}</strong>
+                    <strong className={`${styles.accentCell} ${styles.raceRowPoints}`}>{p.score?.total ?? "—"}</strong>
                   </span>
                 </li>
               ))}

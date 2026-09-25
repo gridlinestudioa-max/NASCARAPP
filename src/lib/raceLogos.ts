@@ -116,6 +116,32 @@ const RACE_LOGOS: Record<string, string> = {
   "championship race": "/race-logos/championship.png",
 };
 
+// Strips whitespace/punctuation so a real NASCAR-synced race name (which
+// can carry sponsor-suffix or spacing variations we didn't anticipate when
+// this dictionary's keys were written) still matches — e.g. "YellaWood
+// 500" vs "Yellawood  500". Never strips words, so two real races still
+// can't collide on a shared venue nickname.
+function normalizeKey(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+const NORMALIZED_RACE_LOGOS = new Map(
+  Object.entries(RACE_LOGOS).map(([key, src]) => [normalizeKey(key), src]),
+);
+
 export function getRaceLogo(trackName: string): string | null {
-  return RACE_LOGOS[trackName.trim().toLowerCase()] ?? null;
+  const trimmed = trackName.trim().toLowerCase();
+  if (RACE_LOGOS[trimmed]) return RACE_LOGOS[trimmed];
+
+  const normalized = normalizeKey(trackName);
+  if (NORMALIZED_RACE_LOGOS.has(normalized)) return NORMALIZED_RACE_LOGOS.get(normalized)!;
+
+  // Last resort: a synced name that embeds one of our known names as a
+  // substring (e.g. a sponsor-suffixed or venue-suffixed variant) — only
+  // matches keys long enough (8+ normalized chars) to make a false
+  // positive implausible.
+  for (const [key, src] of NORMALIZED_RACE_LOGOS) {
+    if (key.length >= 8 && normalized.includes(key)) return src;
+  }
+  return null;
 }

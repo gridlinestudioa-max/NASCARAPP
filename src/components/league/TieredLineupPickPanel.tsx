@@ -266,7 +266,7 @@ export default async function TieredLineupPickPanel({
 
   return (
     <>
-      <Card title="Your lineup">
+      <Card title="Your lineup" className={lineupFormStyles.lineupCard}>
         <TieredLineupForm
           leagueId={leagueId}
           raceId={raceId}
