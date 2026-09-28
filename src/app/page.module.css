@@ -96,7 +96,10 @@
 .driverCell {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  /* Matches .scheduleRace's gap — same first-column width (.rankNum /
+     .weekChip, both 24px) plus the same gap lines the logo and the
+     driver badge up at the same x between the two snapshot lists. */
+  gap: 10px;
   flex: 1;
   min-width: 0;
 }
@@ -273,6 +276,19 @@
   min-width: 0;
 }
 
+/* Fixed width, matching .weekChip below — so the race logo and the
+   driver badge in the two snapshot lists both start at the same x,
+   forming one straight column down the page instead of drifting with
+   however wide "1." vs "32" happens to render. */
+.rankNum {
+  width: 24px;
+  flex-shrink: 0;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+}
+
 /* `.snapshotList` (plain local class, not `:global(.rowList)`) is what
    actually matches here — CSS Modules hashes any bare `.rowList` token
    written in *this* file into a name that never matches the literal
@@ -302,11 +318,13 @@ ul.snapshotList > li {
 /* Zeroing the row's own left padding above still leaves the Card's own
    24px edge padding — noticeably more than the ~4px the "Upcoming
    Schedule" / "Driver Points" title above it sits in from the card edge.
-   Pulling the list out by the difference (and letting its auto width
-   fill back in, since only margin-left moves) lines row content up with
-   the title instead of sitting visibly indented under it. */
+   Pulling the list out (and letting its auto width fill back in, since
+   only margin-left moves) lines row content back up close to the title
+   instead of sitting indented under it — space-3 short of fully flush,
+   so there's still a small breathing gap rather than content butting
+   right up against the card's edge. */
 ul.snapshotList {
-  margin-left: calc(var(--space-1) - var(--space-5));
+  margin-left: calc(var(--space-1) - var(--space-5) + var(--space-3));
 }
 
 .raceName {

@@ -145,7 +145,7 @@ function DriverPointsSnapshot({
           {standings.map((s, i) => (
             <li key={s.driverId}>
               <Link href={`/stats?driver=${s.driverId}`} className={styles.driverCell}>
-                {i + 1}.
+                <span className={styles.rankNum}>{i + 1}.</span>
                 <DriverNumberBadge number={s.number} name={s.driverName} className={styles.driverBadge} />
                 <span className={styles.driverName}>{s.driverName}</span>
               </Link>
