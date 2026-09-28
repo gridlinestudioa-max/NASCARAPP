@@ -45,15 +45,22 @@
   transition: width 0.15s ease, padding 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
+.mobileTopRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
 .brandRow {
   display: flex;
   align-items: center;
   gap: 10px;
   border-radius: 12px;
   padding: 6px;
-  margin-bottom: 16px;
   text-decoration: none;
   color: inherit;
+  flex: 1;
+  min-width: 0;
 }
 
 .brandMark {
@@ -264,7 +271,17 @@
   background: var(--sb-active-bg);
 }
 
-.mobileSignOut {
+.mobileMenuButton {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--sb-text);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.mobileBackdrop {
   display: none;
 }
 
@@ -309,18 +326,22 @@
     width: 100% !important;
     height: auto !important;
     position: static !important;
+    z-index: 60;
   }
 
   .content {
     margin-left: 0;
   }
 
+  /* Collapsed (default): just the compact top bar — brand mark + menu
+     button. Nothing else from the desktop sidebar renders here; a row of
+     bare icons with no room for labels was the whole problem this
+     replaces. Everything else only appears inside .mobileOpen below. */
   .sidebar {
     position: static !important;
     width: 100% !important;
     height: auto !important;
     flex-direction: row !important;
-    flex-wrap: wrap;
     align-items: center;
     padding: var(--space-2) var(--space-3) !important;
     border-radius: 14px;
@@ -330,40 +351,57 @@
   .brandText,
   .sectionLabel,
   .sectionRow,
-  .userInfo {
+  .userInfo,
+  .navGroup,
+  .userRow {
     display: none;
   }
 
-  .brandRow {
+  .mobileTopRow {
     margin-bottom: 0;
   }
 
-  .navGroup {
-    flex-direction: row;
-    flex: 1;
-    overflow-x: auto;
-    margin-bottom: 0;
-    gap: var(--space-1);
-  }
-
-  .userRow {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
-  }
-
-  .mobileSignOut {
+  .mobileMenuButton {
     display: flex;
     margin-left: auto;
   }
 
-  .sidebar .mobileSignOut button {
-    background: transparent;
-    border: none;
-    color: var(--sb-text-faint);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 6px;
+  .mobileBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 55;
+  }
+
+  /* Open: the same bar becomes a full dropdown panel — column layout,
+     every section from the desktop hover-expanded sidebar, but reached by
+     a tap instead of a mouse hover that touch input can never trigger. */
+  .sidebar.mobileOpen {
+    flex-direction: column !important;
+    align-items: stretch;
+    position: fixed !important;
+    top: calc(var(--space-3) * 2 + 44px);
+    left: var(--space-3);
+    right: var(--space-3);
+    width: auto !important;
+    max-height: calc(100vh - var(--space-3) * 4 - 44px);
+    overflow-y: auto;
+    padding: var(--space-3) !important;
+    box-shadow: var(--shadow-shell) !important;
+  }
+
+  .sidebar.mobileOpen .brandText,
+  .sidebar.mobileOpen .sectionLabel,
+  .sidebar.mobileOpen .sectionRow,
+  .sidebar.mobileOpen .userInfo,
+  .sidebar.mobileOpen .navGroup,
+  .sidebar.mobileOpen .userRow {
+    display: flex;
+  }
+
+  .sidebar.mobileOpen .mobileTopRow {
+    margin-bottom: 16px;
   }
 
   .contentInner {
