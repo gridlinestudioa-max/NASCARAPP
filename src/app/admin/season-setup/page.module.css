@@ -29,3 +29,12 @@
   color: #fafafa;
   font-weight: 700;
 }
+
+@media (max-width: 760px) {
+  /* No horizontal swiping anywhere on mobile — wrap onto a second line
+     instead of needing a sideways scroll to reach the rest of the tabs. */
+  .tabs {
+    flex-wrap: wrap;
+    overflow-x: hidden;
+  }
+}
