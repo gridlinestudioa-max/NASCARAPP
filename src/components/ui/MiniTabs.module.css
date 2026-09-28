@@ -22,11 +22,19 @@
   background: none;
   border: none;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
 .toggleBtn:hover {
   color: var(--text-primary);
+  background: color-mix(in oklab, var(--bg-surface-muted) 100%, var(--text-primary) 6%);
+}
+
+/* button.toggleBtn (not just .toggleBtn): needs to beat globals.css's own
+   `button:active:not(:disabled)` press-scale, same specificity issue as
+   TieredLineupForm.module.css's button.slot fix. */
+button.toggleBtn:active {
+  transform: scale(0.95);
 }
 
 .toggleBtnActive,

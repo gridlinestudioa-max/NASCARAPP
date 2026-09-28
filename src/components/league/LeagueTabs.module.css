@@ -19,11 +19,16 @@
   font-weight: 600;
   color: var(--text-secondary);
   white-space: nowrap;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
 .tab:hover {
   color: var(--text-primary);
+  background: color-mix(in oklab, var(--bg-surface-muted) 100%, var(--text-primary) 6%);
+}
+
+.tab:active {
+  transform: scale(0.95);
 }
 
 .active,
