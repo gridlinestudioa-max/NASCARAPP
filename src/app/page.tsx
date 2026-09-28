@@ -118,7 +118,7 @@ function ScheduleSnapshot({
                   className={styles.scheduleLogo}
                   overrideSrc={r.logoOverride}
                 />
-                {displayRaceName(r.trackName)}
+                <span className={styles.raceName}>{displayRaceName(r.trackName)}</span>
               </Link>
               <span className={styles.muted}>
                 {r.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
@@ -147,7 +147,7 @@ function DriverPointsSnapshot({
               <Link href={`/stats?driver=${s.driverId}`} className={styles.driverCell}>
                 {i + 1}.
                 <DriverNumberBadge number={s.number} name={s.driverName} className={styles.driverBadge} />
-                {s.driverName}
+                <span className={styles.driverName}>{s.driverName}</span>
               </Link>
               <span className={styles.muted}>{s.points.toLocaleString()} pts</span>
             </li>

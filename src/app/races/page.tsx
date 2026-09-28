@@ -83,8 +83,19 @@ export default async function SchedulePage() {
                       {r.venueName && <span className={styles.venueName}>{displayRaceName(r.trackName)}</span>}
                     </span>
                     <span className={styles.raceMeta}>
-                      {isNext && <Badge tone="accent">Next Up</Badge>}
-                      {isComplete && <Badge tone="neutral">Final</Badge>}
+                      {/* Mobile swaps the word pill for the small dot the
+                          page's own legend already teaches — a "Final"/
+                          "Next Up" pill was crowding out the track name on
+                          narrow widths; the dot carries the same
+                          information the legend above already explains. */}
+                      <span className={styles.statusDot}>
+                        {isNext && <span className={`${styles.legendDot} ${styles.legendDotAccent}`} aria-label="Next up" />}
+                        {isComplete && <span className={`${styles.legendDot} ${styles.legendDotFaint}`} aria-label="Final" />}
+                      </span>
+                      <span className={styles.statusBadges}>
+                        {isNext && <Badge tone="accent">Next Up</Badge>}
+                        {isComplete && <Badge tone="neutral">Final</Badge>}
+                      </span>
                       <span className={styles.dateLabel}>
                         {new Date(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                       </span>
