@@ -363,6 +363,7 @@
   }
 
   .bottomBarItem {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -371,14 +372,45 @@
     gap: 3px;
     background: transparent;
     border: none;
-    color: var(--text-primary);
+    color: var(--text-muted);
     text-decoration: none;
     font-family: inherit;
     cursor: pointer;
   }
 
   .bottomBarItemActive {
-    color: var(--text-muted);
+    color: var(--text-primary);
+  }
+
+  /* globals.css's `button[type="button"]` (a real attribute + tag
+     selector, (0,1,1)) gives every plain secondary button a visible card
+     background/border/padding — including Leagues/More here, which are
+     <button type="button"> so the browser doesn't treat them as a form
+     submit. That beat .bottomBarItem's own class-only rule above, showing
+     up as a stray rounded grey box behind those two tabs only (Home/
+     Schedule/Stats are <Link>s, unaffected). nav+button+class stacks
+     enough specificity to actually win. */
+  nav.bottomBar button.bottomBarItem {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  /* The active tab's marker: a short bar sitting right on the bar's own
+     top edge, above the icon — not a filled pill behind it. Leagues/More
+     get this the same as a real route the moment their sheet is open
+     (see AppShell.tsx), since opening the sheet *is* being on that tab. */
+  .bottomBarItemActive::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--text-primary);
   }
 
   .bottomBarIcon {
@@ -455,13 +487,74 @@
     padding: 4px;
   }
 
-  .bottomSheet .navGroup,
   .bottomSheet .userRow {
     margin-bottom: 0;
-  }
-
-  .bottomSheet .userRow {
     margin-top: 12px;
     padding-top: 12px;
+  }
+
+  /* Two-up grid of rounded destination cards — the sheet's actual content,
+     replacing the old vertical link list so a tab with several things
+     under it (Leagues, More) reads as one pop-out panel of its own
+     destinations, not a menu. */
+  .sheetGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .sheetCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 104px;
+    padding: 18px 10px;
+    border-radius: 16px;
+    background: var(--bg-surface-muted);
+    color: var(--sb-text-muted);
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .sheetCard:hover {
+    background: var(--bg-surface);
+    color: var(--sb-text);
+  }
+
+  .sheetCardActive {
+    color: var(--sb-text);
+    background: var(--bg-surface);
+  }
+
+  .sheetCardIcon {
+    display: flex;
+  }
+
+  .sheetCardIcon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .sheetCardLabel {
+    font-size: 0.82rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* Bigger than their sidebar-list sizing (8px dot / 18px icon) to read
+     as a card's own icon rather than a cramped list-row leftover. */
+  .sheetCard .leagueDot {
+    width: 16px;
+    height: 16px;
+  }
+
+  .sheetCard .leagueIcon {
+    width: 32px;
+    height: 32px;
   }
 }
