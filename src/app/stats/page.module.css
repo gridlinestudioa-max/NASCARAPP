@@ -10,11 +10,10 @@
 }
 
 .legendSwatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: #f7edcb;
-  border: 1px solid #e6d9a0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e3b23c;
   display: inline-block;
 }
 

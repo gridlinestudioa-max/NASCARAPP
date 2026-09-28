@@ -52,7 +52,7 @@ export default function DriverStatsTable({
         {drivers.map((d, i) => {
           const expanded = expandedId === d.driverId;
           return (
-            <div key={d.driverId} className={d.inChase ? `${styles.mobileRow} ${styles.chaseRow}` : styles.mobileRow}>
+            <div key={d.driverId} className={styles.mobileRow}>
               <button
                 type="button"
                 className={styles.mobileRowHead}
@@ -61,7 +61,10 @@ export default function DriverStatsTable({
               >
                 <span className={styles.rank}>{i + 1}</span>
                 <span className={styles.driverCell}>
-                  <DriverNumberBadge number={d.number} name={d.driverName} className={styles.avatar} />
+                  <span className={styles.numberWrap}>
+                    <DriverNumberBadge number={d.number} name={d.driverName} className={styles.avatar} />
+                    {d.inChase && <span className={styles.chaseDot} title="Chase field" />}
+                  </span>
                   <span className={styles.driverName}>{d.driverName}</span>
                 </span>
                 <span className={styles.points}>{d.points.toLocaleString()}</span>
@@ -114,15 +117,14 @@ export default function DriverStatsTable({
           </thead>
           <tbody>
             {drivers.map((d, i) => (
-              <tr
-                key={d.driverId}
-                onClick={() => setSelectedId(d.driverId)}
-                className={d.inChase ? styles.chaseRow : undefined}
-              >
+              <tr key={d.driverId} onClick={() => setSelectedId(d.driverId)}>
                 <td className={styles.rank}>{i + 1}</td>
                 <td>
                   <div className={styles.driverCell}>
-                    <DriverNumberBadge number={d.number} name={d.driverName} className={styles.avatar} />
+                    <span className={styles.numberWrap}>
+                      <DriverNumberBadge number={d.number} name={d.driverName} className={styles.avatar} />
+                      {d.inChase && <span className={styles.chaseDot} title="Chase field" />}
+                    </span>
                     <div>
                       <div className={styles.driverName}>{d.driverName}</div>
                       {d.team && <div className={styles.team}>{d.team}</div>}
