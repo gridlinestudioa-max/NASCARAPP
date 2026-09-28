@@ -34,10 +34,21 @@
 }
 
 @media (max-width: 760px) {
-  /* No horizontal swiping anywhere on mobile — wrap onto a second line
-     instead of needing a sideways scroll to reach the rest of the tabs. */
+  /* All 4 tabs stay on one line with no horizontal scroll — each tab
+     takes an equal share of the row instead of its own content width,
+     shrinking padding/font enough that even "Standings" fits without
+     wrapping or forcing a swipe. */
   .tabs {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     overflow-x: hidden;
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 7px 2px;
+    font-size: 0.72rem;
+    text-align: center;
   }
 }
