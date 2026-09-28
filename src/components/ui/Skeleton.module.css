@@ -1,0 +1,63 @@
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.bone {
+  display: block;
+  flex-shrink: 0;
+  /* Relative to --bg-surface/--text-primary, same as every other themed
+     tint sitewide (color-mix(in oklab, ...)) — so this adapts to light and
+     dark automatically instead of needing its own theme override. */
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--bg-surface) 88%, var(--text-primary)) 25%,
+    color-mix(in oklab, var(--bg-surface) 78%, var(--text-primary)) 50%,
+    color-mix(in oklab, var(--bg-surface) 88%, var(--text-primary)) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bone {
+    animation: none;
+    background: color-mix(in oklab, var(--bg-surface) 84%, var(--text-primary));
+  }
+}
+
+/* Mirrors Card.module.css's outside-title layout exactly, so a
+   SkeletonCard sits flush with the real Card it's standing in for. */
+.outsideWrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.outsideHeader {
+  margin: 0 var(--space-1) var(--space-2);
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+  flex: 1;
+}
+
+.card + .card,
+.outsideWrap + .outsideWrap {
+  margin-top: var(--space-4);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
