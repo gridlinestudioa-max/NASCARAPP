@@ -6,6 +6,14 @@ import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { displayRaceName } from "@/lib/raceName";
 import styles from "./page.module.css";
 
+function ChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export type MatrixMember = { userId: string; name: string };
 
 export type MatrixBreakdownRow = {
@@ -36,8 +44,55 @@ export default function FullScoreMatrix({
 }) {
   const [expandedRaceId, setExpandedRaceId] = useState<string | null>(null);
 
+  // Mobile only (see .module.css) — the race x member grid needs a
+  // horizontal swipe once a league has more than 2-3 players. This drives
+  // a member-centric list instead: everyone's season total, visible at
+  // once with no scrolling, with that member's race-by-race scores (and
+  // the race names the grid dropped) available behind a tap.
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
+  const sortedMembers = [...members].sort((a, b) => (totalByUser[b.userId] ?? 0) - (totalByUser[a.userId] ?? 0));
+
   return (
-    <div className={styles.scrollX}>
+    <>
+      <div className={styles.mobileMatrix}>
+        {sortedMembers.map((m, i) => {
+          const expanded = expandedMemberId === m.userId;
+          return (
+            <div key={m.userId} className={styles.mobileMemberRow}>
+              <button
+                type="button"
+                className={styles.mobileMemberHead}
+                onClick={() => setExpandedMemberId(expanded ? null : m.userId)}
+                aria-expanded={expanded}
+              >
+                <span className={styles.rank}>{i + 1}</span>
+                <span className={styles.memberName}>{m.name}</span>
+                <span className={styles.memberTotal}>{(totalByUser[m.userId] ?? 0).toLocaleString()}</span>
+                <span className={expanded ? `${styles.chev} ${styles.chevOpen}` : styles.chev}>
+                  <ChevronIcon />
+                </span>
+              </button>
+              {expanded && (
+                <div className={styles.mobileMemberDetail}>
+                  {races.map((r) => (
+                    <div key={r.raceId} className={styles.mobileMemberDetailRow}>
+                      <span className={styles.raceCell}>
+                        <RaceLogo trackName={r.trackName} size={22} className={styles.raceIcon} />
+                        <span className={styles.raceName}>
+                          Week {r.week} · {displayRaceName(r.trackName)}
+                        </span>
+                      </span>
+                      <span className={styles.num}>{r.scores[m.userId] ?? "—"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className={styles.scrollX}>
       <table>
         <thead>
           <tr>
@@ -127,6 +182,7 @@ export default function FullScoreMatrix({
           </tr>
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }

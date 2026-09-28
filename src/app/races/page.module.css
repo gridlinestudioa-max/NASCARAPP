@@ -159,6 +159,14 @@
     min-width: 60px;
   }
 
+  .trackName {
+    font-size: 0.86rem;
+  }
+
+  .venueName {
+    font-size: 0.74rem;
+  }
+
   .statusDot {
     display: inline-flex;
     align-items: center;

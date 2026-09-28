@@ -108,3 +108,23 @@
   color: var(--text-secondary);
   margin-top: 2px;
 }
+
+@media (max-width: 760px) {
+  /* Stacking the leader block under identity (tried previously) still
+     read as a disconnected, floating element on a narrow card — dropped
+     entirely on mobile instead. Season Score/Rank below is what a member
+     actually needs at a glance; the League Leader stat is one tap away
+     on the Standings tab. */
+  .leaderBlock {
+    display: none;
+  }
+
+  .stats {
+    justify-content: space-around;
+    gap: var(--space-3);
+  }
+
+  .stats > div {
+    flex: 1;
+  }
+}

@@ -169,3 +169,88 @@
   font-weight: 800;
   flex-shrink: 0;
 }
+
+/* ---------- Mobile member-centric matrix ---------- */
+
+.mobileMatrix {
+  display: none;
+}
+
+.mobileMemberRow + .mobileMemberRow {
+  border-top: 1px solid var(--border-color);
+}
+
+.mobileMemberHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.rank {
+  font-weight: 800;
+  color: var(--text-muted);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.memberName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memberTotal {
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: var(--text-accent);
+}
+
+.mobileMemberDetail {
+  padding: 0 4px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobileMemberDetailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.mobileMemberDetailRow .raceCell {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobileMemberDetailRow .raceName {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+}
+
+.mobileMemberDetailRow .num {
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .scrollX {
+    display: none;
+  }
+
+  .mobileMatrix {
+    display: block;
+  }
+}

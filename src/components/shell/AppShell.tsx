@@ -319,13 +319,12 @@ export default function AppShell({
             </Link>
           );
         })}
+        {/* Leagues/More never take the active look, even while a sheet is
+            open or a league route is active — only Home/Schedule/Stats
+            (real destinations) show which tab you're on. */}
         <button
           type="button"
-          className={
-            activeLeagueId || mobileSheet === "leagues"
-              ? `${styles.bottomBarItem} ${styles.bottomBarItemActive}`
-              : styles.bottomBarItem
-          }
+          className={styles.bottomBarItem}
           onClick={() => setMobileSheet((s) => (s === "leagues" ? null : "leagues"))}
           aria-expanded={mobileSheet === "leagues"}
         >
@@ -334,7 +333,7 @@ export default function AppShell({
         </button>
         <button
           type="button"
-          className={mobileSheet === "more" ? `${styles.bottomBarItem} ${styles.bottomBarItemActive}` : styles.bottomBarItem}
+          className={styles.bottomBarItem}
           onClick={() => setMobileSheet((s) => (s === "more" ? null : "more"))}
           aria-expanded={mobileSheet === "more"}
         >
