@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { signOutAction } from "@/app/actions";
 import styles from "./AppShell.module.css";
 
@@ -74,6 +74,18 @@ const ADD_ICON = (
   </svg>
 );
 
+const MENU_ICON = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
+  </svg>
+);
+
+const CLOSE_ICON = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+  </svg>
+);
+
 // var(--dot-N), not literal hex — a league with no explicit color (see
 // leagueColors.ts) falls back to this neutral grayscale rotation, and
 // unlike LEAGUE_COLOR_SWATCHES's saturated picks, #141414 read as
@@ -100,15 +112,45 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const [hovered, setHovered] = useState(false);
+  // Touch devices never fire the hover events above, which is exactly why
+  // the mobile nav used to be an unlabeled icon strip — mobileMenuOpen is a
+  // separate, tap-driven trigger for the same "expanded" (labels showing)
+  // layout, opening it as a dropdown panel instead of a hover-widened rail.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const expanded = hovered || mobileMenuOpen;
+
+  // Close the dropdown after a navigation completes — it has no other way
+  // to close itself once a link inside it is tapped. This resets menu UI
+  // in response to a route change rather than deriving render output from
+  // props/state, so a plain effect (not useMemo) is the right tool; React
+  // bails out of the re-render itself when the value is already false.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileMenuOpen]);
 
   const activeLeagueId = pathname.match(/^\/leagues\/([^/]+)/)?.[1];
   const displayName = user.name ?? user.email;
 
   return (
     <div className={styles.shell}>
+      {/* Mobile only (see AppShell.module.css) — dims the page and closes
+          the dropdown on an outside tap, same as any standard menu. */}
+      {mobileMenuOpen && (
+        <div className={styles.mobileBackdrop} onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
+      )}
       <div className={styles.sidebarSlot}>
         <aside
-          className={styles.sidebar}
+          className={mobileMenuOpen ? `${styles.sidebar} ${styles.mobileOpen}` : styles.sidebar}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
@@ -119,35 +161,50 @@ export default function AppShell({
               : "0 20px 40px -14px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.1)",
           }}
         >
-          <Link
-            href="/"
-            className={styles.brandRow}
-            style={{ justifyContent: hovered ? "flex-start" : "center" }}
-          >
-            <span className={styles.brandMark}>
-              {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- admin-pasted URL, not a static/local asset
-                <img src={logoUrl} alt="" className={styles.brandMarkImg} />
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M4 3v18M4 4h12l-2.5 3L16 10H4"
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              )}
-            </span>
-            {hovered && (
-              <span className={styles.brandText}>
-                <span className={styles.brandName}>Fantasy NASCAR HQ</span>
+          {/* Its own row-flex, independent of .sidebar's own flex-direction
+              (column once open on mobile) — brand + toggle stay side by
+              side as a header, with everything else stacking below them. */}
+          <div className={styles.mobileTopRow}>
+            <Link
+              href="/"
+              className={styles.brandRow}
+              style={{ justifyContent: expanded ? "flex-start" : "center" }}
+            >
+              <span className={styles.brandMark}>
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- admin-pasted URL, not a static/local asset
+                  <img src={logoUrl} alt="" className={styles.brandMarkImg} />
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M4 3v18M4 4h12l-2.5 3L16 10H4"
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                )}
               </span>
-            )}
-          </Link>
+              {expanded && (
+                <span className={styles.brandText}>
+                  <span className={styles.brandName}>Fantasy NASCAR HQ</span>
+                </span>
+              )}
+            </Link>
 
-          {hovered && <div className={styles.sectionLabel}>Essentials</div>}
+            <button
+              type="button"
+              className={styles.mobileMenuButton}
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? CLOSE_ICON : MENU_ICON}
+            </button>
+          </div>
+
+          {expanded && <div className={styles.sectionLabel}>Essentials</div>}
           <nav className={styles.navGroup}>
             {ESSENTIAL_NAV_ITEMS.map((item) => {
               const active = isActivePath(pathname, item.href) && !activeLeagueId;
@@ -156,16 +213,16 @@ export default function AppShell({
                   key={item.href}
                   href={item.href}
                   className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
-                  style={{ justifyContent: hovered ? "flex-start" : "center" }}
+                  style={{ justifyContent: expanded ? "flex-start" : "center" }}
                 >
                   <span className={styles.navIcon}>{item.icon}</span>
-                  {hovered && <span className={styles.navLabel}>{item.label}</span>}
+                  {expanded && <span className={styles.navLabel}>{item.label}</span>}
                 </Link>
               );
             })}
           </nav>
 
-          {hovered && (
+          {expanded && (
             <div className={styles.sectionRow}>
               <span className={styles.sectionLabel}>Leagues</span>
               <Link href="/leagues/new" className={styles.sectionAction} aria-label="Create a league" title="Create a league">
@@ -181,7 +238,7 @@ export default function AppShell({
                   key={league.id}
                   href={`/leagues/${league.id}`}
                   className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
-                  style={{ justifyContent: hovered ? "flex-start" : "center" }}
+                  style={{ justifyContent: expanded ? "flex-start" : "center" }}
                 >
                   {league.iconUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- commissioner-pasted URL, not a static/local asset
@@ -192,13 +249,13 @@ export default function AppShell({
                       style={{ background: league.color ?? DOT_COLORS[i % DOT_COLORS.length] }}
                     />
                   )}
-                  {hovered && <span className={styles.navLabel}>{league.name}</span>}
+                  {expanded && <span className={styles.navLabel}>{league.name}</span>}
                 </Link>
               );
             })}
           </nav>
 
-          {hovered && <div className={styles.sectionLabel}>Support</div>}
+          {expanded && <div className={styles.sectionLabel}>Support</div>}
           <nav className={styles.navGroup}>
             {isAdmin && (
               <Link
@@ -208,23 +265,23 @@ export default function AppShell({
                     ? `${styles.navLink} ${styles.navLinkActive}`
                     : styles.navLink
                 }
-                style={{ justifyContent: hovered ? "flex-start" : "center" }}
+                style={{ justifyContent: expanded ? "flex-start" : "center" }}
               >
                 <span className={styles.navIcon}>{ADMIN_NAV_ITEM.icon}</span>
-                {hovered && <span className={styles.navLabel}>{ADMIN_NAV_ITEM.label}</span>}
+                {expanded && <span className={styles.navLabel}>{ADMIN_NAV_ITEM.label}</span>}
               </Link>
             )}
             <Link
               href="/settings"
               className={styles.settingsToggle}
-              style={{ justifyContent: hovered ? "flex-start" : "center" }}
+              style={{ justifyContent: expanded ? "flex-start" : "center" }}
             >
               <span className={styles.navIcon}>{SETTINGS_ICON}</span>
-              {hovered && <span className={styles.navLabel}>Settings</span>}
+              {expanded && <span className={styles.navLabel}>Settings</span>}
             </Link>
           </nav>
 
-          <div className={styles.userRow} style={{ justifyContent: hovered ? "flex-start" : "center" }}>
+          <div className={styles.userRow} style={{ justifyContent: expanded ? "flex-start" : "center" }}>
             <span className={styles.avatar}>
               {user.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- arbitrary uploaded Vercel Blob URL, not a static/local asset
@@ -233,7 +290,7 @@ export default function AppShell({
                 (displayName || "?").charAt(0).toUpperCase()
               )}
             </span>
-            {hovered && (
+            {expanded && (
               <>
                 <span className={styles.userInfo}>
                   <span className={styles.userName}>{displayName}</span>
@@ -245,13 +302,6 @@ export default function AppShell({
                 </form>
               </>
             )}
-            {/* Always rendered (not gated on hover) so sign-out stays reachable on
-                touch devices, which never trigger the desktop hover-expand state. */}
-            <form action={signOutAction} className={styles.mobileSignOut}>
-              <button type="submit" aria-label="Sign out" title="Sign out">
-                {SIGN_OUT_ICON}
-              </button>
-            </form>
           </div>
         </aside>
       </div>
