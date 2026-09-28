@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Chart,
   LineController,
@@ -9,10 +9,12 @@ import {
   LinearScale,
   CategoryScale,
   Tooltip,
+  Filler,
 } from "chart.js";
+import RangeSlider from "@/components/ui/RangeSlider";
 import styles from "./TrendChart.module.css";
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip);
+Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler);
 
 // Cycled by series index — a small, distinct categorical palette rather
 // than one color per specific player, since a league can have any number
@@ -27,6 +29,26 @@ const SERIES_COLORS = [
   "#4a4a4a",
   "#1f9e9e",
 ];
+
+// Canvas can't read CSS custom properties itself (context.font/strokeStyle
+// need a resolved string, not "var(--x)"), so every themed color and the
+// site's actual font family — the real next/font-generated name behind
+// --font-inter, not the literal word "Inter" — are read from the live
+// computed style right before each chart (re)build. That's also what
+// makes the chart follow light/dark mode instead of the flat hardcoded
+// hex values this component used to have.
+function readChartTheme() {
+  const root = getComputedStyle(document.documentElement);
+  const read = (name: string, fallback: string) => root.getPropertyValue(name).trim() || fallback;
+  const inter = read("--font-inter", "");
+  return {
+    font: inter ? `${inter}, ${read("--font-body", "sans-serif")}` : read("--font-body", "sans-serif"),
+    grid: read("--border-color", "#e3e3e3"),
+    tick: read("--text-secondary", "#7a7a7a"),
+    tooltipBg: read("--ink", "#141414"),
+    tooltipText: read("--text-on-ink", "#ffffff"),
+  };
+}
 
 export type TrendSeries = { userId: string; name: string; data: number[] };
 
@@ -50,40 +72,84 @@ export default function TrendChart({
   const chartRef = useRef<Chart | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
 
+  // [startIndex, endIndex] into `labels`/each series' `data` — the window
+  // the slider currently shows. Resets to the full season whenever the
+  // number of weeks changes (a new race gets scored, or the user switches
+  // to a league with a different schedule length) — the "adjusting state
+  // when a prop changes" pattern (a render-time compare against the last
+  // seen length), not an effect, per React's own guidance on avoiding the
+  // extra render+effect round trip a useEffect-based reset would cost.
+  const [range, setRange] = useState<[number, number]>([0, Math.max(0, labels.length - 1)]);
+  const [lastLength, setLastLength] = useState(labels.length);
+  if (labels.length !== lastLength) {
+    setLastLength(labels.length);
+    setRange([0, Math.max(0, labels.length - 1)]);
+  }
+
+  const [start, end] = range;
+  const slicedLabels = useMemo(() => labels.slice(start, end + 1), [labels, start, end]);
+  const slicedSeries = useMemo(
+    () => series.map((s) => ({ ...s, data: s.data.slice(start, end + 1) })),
+    [series, start, end],
+  );
+
   useEffect(() => {
     if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext("2d");
+    if (!ctx) return;
+    const theme = readChartTheme();
 
-    const datasets = series.map((s, i) => ({
-      label: s.name,
-      data: s.data,
-      borderColor: SERIES_COLORS[i % SERIES_COLORS.length],
-      backgroundColor: SERIES_COLORS[i % SERIES_COLORS.length],
-      borderWidth: 2,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      tension: 0.4,
-      cubicInterpolationMode: "monotone" as const,
-      hidden: hidden.has(s.userId),
-    }));
+    const datasets = slicedSeries.map((s, i) => {
+      const color = SERIES_COLORS[i % SERIES_COLORS.length];
+      // A soft gradient fade under the line reads as an intentional
+      // "dashboard" chart rather than a bare plotted line — the classic
+      // tell of a not-quite-designed graph.
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, `${color}33`);
+      gradient.addColorStop(1, `${color}00`);
+      return {
+        label: s.name,
+        data: s.data,
+        borderColor: color,
+        backgroundColor: gradient,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: color,
+        pointHoverBorderColor: theme.tooltipText,
+        pointHoverBorderWidth: 2,
+        tension: 0.4,
+        cubicInterpolationMode: "monotone" as const,
+        hidden: hidden.has(s.userId),
+      };
+    });
 
     const yScale = {
       reverse: yReversed,
-      grid: { color: "#e6e4d4" },
+      border: { display: false },
+      grid: { color: theme.grid },
       ticks: {
-        color: "#9aa1a8",
+        color: theme.tick,
+        font: { family: theme.font, size: 11 },
         stepSize: yReversed ? 1 : undefined,
         precision: yReversed ? 0 : undefined,
       },
     };
+    const xScale = {
+      border: { display: false },
+      grid: { display: false },
+      ticks: { color: theme.tick, font: { family: theme.font, size: 11 }, maxRotation: 0, autoSkip: true },
+    };
 
     if (chartRef.current) {
-      chartRef.current.data = { labels, datasets };
-      chartRef.current.options.scales = { ...chartRef.current.options.scales, y: yScale };
+      chartRef.current.data = { labels: slicedLabels, datasets };
+      chartRef.current.options.scales = { x: xScale, y: yScale };
       chartRef.current.update();
     } else {
-      chartRef.current = new Chart(canvasRef.current, {
+      chartRef.current = new Chart(ctx, {
         type: "line",
-        data: { labels, datasets },
+        data: { labels: slicedLabels, datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -91,22 +157,22 @@ export default function TrendChart({
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: "#070707",
-              borderColor: "#e6e4d4",
-              borderWidth: 1,
-              titleColor: "#fffef1",
-              bodyColor: "#fffef1",
+              backgroundColor: theme.tooltipBg,
+              titleColor: theme.tooltipText,
+              bodyColor: theme.tooltipText,
+              titleFont: { family: theme.font, weight: 700 },
+              bodyFont: { family: theme.font },
               padding: 10,
+              cornerRadius: 8,
+              displayColors: true,
+              boxPadding: 4,
             },
           },
-          scales: {
-            x: { grid: { color: "#e6e4d4" }, ticks: { color: "#9aa1a8", maxRotation: 0, autoSkip: true } },
-            y: yScale,
-          },
+          scales: { x: xScale, y: yScale },
         },
       });
     }
-  }, [labels, series, hidden, yReversed]);
+  }, [slicedLabels, slicedSeries, hidden, yReversed, height]);
 
   useEffect(() => {
     return () => {
@@ -129,6 +195,18 @@ export default function TrendChart({
       <div className={styles.wrap} style={{ height }}>
         <canvas ref={canvasRef} />
       </div>
+      {labels.length > 1 && (
+        <div className={styles.sliderWrap}>
+          <RangeSlider
+            min={0}
+            max={labels.length - 1}
+            value={range}
+            onChange={setRange}
+            formatLabel={(i) => labels[i] ?? ""}
+            aria-label="Week range"
+          />
+        </div>
+      )}
       <div className={styles.legend}>
         {series.map((s, i) => (
           <button
