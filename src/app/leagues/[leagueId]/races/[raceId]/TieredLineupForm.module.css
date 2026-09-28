@@ -35,7 +35,17 @@
   }
 }
 
-.slot {
+/* button.slot (not just .slot): globals.css's `button[type="button"]` reset
+   has specificity (0,1,1) — one class-level attribute selector plus the
+   `button` element — which otherwise beats a bare `.slot` class (0,1,0)
+   outright and silently overwrites this rule's background/border/color with
+   its light theme-surface defaults. That's invisible on its own dashed
+   border, but it also flips these slots from this card's black background
+   to a near-white one, which then swallows the white-on-dark child text
+   (.placeholder/.tapHint) that assumes the black background. Same fix is
+   applied below to .slotFilled, .closeBtn, .removeBtn and .driverRow, which
+   have the identical problem. */
+button.slot {
   all: unset;
   box-sizing: border-box;
   width: 100%;
@@ -52,13 +62,85 @@
   text-align: left;
 }
 
-.slot:hover {
+button.slot:hover {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-.slot:focus-visible {
+button.slot:focus-visible {
   outline: 2px solid var(--tier-b);
   outline-offset: 2px;
+}
+
+button.slot.slotDropOk {
+  border-color: var(--success);
+  background: rgba(120, 220, 150, 0.18);
+}
+
+button.slot.slotDropNo {
+  border-color: var(--danger);
+  background: rgba(230, 90, 90, 0.14);
+}
+
+/* ---------- Driver pool (drag source) ---------- */
+
+.pool {
+  margin-bottom: var(--space-4);
+}
+
+.poolTierRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.poolTierRow .tierTag {
+  flex: none;
+}
+
+/* Driver names (e.g. "AJ Allmendinger") are wide enough that keeping the
+   tier tag beside the chip row leaves too little width for more than one
+   chip per line on a phone — stack the tag above instead, same as the
+   starter/bench slots already do, so 2+ chips fit per row. */
+@media (max-width: 480px) {
+  .poolTierRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1, 4px);
+  }
+}
+
+.poolChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-height: 34px;
+  align-items: center;
+}
+
+.poolEmpty {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-style: italic;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-pill);
+  padding: 5px 10px 5px 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.chip:active {
+  cursor: grabbing;
 }
 
 .tierTag {
@@ -84,7 +166,7 @@
   color: var(--tier-c);
 }
 
-.slotFilled {
+button.slot.slotFilled {
   border-style: solid;
   background: rgba(255, 255, 255, 0.14);
 }
@@ -227,7 +309,9 @@
   margin: 0;
 }
 
-.closeBtn {
+/* button.closeBtn / button.removeBtn: same globals.css button[type="button"]
+   specificity problem as button.slot above. */
+button.closeBtn {
   all: unset;
   width: 30px;
   height: 30px;
@@ -241,7 +325,7 @@
   flex: none;
 }
 
-.closeBtn:hover {
+button.closeBtn:hover {
   background: var(--bg-surface-muted);
 }
 
@@ -250,7 +334,7 @@
   flex: none;
 }
 
-.removeBtn {
+button.removeBtn {
   all: unset;
   cursor: pointer;
   font-size: 0.82rem;
@@ -258,7 +342,7 @@
   font-weight: 500;
 }
 
-.removeBtn:hover {
+button.removeBtn:hover {
   text-decoration: underline;
 }
 
@@ -293,7 +377,7 @@
   flex: 1 1 auto;
 }
 
-.driverRow {
+button.driverRow {
   all: unset;
   box-sizing: border-box;
   display: grid;
@@ -306,20 +390,20 @@
   cursor: pointer;
 }
 
-.driverRow:first-child {
+button.driverRow:first-child {
   border-top: none;
 }
 
-.driverRow:hover:not(:disabled) {
+button.driverRow:hover:not(:disabled) {
   background: var(--bg-surface-muted);
 }
 
-.driverRow:disabled {
+button.driverRow:disabled {
   cursor: not-allowed;
   opacity: 0.4;
 }
 
-.driverRowCurrent {
+button.driverRow.driverRowCurrent {
   background: var(--success-bg);
 }
 
