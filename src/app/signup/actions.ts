@@ -68,7 +68,7 @@ export async function signup(
     await signIn("credentials", {
       username: trimmedUsername,
       password,
-      redirectTo: "/",
+      redirectTo: "/welcome",
     });
   } catch (error) {
     // signIn() redirects on success by throwing a special Next.js redirect

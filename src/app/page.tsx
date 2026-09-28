@@ -12,6 +12,7 @@ import { computeSeasonPointsStandings } from "@/lib/seasonPoints";
 import { computePlayerSeasonStats, computeWeeklyTotals, ordinal, scoredRacesInOrder } from "@/lib/leagueStats";
 import { displayRaceName } from "@/lib/raceName";
 import { getCurrentSeason } from "@/lib/season";
+import { firstNameFor } from "@/lib/displayName";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +27,7 @@ export default async function Home() {
     redirect("/login");
   }
   const userId = session.user.id;
-  const displayName = session.user.name ?? session.user.email ?? "there";
-  const firstName = displayName.split(" ")[0];
+  const firstName = firstNameFor(session.user.name, session.user.email);
 
   const [memberships, season] = await Promise.all([
     prisma.leagueMembership.findMany({

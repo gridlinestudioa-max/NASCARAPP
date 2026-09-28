@@ -10,7 +10,7 @@ import NotificationsForm from "./NotificationsForm";
 import LeagueColorsForm from "./LeagueColorsForm";
 import AppearanceForm from "./AppearanceForm";
 import AvatarUploadForm from "./AvatarUploadForm";
-import InstallAppCard from "./InstallAppCard";
+import InstallAppCard from "@/components/install/InstallAppCard";
 
 export const dynamic = "force-dynamic";
 

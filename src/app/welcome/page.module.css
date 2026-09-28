@@ -1,0 +1,8 @@
+.sub {
+  color: var(--text-muted);
+  margin: 6px 0 var(--space-4);
+}
+
+.continue {
+  margin-top: var(--space-4);
+}

@@ -1,10 +1,20 @@
+/* flex + wrap (not the plain block default) so segments break onto a new
+   line as a whole unit once the row runs out of room — a long league name
+   or "Commissioner Tools" was otherwise staying on the same line as
+   whatever preceded it and running off the edge of a narrow viewport,
+   silently clipped by the sitewide overflow-x: hidden instead of wrapping
+   or scrolling into view. */
 .breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 2px;
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-bottom: var(--space-5);
 }
 
 .segment {
+  display: inline-flex;
   white-space: nowrap;
 }
 
