@@ -232,10 +232,15 @@ a:not([class]):hover {
   padding: 0.5em 1em;
   font-weight: 600;
   font-size: 0.82rem;
+  transition: opacity 0.15s ease, transform 0.1s ease;
 }
 
 .linkButton:hover {
   opacity: 0.85;
+}
+
+.linkButton:active {
+  transform: scale(0.97);
 }
 
 .linkButtonOutline {
@@ -248,10 +253,15 @@ a:not([class]):hover {
   padding: 0.5em 1em;
   font-weight: 600;
   font-size: 0.82rem;
+  transition: border-color 0.15s ease, transform 0.1s ease;
 }
 
 .linkButtonOutline:hover {
   border-color: var(--text-muted);
+}
+
+.linkButtonOutline:active {
+  transform: scale(0.97);
 }
 
 code {
@@ -294,8 +304,20 @@ p + p {
   border-radius: var(--radius-sm);
 }
 
+.rowList a {
+  transition: background-color 0.15s ease;
+}
+
+/* --bg-surface-muted currently equals --bg-surface exactly, and these rows
+   almost always sit directly on a Card (same --bg-surface background), so
+   this hover was rendering as a no-op — color-mix toward the ink color
+   instead so it's actually visible. */
 .rowList a:hover {
-  background: var(--bg-surface-muted);
+  background: color-mix(in oklab, var(--bg-surface) 94%, var(--text-primary));
+}
+
+.rowList a:active {
+  background: color-mix(in oklab, var(--bg-surface) 88%, var(--text-primary));
 }
 
 /* Driver name + DriverNumberBadge, used anywhere a driver's name is
@@ -344,6 +366,15 @@ textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+input[type="text"]:hover:not(:focus),
+input[type="email"]:hover:not(:focus),
+input[type="password"]:hover:not(:focus),
+input[type="number"]:hover:not(:focus),
+select:hover:not(:focus),
+textarea:hover:not(:focus) {
+  border-color: var(--color-slate);
+}
+
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
@@ -375,7 +406,16 @@ button {
   cursor: pointer;
   border-radius: var(--radius-btn);
   padding: 0.55em 1.3em;
-  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+/* Sitewide tap/press feedback — every button dips slightly on press and
+   springs back on release, so every clickable surface in the app confirms
+   a tap actually registered rather than just changing color a beat later.
+   :not(:disabled) so a disabled button (already visually inert via opacity
+   below) doesn't also look pressable. */
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 button:disabled {
@@ -401,6 +441,10 @@ button[type="button"] {
 
 button[type="button"]:hover:not(:disabled) {
   border-color: var(--color-slate);
+  /* --bg-surface-muted currently equals --bg-surface exactly (see its
+     definition above), so a hover tint has to actually mix toward the ink
+     color rather than reference that token, or this rule would be a no-op. */
+  background: color-mix(in oklab, var(--bg-surface) 94%, var(--text-primary));
 }
 
 /* ---------- Inline status messages ----------
@@ -463,8 +507,14 @@ td {
   vertical-align: middle;
 }
 
+tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Same --bg-surface-muted == --bg-surface no-op as .rowList above — tables
+   sit on a Card's --bg-surface background too. */
 tbody tr:hover {
-  background: var(--bg-surface-muted);
+  background: color-mix(in oklab, var(--bg-surface) 94%, var(--text-primary));
 }
 
 tbody tr:last-child td {
@@ -480,5 +530,21 @@ table input[type="number"] {
    markup — most forms are a flat list of label/input divs. */
 form > * + * {
   margin-top: var(--space-3);
+}
+
+/* ---------- Motion ----------
+   The hover/press micro-interactions added above (button/link/row/tab
+   transforms and color transitions) are all small and short, but anyone
+   with prefers-reduced-motion set gets them collapsed to effectively
+   instant anyway — the end state (pressed, hovered) still applies, just
+   without the animated transition getting there. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

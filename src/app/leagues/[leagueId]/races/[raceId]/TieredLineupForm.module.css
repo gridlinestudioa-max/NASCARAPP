@@ -87,6 +87,17 @@ button.slot.slotDropNo {
   margin-bottom: var(--space-4);
 }
 
+/* Dragging is mouse-only (see TieredLineupForm.tsx's HTML5Backend comment) —
+   below the site's mobile breakpoint (matches AppShell's sidebar/bottom-bar
+   switch) a pool of cards that don't respond to a touch drag would just be
+   confusing, so it's hidden entirely and the tap-to-open picker modal is the
+   only way to fill a slot. */
+@media (max-width: 760px) {
+  .pool {
+    display: none;
+  }
+}
+
 .poolTierRow {
   display: flex;
   align-items: center;
@@ -96,18 +107,6 @@ button.slot.slotDropNo {
 
 .poolTierRow .tierTag {
   flex: none;
-}
-
-/* Driver names (e.g. "AJ Allmendinger") are wide enough that keeping the
-   tier tag beside the chip row leaves too little width for more than one
-   chip per line on a phone — stack the tag above instead, same as the
-   starter/bench slots already do, so 2+ chips fit per row. */
-@media (max-width: 480px) {
-  .poolTierRow {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-1, 4px);
-  }
 }
 
 .poolChips {
@@ -216,6 +215,22 @@ button.slot.slotFilled {
 .tapHint {
   font-size: 0.73rem;
   color: rgba(255, 255, 255, 0.55);
+}
+
+/* Two copies of the hint text, one mentioning drag and one not — toggled by
+   the same breakpoint that hides .pool above, so the wording always matches
+   what's actually possible on the device rendering it. */
+.hintMobile {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .hintDesktop {
+    display: none;
+  }
+  .hintMobile {
+    display: inline;
+  }
 }
 
 .saveBar {

@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { TouchBackend } from "react-dnd-touch-backend";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import type { DriverTier, TieredLineupSlot } from "@/lib/tieredDraft";
 import { ItemTypes, type DriverDragItem } from "@/lib/dnd";
@@ -14,13 +14,14 @@ type DriverOption = { id: string; name: string; number: number | null; startsUse
 const TIER_LABEL: Record<DriverTier, string> = { A: "Tier A", B: "Tier B", C: "Tier C" };
 const TIER_CLASS: Record<DriverTier, string> = { A: styles.slotA, B: styles.slotB, C: styles.slotC };
 
-// TouchBackend with enableMouseEvents covers touch *and* mouse in one backend —
-// simpler than juggling HTML5Backend + TouchBackend behind a multi-backend
-// switch, and this app is mobile-first (most of its traffic is a phone), so a
-// backend that only worked with a mouse would leave the primary audience with
-// a picker that silently doesn't drag. Defined once at module scope so it's a
-// stable reference across renders.
-const dndBackendOptions = { enableMouseEvents: true };
+// HTML5Backend on purpose, not a touch backend: native HTML5 drag-and-drop
+// doesn't fire from a finger gesture on a phone, so this deliberately limits
+// dragging to mouse/trackpad (desktop) while leaving touch devices with only
+// the tap-to-open picker modal below — dragging a driver card with a thumb
+// fights the page's own scroll gesture, so tap is the better mobile
+// interaction rather than a lesser one. The driver pool itself is hidden on
+// mobile widths in the CSS (a pool of cards that don't respond to touch drag
+// would just be confusing) — see .pool's media query.
 
 export default function TieredLineupForm({
   leagueId,
@@ -133,7 +134,7 @@ export default function TieredLineupForm({
   const showPool = lockPhase === "open";
 
   return (
-    <DndProvider backend={TouchBackend} options={dndBackendOptions}>
+    <DndProvider backend={HTML5Backend}>
       <form action={formAction}>
         <input type="hidden" name="leagueId" value={leagueId} />
         <input type="hidden" name="raceId" value={raceId} />
@@ -391,12 +392,18 @@ function Slot({
             <DriverNumberBadge number={driver.number} name={driver.name} className={styles.driverBadge} />
             {driver.name}
           </span>
-          <span className={styles.tapHint}>{role === "STARTER" ? "Starter" : "Bench"} · drag or tap to change</span>
+          <span className={styles.tapHint}>
+            <span className={styles.hintDesktop}>{role === "STARTER" ? "Starter" : "Bench"} · drag or tap to change</span>
+            <span className={styles.hintMobile}>{role === "STARTER" ? "Starter" : "Bench"} · tap to change</span>
+          </span>
         </>
       ) : (
         <>
           <span className={styles.placeholder}>Empty {role === "STARTER" ? "starter" : "bench"} slot</span>
-          <span className={styles.tapHint}>Drag a driver here, or tap</span>
+          <span className={styles.tapHint}>
+            <span className={styles.hintDesktop}>Drag a driver here, or tap</span>
+            <span className={styles.hintMobile}>Tap to pick</span>
+          </span>
         </>
       )}
     </button>
