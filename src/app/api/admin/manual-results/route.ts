@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { applyParsedRaceData } from "@/lib/raceSync";
 import { displayRaceName } from "@/lib/raceName";
+import { sendManualResultsAppliedAlert } from "@/lib/email";
 import type { ParsedWeekendData } from "@/lib/nascarFeed";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +64,10 @@ type Body = {
   qualifying?: PositionRow[];
   stageResults?: { stageNumber: number; driverName: string; position: number }[];
   entries?: EntryRow[];
+  // Free text describing where the caller got this data (e.g. "NASCAR.com
+  // official results, cross-checked with Racing-Reference.info") — included
+  // in the confirmation email below so it's easy to spot-check.
+  source?: string;
 };
 
 function isResultRow(v: unknown): v is ResultRow {
@@ -146,5 +151,25 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return Response.json({ ok: false, error: result.error }, { status: 400 });
   }
+
+  // Sent here rather than expecting the caller to — the admin's email
+  // address is a server-side secret this route already has access to via
+  // ADMIN_EMAIL, and every caller of this endpoint (today's weekly
+  // web-search task, and anything else that ever posts to it) gets the
+  // same confirmation without needing to know it or hold its own
+  // mail-sending logic.
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (adminEmail) {
+    const race = await prisma.race.findUnique({ where: { id: body.raceId }, select: { week: true, trackName: true } });
+    if (race) {
+      await sendManualResultsAppliedAlert(adminEmail, {
+        week: race.week,
+        trackName: displayRaceName(race.trackName),
+        message: result.message,
+        source: typeof body.source === "string" ? body.source : undefined,
+      });
+    }
+  }
+
   return Response.json({ ok: true, message: result.message });
 }

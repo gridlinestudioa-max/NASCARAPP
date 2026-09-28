@@ -97,3 +97,29 @@ export async function sendSyncSuccessAlert(to: string, notable: string[]): Promi
     `,
   });
 }
+
+// Sent by POST /api/admin/manual-results itself (not by whatever posted to
+// it) so this fires regardless of what called the endpoint — the weekly
+// web-search backfill task today, potentially something else later —
+// without each caller needing to know the admin's email or hold its own
+// mail-sending logic.
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+export async function sendManualResultsAppliedAlert(
+  to: string,
+  params: { trackName: string; week: number; message: string; source?: string },
+): Promise<SendEmailResult> {
+  return sendEmail({
+    to,
+    subject: `Fantasy NASCAR HQ: results manually entered for Week ${params.week}`,
+    html: `
+      <p>Results were just posted for Week ${params.week} — ${escapeHtml(params.trackName)} — through the
+      manual-results endpoint (not the automatic NASCAR feed sync).</p>
+      <p>${escapeHtml(params.message)}</p>
+      ${params.source ? `<p><small>Source: ${escapeHtml(params.source)}</small></p>` : ""}
+      <p>Worth a quick double-check that these match the official results.</p>
+    `,
+  });
+}
