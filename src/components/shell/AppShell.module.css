@@ -371,14 +371,14 @@
     gap: 3px;
     background: transparent;
     border: none;
-    color: var(--text-muted);
+    color: var(--text-primary);
     text-decoration: none;
     font-family: inherit;
     cursor: pointer;
   }
 
   .bottomBarItemActive {
-    color: var(--text-primary);
+    color: var(--text-muted);
   }
 
   .bottomBarIcon {

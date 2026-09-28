@@ -110,33 +110,13 @@
 }
 
 @media (max-width: 760px) {
-  /* Stack identity above the leader block instead of floating the leader
-     block to the right — on a narrow card that right-alignment collided
-     with the left-aligned identity block and read as scattered. */
-  .topRow {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-3);
-  }
-
+  /* Stacking the leader block under identity (tried previously) still
+     read as a disconnected, floating element on a narrow card — dropped
+     entirely on mobile instead. Season Score/Rank below is what a member
+     actually needs at a glance; the League Leader stat is one tap away
+     on the Standings tab. */
   .leaderBlock {
-    align-items: stretch;
-    width: 100%;
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--border-color);
-  }
-
-  /* leaderInfo's DOM order is [text, avatar] (row on desktop reads
-     name/score before the avatar, right-aligned). Reversed here so the
-     avatar leads like .identity's avatar-then-name does, keeping both
-     rows in the same left-to-right visual pattern. */
-  .leaderInfo {
-    justify-content: space-between;
-    flex-direction: row-reverse;
-  }
-
-  .leaderText {
-    text-align: left;
+    display: none;
   }
 
   .stats {

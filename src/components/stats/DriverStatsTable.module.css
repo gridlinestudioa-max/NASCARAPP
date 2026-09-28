@@ -28,7 +28,7 @@
    near-white in dark mode and disappear against this light background. */
 .chaseRow,
 .chaseRow:hover {
-  background: #f7edcb;
+  background: #f2e0ac;
   color: #4a4220;
 }
 
@@ -265,11 +265,44 @@
   transform: rotate(180deg);
 }
 
+/* A distinct tinted strip (not just bare numbers under the header) with a
+   divider between each stat — reads as one deliberate panel instead of a
+   loose grid of digits. */
 .mobileDetail {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  padding: 0 14px 14px;
+  padding: 14px 10px 16px;
+  background: var(--bg-surface-muted);
+  border-top: 1px solid var(--border-color);
+}
+
+.mobileDetail > div {
+  text-align: center;
+  padding: 0 4px;
+}
+
+.mobileDetail > div + div {
+  border-left: 1px solid var(--border-color);
+}
+
+.mobileDetail .statValueSmall {
+  font-size: 1.05rem;
+}
+
+.mobileDetail .statLabel {
+  font-size: 0.62rem;
+  margin-top: 3px;
+}
+
+/* Keep the expanded panel reading as part of the same gold row instead of
+   a mismatched grey patch dropped into it. */
+.chaseRow .mobileDetail {
+  background: #ecdca0;
+  border-top-color: #e0c777;
+}
+
+.chaseRow .mobileDetail > div + div {
+  border-left-color: #e0c777;
 }
 
 @media (max-width: 480px) {

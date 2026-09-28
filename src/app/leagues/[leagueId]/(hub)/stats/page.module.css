@@ -76,6 +76,25 @@
   .mobileTabs {
     display: block;
   }
+
+  /* The mobile tab tables (Momentum, Consistency, Stage Points,
+     Diversity, Most Picked) are plain <table>s with 2-3 columns sized
+     to content — on a phone that content (driver badge + name, "Picked
+     most by" name, a numeric column) doesn't fit and the browser just
+     squeezes every column, wrapping/clipping headers and crowding cells
+     into each other. table-layout: fixed splits the width evenly and
+     lets every cell ellipsize instead. */
+  .mobileTabs .compactTable {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .mobileTabs .compactTable td,
+  .mobileTabs .compactTable th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 
@@ -126,10 +145,25 @@
   padding: 6px var(--space-3);
 }
 
+/* flex-shrink: 0 (not min-width: 0) — this holds the race icon + name.
+   With min-width: 0 the outer <li>'s flex-shrink math could crush this
+   whole box down past the icon's own size (the icon, protected by its
+   own flex-shrink: 0, then rendered at full size anyway and spilled out
+   over .raceRowRight — the "logos on top of each other" bug). Pinning
+   this side at its content size means .raceRowRight (which already
+   truncates its driver name via minmax(0, ...)) absorbs the shrinking
+   instead. max-width + min-width: 0 on .raceRowLabel below still let an
+   unusually long race name ellipsize on its own. */
 .raceRowMain {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-shrink: 0;
+  max-width: 52%;
+  min-width: 0;
+}
+
+.raceRowLabel {
   min-width: 0;
 }
 

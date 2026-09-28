@@ -152,18 +152,17 @@
     display: none;
   }
 
-  /* Score and rank sit in their own two right-hand columns (not a shared
-     grid area — a header/rank grid item can't overlap a scoreCell item)
-     so both end up flush right, next to each other, rather than score
-     pinned left and rank pinned right across the full row width. */
+  /* League name, score, and rank all share one row — score and rank sit
+     in their own two right-hand columns (not a shared grid area — a
+     league-name grid item can't overlap a scoreCell item) so both end up
+     flush right, next to each other, instead of a second row. */
   .tableRow {
     /* minmax(0, 1fr), not bare 1fr — see the .snapshotRow comment below
        for why a bare 1fr track can silently force overflow once its
        content (leagueName here) is nowrap + ellipsis. */
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "league league league"
-      ".      score  rank"
+      "league score rank"
       "action action action";
   }
 
@@ -189,6 +188,19 @@
 
   .tableRow > *:nth-child(4) {
     grid-area: rank;
+  }
+
+  /* Name, score, and rank now share one row — trim the avatar and the
+     gap in front of it a little so the name gets back some of the room
+     that cost it. */
+  .leagueCell {
+    gap: 8px;
+  }
+
+  .avatar,
+  .avatarImg {
+    width: 30px;
+    height: 30px;
   }
 
   .actionCell {
@@ -241,6 +253,18 @@
   gap: 10px;
   flex: 1;
   min-width: 0;
+}
+
+/* globals.css's `.rowList a` rule gives every anchor inside a rowList its
+   own var(--space-3) padding, meant for a link that fills its whole row.
+   Here the link is only the left portion of the row (the date/points sit
+   in a separate trailing span) — so on top of the <li>'s own space-3
+   padding, that second padding pass doubled the row's left inset. Zeroed
+   here (specificity: two classes beats globals.css's one class + tag) so
+   the row's content lines up with every other card on this page. */
+.rowList .scheduleRace,
+.rowList .driverCell {
+  padding: 0;
 }
 
 .raceName {
