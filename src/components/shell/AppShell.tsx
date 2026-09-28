@@ -307,7 +307,10 @@ export default function AppShell({
           Escape, or navigating. */}
       <nav className={styles.bottomBar} aria-label="Primary">
         {ESSENTIAL_NAV_ITEMS.map((item) => {
-          const active = isActivePath(pathname, item.href) && !activeLeagueId;
+          // A sheet being open takes over the active look entirely (see
+          // reference) — Home shouldn't still read as active while the
+          // More sheet is up over it.
+          const active = isActivePath(pathname, item.href) && !activeLeagueId && !mobileSheet;
           return (
             <Link
               key={item.href}
@@ -319,12 +322,14 @@ export default function AppShell({
             </Link>
           );
         })}
-        {/* Leagues/More never take the active look, even while a sheet is
-            open or a league route is active — only Home/Schedule/Stats
-            (real destinations) show which tab you're on. */}
+        {/* Leagues/More take the same active look (icon/label lit up, bar
+            above) whenever their own sheet is open — not tied to a route,
+            since opening the sheet is itself "being on that tab". */}
         <button
           type="button"
-          className={styles.bottomBarItem}
+          className={
+            mobileSheet === "leagues" ? `${styles.bottomBarItem} ${styles.bottomBarItemActive}` : styles.bottomBarItem
+          }
           onClick={() => setMobileSheet((s) => (s === "leagues" ? null : "leagues"))}
           aria-expanded={mobileSheet === "leagues"}
         >
@@ -333,7 +338,9 @@ export default function AppShell({
         </button>
         <button
           type="button"
-          className={styles.bottomBarItem}
+          className={
+            mobileSheet === "more" ? `${styles.bottomBarItem} ${styles.bottomBarItemActive}` : styles.bottomBarItem
+          }
           onClick={() => setMobileSheet((s) => (s === "more" ? null : "more"))}
           aria-expanded={mobileSheet === "more"}
         >
@@ -362,15 +369,14 @@ export default function AppShell({
           {leagues.length === 0 ? (
             <p className={styles.sheetEmpty}>You&apos;re not in any leagues yet.</p>
           ) : (
-            <nav className={styles.navGroup}>
+            <div className={styles.sheetGrid}>
               {leagues.map((league, i) => {
                 const active = league.id === activeLeagueId;
                 return (
                   <Link
                     key={league.id}
                     href={`/leagues/${league.id}`}
-                    className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
-                    style={{ justifyContent: "flex-start" }}
+                    className={active ? `${styles.sheetCard} ${styles.sheetCardActive}` : styles.sheetCard}
                   >
                     {league.iconUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element -- commissioner-pasted URL, not a static/local asset
@@ -381,11 +387,11 @@ export default function AppShell({
                         style={{ background: league.color ?? DOT_COLORS[i % DOT_COLORS.length] }}
                       />
                     )}
-                    <span className={styles.navLabel}>{league.name}</span>
+                    <span className={styles.sheetCardLabel}>{league.name}</span>
                   </Link>
                 );
               })}
-            </nav>
+            </div>
           )}
         </div>
       )}
@@ -398,30 +404,25 @@ export default function AppShell({
               {CLOSE_ICON}
             </button>
           </div>
-          <nav className={styles.navGroup}>
+          <div className={styles.sheetGrid}>
             {isAdmin && (
               <Link
                 href={ADMIN_NAV_ITEM.href}
                 className={
                   isActivePath(pathname, ADMIN_NAV_ITEM.href)
-                    ? `${styles.navLink} ${styles.navLinkActive}`
-                    : styles.navLink
+                    ? `${styles.sheetCard} ${styles.sheetCardActive}`
+                    : styles.sheetCard
                 }
-                style={{ justifyContent: "flex-start" }}
               >
-                <span className={styles.navIcon}>{ADMIN_NAV_ITEM.icon}</span>
-                <span className={styles.navLabel}>{ADMIN_NAV_ITEM.label}</span>
+                <span className={styles.sheetCardIcon}>{ADMIN_NAV_ITEM.icon}</span>
+                <span className={styles.sheetCardLabel}>{ADMIN_NAV_ITEM.label}</span>
               </Link>
             )}
-            <Link
-              href="/settings"
-              className={styles.settingsToggle}
-              style={{ justifyContent: "flex-start" }}
-            >
-              <span className={styles.navIcon}>{SETTINGS_ICON}</span>
-              <span className={styles.navLabel}>Settings</span>
+            <Link href="/settings" className={styles.sheetCard}>
+              <span className={styles.sheetCardIcon}>{SETTINGS_ICON}</span>
+              <span className={styles.sheetCardLabel}>Settings</span>
             </Link>
-          </nav>
+          </div>
           <div className={styles.userRow} style={{ justifyContent: "flex-start" }}>
             <span className={styles.avatar}>
               {user.avatarUrl ? (
