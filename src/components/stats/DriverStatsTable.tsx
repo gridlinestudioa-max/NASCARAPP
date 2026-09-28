@@ -5,6 +5,14 @@ import Modal, { ModalCloseButton } from "@/components/ui/Modal";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import styles from "./DriverStatsTable.module.css";
 
+function ChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export type DriverStatRow = {
   driverId: string;
   driverName: string;
@@ -31,8 +39,65 @@ export default function DriverStatsTable({
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const selected = drivers.find((d) => d.driverId === selectedId) ?? null;
 
+  // Mobile only (see .module.css) — the full table needs a horizontal
+  // swipe to see anything past points, which isn't great on a phone.
+  // This drives a separate points-only list where tapping a row expands
+  // an inline dropdown of the rest of that driver's stats in place,
+  // instead of the desktop table's swipe-to-see-more / tap-for-modal.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   return (
     <>
+      <div className={styles.mobileList}>
+        {drivers.map((d, i) => {
+          const expanded = expandedId === d.driverId;
+          return (
+            <div key={d.driverId} className={d.inChase ? `${styles.mobileRow} ${styles.chaseRow}` : styles.mobileRow}>
+              <button
+                type="button"
+                className={styles.mobileRowHead}
+                onClick={() => setExpandedId(expanded ? null : d.driverId)}
+                aria-expanded={expanded}
+              >
+                <span className={styles.rank}>{i + 1}</span>
+                <span className={styles.driverCell}>
+                  <DriverNumberBadge number={d.number} name={d.driverName} className={styles.avatar} />
+                  <span className={styles.driverName}>{d.driverName}</span>
+                </span>
+                <span className={styles.points}>{d.points.toLocaleString()}</span>
+                <span className={expanded ? `${styles.chevron} ${styles.chevronOpen}` : styles.chevron}>
+                  <ChevronIcon />
+                </span>
+              </button>
+              {expanded && (
+                <div className={styles.mobileDetail}>
+                  <div>
+                    <div className={styles.statValueSmall}>{d.races}</div>
+                    <div className={styles.statLabel}>Races</div>
+                  </div>
+                  <div>
+                    <div className={styles.statValueSmall}>{d.wins}</div>
+                    <div className={styles.statLabel}>Wins</div>
+                  </div>
+                  <div>
+                    <div className={styles.statValueSmall}>{d.top5}</div>
+                    <div className={styles.statLabel}>Top 5</div>
+                  </div>
+                  <div>
+                    <div className={styles.statValueSmall}>{d.top10}</div>
+                    <div className={styles.statLabel}>Top 10</div>
+                  </div>
+                  <div>
+                    <div className={styles.statValueSmall}>{d.avgFinish || "—"}</div>
+                    <div className={styles.statLabel}>Avg Finish</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       <div className={styles.tableWrap}>
         <table>
           <thead>
