@@ -306,9 +306,19 @@
    Card's own edge padding, pushing rows further right than the card's
    title (also zeroed; top/bottom/right stay for row spacing and the
    hover target). */
+/* globals.css's `.rowList a` also sets `justify-content: space-between`
+   and `gap: var(--space-3)` (12px) — beating .scheduleRace/.driverCell's
+   own gap:10px on specificity ((0,1,1) vs (0,1,0)). space-between then
+   spreads each row's leftover width (which varies row to row with the
+   trailing date/points text and .driverCell's own flex:1) unevenly
+   between the icon and the name instead of holding a fixed gap — the
+   icons visibly drifting left/right row to row. flex-start + an explicit
+   gap here, at high enough specificity to actually win, pins them. */
 ul.snapshotList a.scheduleRace,
 ul.snapshotList a.driverCell {
   padding: 0;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 ul.snapshotList > li {
