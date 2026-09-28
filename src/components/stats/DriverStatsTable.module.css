@@ -22,33 +22,6 @@
   cursor: pointer;
 }
 
-/* Fixed gold highlight, not theme-derived (like the other semantic/tier
-   accents in globals.css) — so its text color is fixed dark too, rather
-   than inheriting --text-primary/--text-muted, which would go
-   near-white in dark mode and disappear against this light background. */
-.chaseRow,
-.chaseRow:hover {
-  background: #f2e0ac;
-  color: #4a4220;
-}
-
-.chaseRow td {
-  border-bottom-color: #e6d9a0;
-}
-
-.chaseRow .team,
-.chaseRow .rank {
-  color: #8a7d3f;
-}
-
-/* .points normally uses --text-accent (theme-aware — see globals.css),
-   but inside a chase row that would flip to near-white in dark mode and
-   disappear against this row's always-light gold background, same as
-   the .team/.rank case above. */
-.chaseRow .points {
-  color: #4a4220;
-}
-
 .num {
   text-align: center;
 }
@@ -78,6 +51,25 @@
   letter-spacing: -0.02em;
   flex-shrink: 0;
   font-family: var(--font-heading);
+}
+
+/* Wraps the number badge so the chase-field dot can anchor to its corner
+   instead of needing its own layout slot. */
+.numberWrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.chaseDot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e3b23c;
+  border: 2px solid var(--bg-surface);
 }
 
 .driverName {
@@ -292,17 +284,6 @@
 .mobileDetail .statLabel {
   font-size: 0.62rem;
   margin-top: 3px;
-}
-
-/* Keep the expanded panel reading as part of the same gold row instead of
-   a mismatched grey patch dropped into it. */
-.chaseRow .mobileDetail {
-  background: #ecdca0;
-  border-top-color: #e0c777;
-}
-
-.chaseRow .mobileDetail > div + div {
-  border-left-color: #e0c777;
 }
 
 @media (max-width: 480px) {

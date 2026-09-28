@@ -82,6 +82,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* A flex item's default min-width is its content size, not 0 — without
+     this, a long name never actually shrinks to ellipsize; it just
+     forces .leagueCellText (and everything up the chain) wider instead. */
+  min-width: 0;
 }
 
 .muted {
@@ -118,6 +122,14 @@
   flex-shrink: 0;
 }
 
+/* On desktop, score and rank stay in their own two of the six table
+   columns — this wrapper only matters on mobile (below), where display:
+   contents keeps it invisible to the desktop grid so it doesn't collapse
+   those two columns into one. */
+.scoreRank {
+  display: contents;
+}
+
 .scoreCell {
   font-size: 0.88rem;
   font-weight: 600;
@@ -152,18 +164,23 @@
     display: none;
   }
 
-  /* League name, score, and rank all share one row — score and rank sit
-     in their own two right-hand columns (not a shared grid area — a
-     league-name grid item can't overlap a scoreCell item) so both end up
-     flush right, next to each other, instead of a second row. */
+  /* League name on the left, score stacked above rank on the right —
+     minmax(0, 1fr) (not bare 1fr, see the .snapshotRow comment below for
+     why) lets a long league name shrink and ellipsize instead of pushing
+     into the score/rank column. */
   .tableRow {
-    /* minmax(0, 1fr), not bare 1fr — see the .snapshotRow comment below
-       for why a bare 1fr track can silently force overflow once its
-       content (leagueName here) is nowrap + ellipsis. */
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "league score rank"
-      "action action action";
+      "league score"
+      "action action";
+  }
+
+  .scoreRank {
+    grid-area: score;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
   }
 
   .leagueCell {
@@ -182,12 +199,13 @@
     gap: 2px;
   }
 
-  .scoreCell {
-    grid-area: score;
-  }
-
-  .tableRow > *:nth-child(4) {
-    grid-area: rank;
+  /* align-items: flex-start above (needed so the commish badge doesn't
+     stretch full-width) also means .leagueName, as a column flex item,
+     sizes to its own content instead of the container's width — nothing
+     is left to ellipsize against. An explicit 100% width gives it that
+     bound back, without affecting the badge above it. */
+  .leagueName {
+    width: 100%;
   }
 
   /* Name, score, and rank now share one row — trim the avatar and the
@@ -255,16 +273,40 @@
   min-width: 0;
 }
 
-/* globals.css's `.rowList a` rule gives every anchor inside a rowList its
-   own var(--space-3) padding, meant for a link that fills its whole row.
-   Here the link is only the left portion of the row (the date/points sit
-   in a separate trailing span) — so on top of the <li>'s own space-3
-   padding, that second padding pass doubled the row's left inset. Zeroed
-   here (specificity: two classes beats globals.css's one class + tag) so
-   the row's content lines up with every other card on this page. */
-.rowList .scheduleRace,
-.rowList .driverCell {
+/* `.snapshotList` (plain local class, not `:global(.rowList)`) is what
+   actually matches here — CSS Modules hashes any bare `.rowList` token
+   written in *this* file into a name that never matches the literal
+   "rowList" class applied via className="rowList" in the JSX, so a rule
+   written as `.rowList ...` silently never fires no matter how it reads.
+   Stacking a type selector on top of `.snapshotList` (ul./a.) instead of
+   relying on class count alone guarantees this beats globals.css's
+   `.rowList a` / `.rowList > li` (each one class + one tag) regardless of
+   which stylesheet the cascade happens to load first — no !important.
+
+   Two layers of extra left padding compound here: globals.css gives every
+   anchor inside a rowList its own space-3 padding meant for a link that
+   fills its whole row (this link is only the left portion — zeroed), and
+   the <li> itself carries a second space-3 left inset on top of the
+   Card's own edge padding, pushing rows further right than the card's
+   title (also zeroed; top/bottom/right stay for row spacing and the
+   hover target). */
+ul.snapshotList a.scheduleRace,
+ul.snapshotList a.driverCell {
   padding: 0;
+}
+
+ul.snapshotList > li {
+  padding-left: 0;
+}
+
+/* Zeroing the row's own left padding above still leaves the Card's own
+   24px edge padding — noticeably more than the ~4px the "Upcoming
+   Schedule" / "Driver Points" title above it sits in from the card edge.
+   Pulling the list out by the difference (and letting its auto width
+   fill back in, since only margin-left moves) lines row content up with
+   the title instead of sitting visibly indented under it. */
+ul.snapshotList {
+  margin-left: calc(var(--space-1) - var(--space-5));
 }
 
 .raceName {

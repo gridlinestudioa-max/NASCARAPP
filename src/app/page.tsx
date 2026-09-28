@@ -107,7 +107,7 @@ function ScheduleSnapshot({
       {races.length === 0 ? (
         <p className={styles.empty}>No upcoming races scheduled.</p>
       ) : (
-        <ul className="rowList">
+        <ul className={`rowList ${styles.snapshotList}`}>
           {races.map((r) => (
             <li key={r.id}>
               <Link href={`/races/${r.id}`} className={styles.scheduleRace}>
@@ -141,7 +141,7 @@ function DriverPointsSnapshot({
       {standings.length === 0 ? (
         <p className={styles.empty}>No results scored yet this season.</p>
       ) : (
-        <ul className="rowList">
+        <ul className={`rowList ${styles.snapshotList}`}>
           {standings.map((s, i) => (
             <li key={s.driverId}>
               <Link href={`/stats?driver=${s.driverId}`} className={styles.driverCell}>
@@ -256,8 +256,10 @@ async function HomeDashboard({
               </span>
             </Link>
             <span className={styles.muted}>{row.memberCount}</span>
-            <span className={styles.scoreCell}>{row.score.toLocaleString()}</span>
-            <span className={styles.muted}>{row.rank ? ordinal(row.rank) : "—"}</span>
+            <span className={styles.scoreRank}>
+              <span className={styles.scoreCell}>{row.score.toLocaleString()}</span>
+              <span className={styles.muted}>{row.rank ? ordinal(row.rank) : "—"}</span>
+            </span>
             <span className={styles.lockedCell}>
               {row.lockedDrivers.length === 0 ? (
                 <span className={styles.muted}>—</span>
