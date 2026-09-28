@@ -95,6 +95,10 @@
   --space-6: 32px;
 
   --sidebar-width: 240px;
+  /* AppShell's fixed mobile bottom tab bar — a single source of truth so
+     the bar, its sheets, and the page content's clearance padding all
+     agree on where it sits without repeating the same number. */
+  --bottom-bar-height: 62px;
 }
 
 /* Dark mode — a per-viewer preference (see AppearanceForm on /settings),

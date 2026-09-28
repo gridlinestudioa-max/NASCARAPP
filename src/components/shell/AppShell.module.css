@@ -45,22 +45,15 @@
   transition: width 0.15s ease, padding 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
-.mobileTopRow {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
 .brandRow {
   display: flex;
   align-items: center;
   gap: 10px;
   border-radius: 12px;
   padding: 6px;
+  margin-bottom: 16px;
   text-decoration: none;
   color: inherit;
-  flex: 1;
-  min-width: 0;
 }
 
 .brandMark {
@@ -190,7 +183,7 @@
   flex-shrink: 0;
 }
 
-.sidebar .settingsToggle {
+.settingsToggle {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -204,7 +197,7 @@
   white-space: nowrap;
 }
 
-.sidebar .settingsToggle:hover {
+.settingsToggle:hover {
   background: var(--sb-active-bg);
   color: var(--sb-text);
 }
@@ -256,7 +249,7 @@
   color: var(--sb-text);
 }
 
-.sidebar .signOutButton {
+.signOutButton {
   background: transparent;
   border: none;
   color: var(--sb-text-faint);
@@ -266,22 +259,34 @@
   border-radius: 6px;
 }
 
-.sidebar .signOutButton:hover {
+.signOutButton:hover {
   color: var(--sb-text);
   background: var(--sb-active-bg);
 }
 
-.mobileMenuButton {
+.mobileBackdrop {
   display: none;
-  background: transparent;
-  border: none;
-  color: var(--sb-text);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
 }
 
-.mobileBackdrop {
+/* Fixed bottom tab bar — mobile only, see the media query below for its
+   actual layout. Defined here (rather than only inside the query) so the
+   class names exist even when the query doesn't apply, matching how the
+   rest of this file is organized. */
+.bottomBar {
+  display: none;
+}
+
+.bottomSheet {
+  /* Same --sb-* aliases .sidebar defines — the sheet reuses .navLink,
+     .sectionLabel, .userRow etc., which are all themed off these custom
+     properties, but the sheet is a sibling of .sidebar in the DOM, not a
+     descendant, so it never inherits them without redefining here too. */
+  --sb-bg: var(--bg-sidebar);
+  --sb-active-bg: var(--bg-sidebar);
+  --sb-text: var(--text-primary);
+  --sb-text-muted: var(--text-secondary);
+  --sb-text-faint: var(--text-muted);
+  --sb-divider: var(--border-color);
   display: none;
 }
 
@@ -322,48 +327,67 @@
     gap: var(--space-3);
   }
 
+  /* The old top sidebar/dropdown is fully replaced by the fixed bottom
+     bar below — nothing from the desktop hover-sidebar renders on mobile
+     at all any more. */
   .sidebarSlot {
-    width: 100% !important;
-    height: auto !important;
-    position: static !important;
-    z-index: 60;
+    display: none;
   }
 
   .content {
     margin-left: 0;
   }
 
-  /* Collapsed (default): just the compact top bar — brand mark + menu
-     button. Nothing else from the desktop sidebar renders here; a row of
-     bare icons with no room for labels was the whole problem this
-     replaces. Everything else only appears inside .mobileOpen below. */
-  .sidebar {
-    position: static !important;
-    width: 100% !important;
-    height: auto !important;
-    flex-direction: row !important;
-    align-items: center;
-    padding: var(--space-2) var(--space-3) !important;
-    border-radius: 14px;
-    box-shadow: var(--shadow-card) !important;
+  .contentInner {
+    padding: var(--space-4);
+    /* Clears the fixed bottom bar so its last row of content is never
+       hidden behind it. */
+    padding-bottom: calc(var(--bottom-bar-height) + var(--space-4));
   }
 
-  .brandText,
-  .sectionLabel,
-  .sectionRow,
-  .userInfo,
-  .navGroup,
-  .userRow {
-    display: none;
-  }
-
-  .mobileTopRow {
-    margin-bottom: 0;
-  }
-
-  .mobileMenuButton {
+  /* Fixed, always-visible, same shape whether a sheet is open or not —
+     the whole point versus the old hamburger dropdown, which replaced
+     itself entirely when opened. */
+  .bottomBar {
     display: flex;
-    margin-left: auto;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--bottom-bar-height);
+    background: var(--bg-sidebar);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -8px 24px -12px rgba(0, 0, 0, 0.25);
+    z-index: 60;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bottomBarItem {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .bottomBarItemActive {
+    color: var(--text-primary);
+  }
+
+  .bottomBarIcon {
+    display: flex;
+  }
+
+  .bottomBarLabel {
+    font-size: 0.65rem;
+    font-weight: 600;
   }
 
   .mobileBackdrop {
@@ -374,37 +398,70 @@
     z-index: 55;
   }
 
-  /* Open: the same bar becomes a full dropdown panel — column layout,
-     every section from the desktop hover-expanded sidebar, but reached by
-     a tap instead of a mouse hover that touch input can never trigger. */
-  .sidebar.mobileOpen {
-    flex-direction: column !important;
-    align-items: stretch;
-    position: fixed !important;
-    top: calc(var(--space-3) * 2 + 44px);
+  /* A sheet slides up from just above the bar — same idea as the bar
+     itself sitting bottom-justified, not a full-screen takeover. */
+  .bottomSheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
     left: var(--space-3);
     right: var(--space-3);
-    width: auto !important;
-    max-height: calc(100vh - var(--space-3) * 4 - 44px);
+    bottom: calc(var(--bottom-bar-height) + var(--space-3));
+    max-height: calc(100vh - var(--bottom-bar-height) - var(--space-3) * 3);
     overflow-y: auto;
-    padding: var(--space-3) !important;
-    box-shadow: var(--shadow-shell) !important;
+    background: var(--bg-sidebar);
+    border-radius: 16px;
+    padding: var(--space-3);
+    box-shadow: var(--shadow-shell);
+    z-index: 60;
   }
 
-  .sidebar.mobileOpen .brandText,
-  .sidebar.mobileOpen .sectionLabel,
-  .sidebar.mobileOpen .sectionRow,
-  .sidebar.mobileOpen .userInfo,
-  .sidebar.mobileOpen .navGroup,
-  .sidebar.mobileOpen .userRow {
+  .bottomSheetHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+    margin-bottom: 8px;
+  }
+
+  .bottomSheetHeader .sectionLabel {
+    margin-bottom: 0;
+  }
+
+  .bottomSheetHeaderActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sheetCloseButton {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
     display: flex;
   }
 
-  .sidebar.mobileOpen .mobileTopRow {
-    margin-bottom: 16px;
+  .sheetCloseButton:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-muted);
   }
 
-  .contentInner {
-    padding: var(--space-4);
+  .sheetEmpty {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    padding: 4px;
+  }
+
+  .bottomSheet .navGroup,
+  .bottomSheet .userRow {
+    margin-bottom: 0;
+  }
+
+  .bottomSheet .userRow {
+    margin-top: 12px;
+    padding-top: 12px;
   }
 }
