@@ -4,7 +4,8 @@ import {
   syncSeasonScheduleWithNascarFeed,
   syncPastRacesWithNascarFeed,
 } from "@/lib/raceSync";
-import { sendSyncFailureAlert } from "@/lib/email";
+import { sendSyncFailureAlert, sendSyncSuccessAlert } from "@/lib/email";
+import { displayRaceName } from "@/lib/raceName";
 import { isEntryListWindow } from "@/lib/nascarSyncSchedule";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +69,18 @@ async function maybeSendFailureAlert(failures: string[]): Promise<void> {
   await sendSyncFailureAlert(adminEmail, failures.join("\n\n"));
 }
 
+// No throttle table like maybeSendFailureAlert's, on purpose: unlike a
+// failure (which can repeat every tick for hours), each item in `notable`
+// is a one-time state transition (see the before/after comparison in GET
+// below) — it can only ever fire once per race per event, so there's
+// nothing to throttle.
+async function maybeSendSuccessAlert(notable: string[]): Promise<void> {
+  if (notable.length === 0) return;
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+  await sendSyncSuccessAlert(adminEmail, notable);
+}
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -97,6 +110,19 @@ export async function GET(request: Request) {
     const dueForEntries = isEntryListWindow(now);
     const dueForQualifying = msUntilStart > 0 && msUntilStart <= 12 * HOUR_MS;
     const dueForResults = msSinceStart >= 3 * HOUR_MS && msSinceStart <= 5 * HOUR_MS;
+
+    // A due window can stay open for hours (the entry-list window alone is
+    // 12 — see ENTRY_WINDOW_MINUTES) and this route ticks every ~15
+    // minutes, so "the sync ran and succeeded" is true on nearly every tick
+    // within it — not a one-time event worth an email on its own. What
+    // actually only happens once per race is *this* race's own
+    // lastSyncedAt going from unset to set (its entry list/qualifying/
+    // results were fetched for the first time) or its status flipping to
+    // COMPLETE (results just went final, which is also what makes driver
+    // points/standings accurate for it) — captured here before the sync
+    // call, compared against the fresh row after.
+    const wasSyncedBefore = race.lastSyncedAt != null;
+    const wasCompleteBefore = race.status === "COMPLETE";
 
     // Cheap (one extra fetch) and keeps every race's trackName/date/
     // nascarRaceId accurate site-wide — gated to the entry-list window so it
@@ -130,6 +156,27 @@ export async function GET(request: Request) {
     if (failures.length > 0) console.error(`[sync-nascar] ${failures.join(" | ")}`);
     await maybeSendFailureAlert(failures);
 
+    const notable: string[] = [];
+    const raceLabel = `Week ${race.week} — ${displayRaceName(race.trackName)}`;
+    if (raceResult?.ok) {
+      const fresh = await prisma.race.findUnique({
+        where: { id: race.id },
+        select: { status: true, lastSyncedAt: true },
+      });
+      if (fresh) {
+        if (!wasSyncedBefore && fresh.lastSyncedAt != null) {
+          notable.push(`${raceLabel}: entry list/qualifying data synced.`);
+        }
+        if (!wasCompleteBefore && fresh.status === "COMPLETE") {
+          notable.push(`${raceLabel}: results are final — driver points and standings are up to date.`);
+        }
+      }
+    }
+    if (backfillResult.ok && (backfillResult.syncedCount ?? 0) > 0) {
+      notable.push(`Backfilled ${backfillResult.syncedCount} past race(s) that hadn't been synced yet.`);
+    }
+    await maybeSendSuccessAlert(notable);
+
     return Response.json({
       raceId: race.id,
       week: race.week,
@@ -138,6 +185,7 @@ export async function GET(request: Request) {
       schedule: scheduleResult,
       backfill: backfillResult,
       race: raceResult,
+      notable,
     });
   } catch (cause) {
     const message = (cause as Error).message;

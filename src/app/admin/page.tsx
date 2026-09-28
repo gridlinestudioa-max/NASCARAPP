@@ -30,6 +30,8 @@ export default async function AdminDashboardPage() {
         <Link href="/admin/season-setup">Season setup (drivers, next year&apos;s schedule) &rarr;</Link>
         {" · "}
         <Link href="/admin/historical-import">Historical results import &rarr;</Link>
+        {" · "}
+        <Link href="/admin/drivers">Duplicate drivers &rarr;</Link>
       </p>
 
       <Card>

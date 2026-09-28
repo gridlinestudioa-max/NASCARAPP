@@ -82,3 +82,18 @@ export async function sendSyncFailureAlert(to: string, details: string): Promise
     `,
   });
 }
+
+// One email per notable event (an entry list landing, results going final,
+// a past-race backfill actually catching something up) — not one per cron
+// tick. The cron route only calls this when it detects a real state
+// transition, so this itself does no throttling of its own.
+export async function sendSyncSuccessAlert(to: string, notable: string[]): Promise<SendEmailResult> {
+  return sendEmail({
+    to,
+    subject: "Fantasy NASCAR HQ: new data synced",
+    html: `
+      <p>The automated NASCAR data sync just picked up something new:</p>
+      <ul>${notable.map((n) => `<li>${n}</li>`).join("")}</ul>
+    `,
+  });
+}

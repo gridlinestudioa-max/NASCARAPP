@@ -241,7 +241,10 @@ export async function applyRaceEntries(
 // transaction. Callers are responsible for their own authorization; this
 // function assumes the caller has already confirmed the requester is
 // allowed to sync this race.
-export type SyncResult = { ok: true; message: string } | { ok: false; error: string };
+// syncedCount is set only by syncPastRacesWithNascarFeed, where the cron
+// route needs the raw number (not the english message) to decide whether a
+// backfill actually caught anything up worth emailing about.
+export type SyncResult = { ok: true; message: string; syncedCount?: number } | { ok: false; error: string };
 
 export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult> {
   const race = await prisma.race.findUnique({ where: { id: raceId }, include: { season: true } });
@@ -527,5 +530,6 @@ export async function syncPastRacesWithNascarFeed(seasonId: string): Promise<Syn
   return {
     ok: true,
     message: `Backfilled ${synced.length} of ${totalRemaining} past races needing sync (batch of ${races.length}).${remainingNote}${failedNote}`,
+    syncedCount: synced.length,
   };
 }
