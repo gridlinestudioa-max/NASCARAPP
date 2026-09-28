@@ -86,6 +86,18 @@ const CLOSE_ICON = (
   </svg>
 );
 
+const LEAGUES_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M7 4h10v4a5 5 0 0 1-10 0V4z" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M8 21h8M12 17v4" strokeLinecap="round" />
+  </svg>
+);
+
 // var(--dot-N), not literal hex — a league with no explicit color (see
 // leagueColors.ts) falls back to this neutral grayscale rotation, and
 // unlike LEAGUE_COLOR_SWATCHES's saturated picks, #141414 read as
@@ -112,45 +124,42 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const [hovered, setHovered] = useState(false);
-  // Touch devices never fire the hover events above, which is exactly why
-  // the mobile nav used to be an unlabeled icon strip — mobileMenuOpen is a
-  // separate, tap-driven trigger for the same "expanded" (labels showing)
-  // layout, opening it as a dropdown panel instead of a hover-widened rail.
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const expanded = hovered || mobileMenuOpen;
+  const expanded = hovered;
 
-  // Close the dropdown after a navigation completes — it has no other way
-  // to close itself once a link inside it is tapped. This resets menu UI
-  // in response to a route change rather than deriving render output from
+  // Mobile only: which bottom sheet (if any) is open. The bottom bar
+  // itself never changes shape — unlike the old hamburger dropdown, tabs
+  // stay put; only a panel slides up above them. At most one open at a
+  // time, so a single nullable field (not two booleans) is the honest
+  // model of the state.
+  const [mobileSheet, setMobileSheet] = useState<"leagues" | "more" | null>(null);
+
+  // Close the sheet after a navigation completes — it has no other way to
+  // close itself once a link inside it is tapped. This resets menu UI in
+  // response to a route change rather than deriving render output from
   // props/state, so a plain effect (not useMemo) is the right tool; React
-  // bails out of the re-render itself when the value is already false.
+  // bails out of the re-render itself when the value is already null.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMobileMenuOpen(false);
+    setMobileSheet(null);
   }, [pathname]);
 
   useEffect(() => {
-    if (!mobileMenuOpen) return;
+    if (!mobileSheet) return;
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setMobileMenuOpen(false);
+      if (e.key === "Escape") setMobileSheet(null);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [mobileMenuOpen]);
+  }, [mobileSheet]);
 
   const activeLeagueId = pathname.match(/^\/leagues\/([^/]+)/)?.[1];
   const displayName = user.name ?? user.email;
 
   return (
     <div className={styles.shell}>
-      {/* Mobile only (see AppShell.module.css) — dims the page and closes
-          the dropdown on an outside tap, same as any standard menu. */}
-      {mobileMenuOpen && (
-        <div className={styles.mobileBackdrop} onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
-      )}
       <div className={styles.sidebarSlot}>
         <aside
-          className={mobileMenuOpen ? `${styles.sidebar} ${styles.mobileOpen}` : styles.sidebar}
+          className={styles.sidebar}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
@@ -161,48 +170,33 @@ export default function AppShell({
               : "0 20px 40px -14px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.1)",
           }}
         >
-          {/* Its own row-flex, independent of .sidebar's own flex-direction
-              (column once open on mobile) — brand + toggle stay side by
-              side as a header, with everything else stacking below them. */}
-          <div className={styles.mobileTopRow}>
-            <Link
-              href="/"
-              className={styles.brandRow}
-              style={{ justifyContent: expanded ? "flex-start" : "center" }}
-            >
-              <span className={styles.brandMark}>
-                {logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- admin-pasted URL, not a static/local asset
-                  <img src={logoUrl} alt="" className={styles.brandMarkImg} />
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M4 3v18M4 4h12l-2.5 3L16 10H4"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                )}
-              </span>
-              {expanded && (
-                <span className={styles.brandText}>
-                  <span className={styles.brandName}>Fantasy NASCAR HQ</span>
-                </span>
+          <Link
+            href="/"
+            className={styles.brandRow}
+            style={{ justifyContent: expanded ? "flex-start" : "center" }}
+          >
+            <span className={styles.brandMark}>
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- admin-pasted URL, not a static/local asset
+                <img src={logoUrl} alt="" className={styles.brandMarkImg} />
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M4 3v18M4 4h12l-2.5 3L16 10H4"
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
               )}
-            </Link>
-
-            <button
-              type="button"
-              className={styles.mobileMenuButton}
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? CLOSE_ICON : MENU_ICON}
-            </button>
-          </div>
+            </span>
+            {expanded && (
+              <span className={styles.brandText}>
+                <span className={styles.brandName}>Fantasy NASCAR HQ</span>
+              </span>
+            )}
+          </Link>
 
           {expanded && <div className={styles.sectionLabel}>Essentials</div>}
           <nav className={styles.navGroup}>
@@ -305,6 +299,151 @@ export default function AppShell({
           </div>
         </aside>
       </div>
+
+      {/* Mobile only (see AppShell.module.css) — a fixed bottom tab bar
+          that never itself changes shape, per the "real app" reference:
+          Home/Schedule/Stats are direct links; Leagues/More each open a
+          sheet that slides up above the bar, closed by its own backdrop,
+          Escape, or navigating. */}
+      <nav className={styles.bottomBar} aria-label="Primary">
+        {ESSENTIAL_NAV_ITEMS.map((item) => {
+          const active = isActivePath(pathname, item.href) && !activeLeagueId;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={active ? `${styles.bottomBarItem} ${styles.bottomBarItemActive}` : styles.bottomBarItem}
+            >
+              <span className={styles.bottomBarIcon}>{item.icon}</span>
+              <span className={styles.bottomBarLabel}>{item.label === "Driver Stats" ? "Stats" : item.label}</span>
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          className={
+            activeLeagueId || mobileSheet === "leagues"
+              ? `${styles.bottomBarItem} ${styles.bottomBarItemActive}`
+              : styles.bottomBarItem
+          }
+          onClick={() => setMobileSheet((s) => (s === "leagues" ? null : "leagues"))}
+          aria-expanded={mobileSheet === "leagues"}
+        >
+          <span className={styles.bottomBarIcon}>{LEAGUES_ICON}</span>
+          <span className={styles.bottomBarLabel}>Leagues</span>
+        </button>
+        <button
+          type="button"
+          className={mobileSheet === "more" ? `${styles.bottomBarItem} ${styles.bottomBarItemActive}` : styles.bottomBarItem}
+          onClick={() => setMobileSheet((s) => (s === "more" ? null : "more"))}
+          aria-expanded={mobileSheet === "more"}
+        >
+          <span className={styles.bottomBarIcon}>{MENU_ICON}</span>
+          <span className={styles.bottomBarLabel}>More</span>
+        </button>
+      </nav>
+
+      {mobileSheet && (
+        <div className={styles.mobileBackdrop} onClick={() => setMobileSheet(null)} aria-hidden="true" />
+      )}
+
+      {mobileSheet === "leagues" && (
+        <div className={styles.bottomSheet} role="dialog" aria-label="Leagues">
+          <div className={styles.bottomSheetHeader}>
+            <span className={styles.sectionLabel}>Leagues</span>
+            <div className={styles.bottomSheetHeaderActions}>
+              <Link href="/leagues/new" className={styles.sectionAction} aria-label="Create a league" title="Create a league">
+                {ADD_ICON}
+              </Link>
+              <button type="button" className={styles.sheetCloseButton} onClick={() => setMobileSheet(null)} aria-label="Close">
+                {CLOSE_ICON}
+              </button>
+            </div>
+          </div>
+          {leagues.length === 0 ? (
+            <p className={styles.sheetEmpty}>You&apos;re not in any leagues yet.</p>
+          ) : (
+            <nav className={styles.navGroup}>
+              {leagues.map((league, i) => {
+                const active = league.id === activeLeagueId;
+                return (
+                  <Link
+                    key={league.id}
+                    href={`/leagues/${league.id}`}
+                    className={active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+                    style={{ justifyContent: "flex-start" }}
+                  >
+                    {league.iconUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- commissioner-pasted URL, not a static/local asset
+                      <img src={league.iconUrl} alt="" className={styles.leagueIcon} />
+                    ) : (
+                      <span
+                        className={styles.leagueDot}
+                        style={{ background: league.color ?? DOT_COLORS[i % DOT_COLORS.length] }}
+                      />
+                    )}
+                    <span className={styles.navLabel}>{league.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+        </div>
+      )}
+
+      {mobileSheet === "more" && (
+        <div className={styles.bottomSheet} role="dialog" aria-label="More">
+          <div className={styles.bottomSheetHeader}>
+            <span className={styles.sectionLabel}>More</span>
+            <button type="button" className={styles.sheetCloseButton} onClick={() => setMobileSheet(null)} aria-label="Close">
+              {CLOSE_ICON}
+            </button>
+          </div>
+          <nav className={styles.navGroup}>
+            {isAdmin && (
+              <Link
+                href={ADMIN_NAV_ITEM.href}
+                className={
+                  isActivePath(pathname, ADMIN_NAV_ITEM.href)
+                    ? `${styles.navLink} ${styles.navLinkActive}`
+                    : styles.navLink
+                }
+                style={{ justifyContent: "flex-start" }}
+              >
+                <span className={styles.navIcon}>{ADMIN_NAV_ITEM.icon}</span>
+                <span className={styles.navLabel}>{ADMIN_NAV_ITEM.label}</span>
+              </Link>
+            )}
+            <Link
+              href="/settings"
+              className={styles.settingsToggle}
+              style={{ justifyContent: "flex-start" }}
+            >
+              <span className={styles.navIcon}>{SETTINGS_ICON}</span>
+              <span className={styles.navLabel}>Settings</span>
+            </Link>
+          </nav>
+          <div className={styles.userRow} style={{ justifyContent: "flex-start" }}>
+            <span className={styles.avatar}>
+              {user.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- arbitrary uploaded Vercel Blob URL, not a static/local asset
+                <img src={user.avatarUrl} alt="" className={styles.avatarImg} />
+              ) : (
+                (displayName || "?").charAt(0).toUpperCase()
+              )}
+            </span>
+            <span className={styles.userInfo}>
+              <span className={styles.userName}>{displayName}</span>
+            </span>
+            <form action={signOutAction}>
+              <button type="submit" className={styles.signOutButton} aria-label="Sign out" title="Sign out">
+                {SIGN_OUT_ICON}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className={styles.content}>
         <div className={styles.contentInner}>{children}</div>
       </div>
