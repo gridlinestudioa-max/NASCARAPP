@@ -6,6 +6,13 @@
   overflow-x: auto;
 }
 
+/* Points-only list with a per-row dropdown — mobile only, see the media
+   query at the bottom of this file. Swaps in for .tableWrap there, which
+   needed a horizontal swipe to see anything past a driver's name. */
+.mobileList {
+  display: none;
+}
+
 .tableWrap table {
   margin: 0;
   min-width: 640px;
@@ -214,4 +221,74 @@
   margin-top: 2px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+/* ---------- Mobile points-only list ---------- */
+
+.mobileRow + .mobileRow {
+  border-top: 1px solid var(--border-color);
+}
+
+.mobileRowHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mobileRowHead .driverCell {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobileRowHead .driverName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.mobileDetail {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+@media (max-width: 480px) {
+  .mobileDetail {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .tableWrap {
+    display: none;
+  }
+
+  .mobileList {
+    display: block;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: calc(var(--radius) + 2px);
+    box-shadow: 0 1px 2px rgba(7, 7, 7, 0.04), 0 8px 24px rgba(7, 7, 7, 0.05);
+    overflow: hidden;
+  }
 }
