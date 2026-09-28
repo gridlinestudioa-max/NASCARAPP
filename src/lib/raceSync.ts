@@ -20,6 +20,7 @@ import {
   matchByNameAndDate,
   matchScheduleEntry,
   parseWeekendData,
+  type ParsedWeekendData,
 } from "@/lib/nascarFeed";
 import { refreshAutoTiersIfDue } from "@/lib/tierRanking";
 import { sendResultsPostedEmail } from "@/lib/email";
@@ -246,43 +247,16 @@ export async function applyRaceEntries(
 // backfill actually caught anything up worth emailing about.
 export type SyncResult = { ok: true; message: string; syncedCount?: number } | { ok: false; error: string };
 
-export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult> {
+// The part of syncRaceWithNascarFeed that doesn't care where the parsed
+// data came from — shared with the manual-results endpoint (see
+// src/app/api/admin/manual-results/route.ts), which builds a
+// ParsedWeekendData-shaped payload from a web search instead of the NASCAR
+// feed for weeks the feed's own sync didn't catch. Same transaction, same
+// tier refresh, same results-posted email either way.
+export async function applyParsedRaceData(raceId: string, parsed: ParsedWeekendData): Promise<SyncResult> {
   const race = await prisma.race.findUnique({ where: { id: raceId }, include: { season: true } });
   if (!race) {
     return { ok: false, error: "Race not found." };
-  }
-
-  let nascarRaceId = race.nascarRaceId;
-  if (!nascarRaceId) {
-    let scheduleList;
-    try {
-      scheduleList = await fetchSeasonRaceList(race.season.year);
-    } catch (cause) {
-      return { ok: false, error: `Couldn't reach NASCAR's schedule feed: ${(cause as Error).message}` };
-    }
-    const candidates = scheduleList.filter((r) => r.series_id === race.nascarSeriesId);
-    const match = matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
-    if (!match) {
-      return {
-        ok: false,
-        error:
-          "Couldn't automatically match this race to a NASCAR schedule entry (track name or date didn't line up with exactly one candidate).",
-      };
-    }
-    nascarRaceId = match.race_id;
-    await prisma.race.update({ where: { id: raceId }, data: { nascarRaceId } });
-  }
-
-  let weekend;
-  try {
-    weekend = await fetchWeekendFeed(race.season.year, race.nascarSeriesId, nascarRaceId);
-  } catch (cause) {
-    return { ok: false, error: `Couldn't reach NASCAR's race feed: ${(cause as Error).message}` };
-  }
-
-  const parsed = parseWeekendData(weekend);
-  if (!parsed) {
-    return { ok: false, error: "NASCAR hasn't published data for this race yet." };
   }
 
   await prisma.$transaction(async (tx) => {
@@ -371,6 +345,48 @@ export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult
     ok: true,
     message: `Synced: ${parsed.entries.length} entries, ${parsed.qualifying.length} qualifying positions, ${parsed.results.length} results, ${parsed.stageResults.length} stage results.`,
   };
+}
+
+export async function syncRaceWithNascarFeed(raceId: string): Promise<SyncResult> {
+  const race = await prisma.race.findUnique({ where: { id: raceId }, include: { season: true } });
+  if (!race) {
+    return { ok: false, error: "Race not found." };
+  }
+
+  let nascarRaceId = race.nascarRaceId;
+  if (!nascarRaceId) {
+    let scheduleList;
+    try {
+      scheduleList = await fetchSeasonRaceList(race.season.year);
+    } catch (cause) {
+      return { ok: false, error: `Couldn't reach NASCAR's schedule feed: ${(cause as Error).message}` };
+    }
+    const candidates = scheduleList.filter((r) => r.series_id === race.nascarSeriesId);
+    const match = matchScheduleEntry({ trackName: race.trackName, date: race.date }, candidates);
+    if (!match) {
+      return {
+        ok: false,
+        error:
+          "Couldn't automatically match this race to a NASCAR schedule entry (track name or date didn't line up with exactly one candidate).",
+      };
+    }
+    nascarRaceId = match.race_id;
+    await prisma.race.update({ where: { id: raceId }, data: { nascarRaceId } });
+  }
+
+  let weekend;
+  try {
+    weekend = await fetchWeekendFeed(race.season.year, race.nascarSeriesId, nascarRaceId);
+  } catch (cause) {
+    return { ok: false, error: `Couldn't reach NASCAR's race feed: ${(cause as Error).message}` };
+  }
+
+  const parsed = parseWeekendData(weekend);
+  if (!parsed) {
+    return { ok: false, error: "NASCAR hasn't published data for this race yet." };
+  }
+
+  return applyParsedRaceData(raceId, parsed);
 }
 
 // One-time (or re-runnable) backfill: matches every race in a season to
