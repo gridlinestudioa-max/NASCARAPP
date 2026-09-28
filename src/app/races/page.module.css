@@ -118,6 +118,16 @@
   flex-shrink: 0;
 }
 
+.statusDot {
+  display: none;
+}
+
+.statusBadges {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .dateLabel {
   font-size: 0.9rem;
   font-weight: 700;
@@ -126,9 +136,40 @@
   text-align: right;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
+  .raceRow {
+    padding: 12px 14px;
+    gap: var(--space-3);
+  }
+
+  .weekChip {
+    width: 28px;
+    height: 28px;
+    font-size: 0.72rem;
+  }
+
+  /* !important — RaceLogo sets width/height as an inline style from its
+     `size` prop, which a plain class rule can't outweigh. */
+  .raceLogo {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
   .raceInfo {
-    min-width: 100px;
+    min-width: 60px;
+  }
+
+  .statusDot {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .statusBadges {
+    display: none;
+  }
+
+  .raceMeta {
+    gap: 8px;
   }
 
   .dateLabel {

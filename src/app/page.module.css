@@ -93,6 +93,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.driverName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .driverBadge {
@@ -138,21 +147,40 @@
   justify-content: flex-end;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .tableHead {
     display: none;
   }
 
+  /* Score and rank sit in their own two right-hand columns (not a shared
+     grid area — a header/rank grid item can't overlap a scoreCell item)
+     so both end up flush right, next to each other, rather than score
+     pinned left and rank pinned right across the full row width. */
   .tableRow {
-    grid-template-columns: 1fr auto;
+    /* minmax(0, 1fr), not bare 1fr — see the .snapshotRow comment below
+       for why a bare 1fr track can silently force overflow once its
+       content (leagueName here) is nowrap + ellipsis. */
+    grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "league league"
-      "score rank"
-      "action action";
+      "league league league"
+      ".      score  rank"
+      "action action action";
   }
 
   .leagueCell {
     grid-area: league;
+  }
+
+  /* The commish badge used to sit inline after the name, on already-tight
+     mobile width, and won them ellipsis away most of it. column-reverse
+     (not swapping the JSX order, which would also reorder the desktop
+     inline reading order "Name Badge") puts whichever renders last in the
+     DOM — the badge — visually first, above the name, without touching
+     markup shared with the desktop layout. */
+  .leagueCellText {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 2px;
   }
 
   .scoreCell {
@@ -161,7 +189,6 @@
 
   .tableRow > *:nth-child(4) {
     grid-area: rank;
-    text-align: right;
   }
 
   .actionCell {
@@ -183,13 +210,20 @@
 
 .snapshotRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr), not bare 1fr — a bare 1fr track's minimum width is
+     "auto" (its content's min-content size), and the nowrap+ellipsis race/
+     driver names below have a min-content size equal to their full
+     unwrapped text width. Without the 0 floor, that intrinsic size
+     propagates up through the grid and forces the whole card wider than
+     the viewport, silently clipped by .content's overflow: hidden rather
+     than scrolling or wrapping. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-4);
 }
 
 @media (max-width: 760px) {
   .snapshotRow {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -205,6 +239,15 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.raceName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .weekChip {
