@@ -40,10 +40,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fantasy NASCAR HQ",
+  title: "FindTheGroove",
   description: "Pick'em and Tiered Draft fantasy NASCAR leagues.",
   appleWebApp: {
-    title: "NASCAR HQ",
+    title: "FTG",
     statusBarStyle: "black-translucent",
   },
 };

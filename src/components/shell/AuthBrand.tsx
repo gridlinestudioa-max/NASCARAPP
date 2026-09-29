@@ -1,18 +1,16 @@
 import styles from "./AuthBrand.module.css";
 
+// Both theme variants always render; CSS shows only the one matching the
+// live data-theme (see AppShell.module.css's brandLogoDark/Light — same
+// swap pattern, kept in sync here rather than shared since this is the
+// only other place a themed brand asset appears).
 export default function AuthBrand() {
   return (
     <div className={styles.brand}>
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-        <path
-          d="M4 3v18M4 4h12l-2.5 3L16 10H4"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      </svg>
-      Fantasy NASCAR HQ
+      {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+      <img src="/brand/ftg-wordmark-dark.svg" alt="FindTheGroove" className={`${styles.wordmark} ${styles.dark}`} />
+      {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+      <img src="/brand/ftg-wordmark-light.svg" alt="FindTheGroove" className={`${styles.wordmark} ${styles.light}`} />
     </div>
   );
 }

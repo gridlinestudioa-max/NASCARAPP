@@ -529,7 +529,7 @@ export default function LeagueRulesForm({
                 className={styles.presetButton}
                 onClick={() => applyPreset(PRESETS.ourDefault)}
               >
-                Fantasy NASCAR HQ Points
+                FTG Points
               </button>
               <button
                 type="button"

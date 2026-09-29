@@ -7,8 +7,8 @@ import type { MetadataRoute } from "next";
 // since a manifest needs concrete pixel sizes it can point a URL at.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Fantasy NASCAR HQ",
-    short_name: "NASCAR HQ",
+    name: "FindTheGroove",
+    short_name: "FTG",
     description: "Pick'em and Tiered Draft fantasy NASCAR leagues.",
     start_url: "/",
     display: "standalone",

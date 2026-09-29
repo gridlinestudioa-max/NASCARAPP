@@ -359,13 +359,17 @@ a:not([class]):hover {
     transform 0.1s ease;
 }
 
+/* Same solid dark/white treatment as the sitewide button[type="button"]
+   rule above (see its comment) — a transparent + --border-strong outline
+   didn't read as a real edge on a dark page, so this is a solid
+   --text-primary fill instead, same as any other non-yellow button. */
 .linkButtonOutline {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
+  background: var(--text-primary);
+  color: var(--bg-app);
+  border: 1px solid var(--text-primary);
   clip-path: var(--slant-8);
   padding: 0.6em 1.3em;
   font-family: var(--font-heading);
@@ -381,9 +385,9 @@ a:not([class]):hover {
 }
 
 .linkButtonOutline:hover {
-  background: var(--text-primary);
+  background: color-mix(in oklab, var(--text-primary) 85%, var(--accent) 15%);
   color: var(--bg-app);
-  border-color: var(--text-primary);
+  border-color: color-mix(in oklab, var(--text-primary) 85%, var(--accent) 15%);
   transform: scale(1.1);
   transition:
     background 0.15s ease,
@@ -621,16 +625,26 @@ button:disabled {
   border-color: var(--accent);
 }
 
+/* Every non-yellow button used to be transparent with a --border-strong
+   outline — on a dark page that border read as a faint, slightly-off
+   grey line rather than a deliberate button edge. Solid fill instead:
+   --text-primary as the background is already the theme's own "ink"
+   color (near-white on the dark default, near-black on the light
+   variant), so this reads as a proper dark/white secondary button in
+   either mode with no separate light/dark-mode CSS needed. */
 :where(button[type="button"]) {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
-}
-
-:where(button[type="button"]:hover:not(:disabled)) {
   background: var(--text-primary);
   color: var(--bg-surface);
-  border-color: var(--text-primary);
+  border: 1px solid var(--text-primary);
+}
+
+/* A warm shift toward the accent color (rather than the old approach of
+   inverting back to an outline) — enough to read as "hovering", without
+   implying this is now a primary/CTA button. */
+:where(button[type="button"]:hover:not(:disabled)) {
+  background: color-mix(in oklab, var(--text-primary) 85%, var(--accent) 15%);
+  color: var(--bg-surface);
+  border-color: color-mix(in oklab, var(--text-primary) 85%, var(--accent) 15%);
 }
 
 /* ---------- Inline status messages ----------

@@ -48,7 +48,7 @@ export default async function SettingsPage() {
 
         <Card title="Install App">
           <p>
-            <small>Add Fantasy NASCAR HQ to your home screen for a full-screen, app-like experience.</small>
+            <small>Add FindTheGroove to your home screen for a full-screen, app-like experience.</small>
           </p>
           <InstallAppCard />
         </Card>
