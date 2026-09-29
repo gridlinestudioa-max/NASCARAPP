@@ -213,7 +213,7 @@ export default async function LeagueTabPage(props: {
         </Card>
       )}
 
-      <Card title="Full Score Matrix" className={styles.matrixCard}>
+      <Card title="Full Score Matrix" className={styles.matrixCard} wide>
         {leagueSeasons.length > 1 && (
           <div className={styles.yearTabs}>
             {leagueSeasons.map((ls) => (
