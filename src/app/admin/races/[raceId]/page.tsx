@@ -10,12 +10,20 @@ import ScheduleEditForm from "./ScheduleEditForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminRacePage(props: PageProps<"/admin/races/[raceId]">) {
+export default async function AdminRacePage(
+  props: PageProps<"/admin/races/[raceId]">,
+) {
   const { raceId } = await props.params;
 
   const race = await prisma.race.findUnique({
     where: { id: raceId },
-    include: { season: true, results: { include: { driver: true }, orderBy: { finishingPosition: "asc" } } },
+    include: {
+      season: true,
+      results: {
+        include: { driver: true },
+        orderBy: { finishingPosition: "asc" },
+      },
+    },
   });
   if (!race) {
     notFound();
@@ -23,7 +31,12 @@ export default async function AdminRacePage(props: PageProps<"/admin/races/[race
 
   return (
     <main>
-      <Breadcrumb items={[{ label: "Admin", href: "/admin" }, { label: displayRaceName(race.trackName) }]} />
+      <Breadcrumb
+        items={[
+          { label: "Admin", href: "/admin" },
+          { label: displayRaceName(race.trackName) },
+        ]}
+      />
       <h1>
         Week {race.week} — {displayRaceName(race.trackName)}
       </h1>
@@ -35,14 +48,27 @@ export default async function AdminRacePage(props: PageProps<"/admin/races/[race
 
       <CardGrid>
         <Card title="Schedule">
-          <ScheduleEditForm raceId={raceId} trackName={race.trackName} date={race.date.toISOString().slice(0, 10)} />
+          <ScheduleEditForm
+            raceId={raceId}
+            trackName={race.trackName}
+            date={race.date.toISOString().slice(0, 10)}
+          />
         </Card>
 
         <Card title="Race data">
           <p>
-            <Link href={`/admin/races/${raceId}/entries`}>Enter entry list</Link> ·{" "}
-            <Link href={`/admin/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
-            <Link href={`/admin/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
+            <Link href={`/admin/races/${raceId}/entries`}>
+              Enter entry list
+            </Link>{" "}
+            ·{" "}
+            <Link href={`/admin/races/${raceId}/tiers`}>
+              Assign weekly tiers
+            </Link>{" "}
+            ·{" "}
+            <Link href={`/admin/races/${raceId}/qualifying`}>
+              Enter qualifying results
+            </Link>{" "}
+            ·{" "}
             <Link href={`/admin/races/${raceId}/results`}>
               {race.results.length > 0 ? "Edit results" : "Enter results"}
             </Link>
@@ -54,28 +80,36 @@ export default async function AdminRacePage(props: PageProps<"/admin/races/[race
         {race.results.length === 0 ? (
           <p>Results haven&apos;t been entered for this race yet.</p>
         ) : (
-          <table>
-            <caption>Only drivers picked in at least one league — not the full field.</caption>
-            <thead>
-              <tr>
-                <th>Finish</th>
-                <th>Driver</th>
-              </tr>
-            </thead>
-            <tbody>
-              {race.results.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.finishingPosition}</td>
-                  <td>
-                    <span className="driverCell">
-                      <DriverNumberBadge number={r.driver.number} name={r.driver.name} className="driverBadge" />
-                      {r.driver.name}
-                    </span>
-                  </td>
+          <div className="tableScroll">
+            <table>
+              <caption>
+                Only drivers picked in at least one league — not the full field.
+              </caption>
+              <thead>
+                <tr>
+                  <th>Finish</th>
+                  <th>Driver</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {race.results.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.finishingPosition}</td>
+                    <td>
+                      <span className="driverCell">
+                        <DriverNumberBadge
+                          number={r.driver.number}
+                          name={r.driver.name}
+                          className="driverBadge"
+                        />
+                        {r.driver.name}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
     </main>

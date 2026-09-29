@@ -4,12 +4,19 @@ import Card from "@/components/ui/Card";
 import CardGrid from "@/components/ui/CardGrid";
 import UserAvatar from "@/components/ui/UserAvatar";
 import StandingsTrendChart from "@/components/league/StandingsTrendChart";
-import { computeWeeklyTotals, scoredRacesInOrder, computePlayerSeasonStats, computeTrendSeries } from "@/lib/leagueStats";
+import {
+  computeWeeklyTotals,
+  scoredRacesInOrder,
+  computePlayerSeasonStats,
+  computeTrendSeries,
+} from "@/lib/leagueStats";
 import { getLeagueHubData } from "../leagueData";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeagueStandingsPage(props: { params: Promise<{ leagueId: string }> }) {
+export default async function LeagueStandingsPage(props: {
+  params: Promise<{ leagueId: string }>;
+}) {
   const { leagueId } = await props.params;
 
   const session = await auth();
@@ -24,52 +31,91 @@ export default async function LeagueStandingsPage(props: { params: Promise<{ lea
 
   const { standings, races, members, picks } = data;
 
-  const avatarByUserId = new Map(members.map((m) => [m.userId, m.user.avatarUrl]));
+  const avatarByUserId = new Map(
+    members.map((m) => [m.userId, m.user.avatarUrl]),
+  );
 
   const weekly = computeWeeklyTotals(races, picks);
   const scoredRaces = scoredRacesInOrder(races, weekly);
-  const playerStats = computePlayerSeasonStats(members, scoredRaces, weekly, picks);
+  const playerStats = computePlayerSeasonStats(
+    members,
+    scoredRaces,
+    weekly,
+    picks,
+  );
   const statsByUserId = new Map(playerStats.map((p) => [p.userId, p]));
   const trend = computeTrendSeries(members, scoredRaces, weekly);
 
   return (
     <CardGrid>
       <Card title="Standings">
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Player</th>
-              <th>Total</th>
-              <th>Diff</th>
-            </tr>
-          </thead>
-          <tbody>
-            {standings.map((s, i) => {
-              const stats = statsByUserId.get(s.userId);
-              return (
-                <tr key={s.userId} style={s.userId === session.user.id ? { fontWeight: 700 } : undefined}>
-                  <td>{i + 1}</td>
-                  <td>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                      <UserAvatar name={s.name} avatarUrl={avatarByUserId.get(s.userId)} />
-                      {s.name}
-                    </span>
-                  </td>
-                  <td style={{ fontWeight: 800, fontFamily: "var(--font-heading)", color: "var(--accent)" }}>
-                    {s.total}
-                  </td>
-                  <td>{!stats || stats.diffToLeader === 0 ? "Leader" : `+${stats.diffToLeader}`}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="tableScroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Total</th>
+                <th>Diff</th>
+              </tr>
+            </thead>
+            <tbody>
+              {standings.map((s, i) => {
+                const stats = statsByUserId.get(s.userId);
+                return (
+                  <tr
+                    key={s.userId}
+                    style={
+                      s.userId === session.user.id
+                        ? { fontWeight: 700 }
+                        : undefined
+                    }
+                  >
+                    <td>{i + 1}</td>
+                    <td>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <UserAvatar
+                          name={s.name}
+                          avatarUrl={avatarByUserId.get(s.userId)}
+                        />
+                        {s.name}
+                      </span>
+                    </td>
+                    <td
+                      style={{
+                        fontWeight: 800,
+                        fontFamily: "var(--font-heading)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {s.total}
+                    </td>
+                    <td>
+                      {!stats || stats.diffToLeader === 0
+                        ? "Leader"
+                        : `+${stats.diffToLeader}`}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {scoredRaces.length > 0 && (
         <Card title="Trend">
-          <StandingsTrendChart labels={trend.labels} places={trend.places} diffs={trend.diffs} />
+          <StandingsTrendChart
+            labels={trend.labels}
+            places={trend.places}
+            diffs={trend.diffs}
+          />
         </Card>
       )}
     </CardGrid>

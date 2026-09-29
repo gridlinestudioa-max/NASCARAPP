@@ -62,6 +62,7 @@
    visible per viewport width. */
 .desktopTable {
   display: block;
+  overflow-x: auto;
 }
 
 .mobileTabs {
@@ -80,23 +81,14 @@
   /* The mobile tab tables (Momentum, Consistency, Stage Points,
      Diversity, Most Picked) are plain <table>s with 2-3 columns sized
      to content — on a phone that content (driver badge + name, "Picked
-     most by" name, a numeric column) doesn't fit and the browser just
-     squeezes every column, wrapping/clipping headers and crowding cells
-     into each other. table-layout: fixed splits the width evenly and
-     lets every cell ellipsize instead. */
-  .mobileTabs .compactTable {
-    width: 100%;
-    table-layout: fixed;
-  }
-
-  .mobileTabs .compactTable td,
-  .mobileTabs .compactTable th {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+     most by" name, a numeric column) doesn't fit at once. A previous
+     table-layout: fixed + ellipsis approach squeezed every column into
+     an equal share of the width regardless of what it held, which for
+     3 columns made the driver name, the "picked most by" name, and even
+     column *headers* ("Times picked") unreadably truncated — worse than
+     just letting the table scroll (TabbedPanel wraps every tab's content
+     in .tableScroll — see globals.css) at its natural content width. */
 }
-
 
 .barRow + .barRow {
   margin-top: var(--space-2);

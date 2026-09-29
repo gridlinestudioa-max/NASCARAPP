@@ -47,9 +47,21 @@
      --border-strong (a more visible hairline, for outline buttons) and
      --surface-hover (a table/list row hover tint one step up from
      --surface-hover... er, from --surface). */
-  --surface-raised: color-mix(in oklab, var(--surface) 82%, var(--text-primary) 18%);
-  --surface-hover: color-mix(in oklab, var(--surface) 90%, var(--text-primary) 10%);
-  --border-strong: color-mix(in oklab, var(--border) 55%, var(--text-primary) 45%);
+  --surface-raised: color-mix(
+    in oklab,
+    var(--surface) 82%,
+    var(--text-primary) 18%
+  );
+  --surface-hover: color-mix(
+    in oklab,
+    var(--surface) 90%,
+    var(--text-primary) 10%
+  );
+  --border-strong: color-mix(
+    in oklab,
+    var(--border) 55%,
+    var(--text-primary) 45%
+  );
 
   /* Text */
   /* Deliberately NOT var(--ink) — --ink is a solid "chip fill" color
@@ -121,7 +133,10 @@
      toggle (see themeVars.ts's --muted/--faint comment for why); --bg-app
      is the derived, cascadable token that the light block below actually
      overrides. */
-  --checker: repeating-conic-gradient(var(--text-primary) 0 25%, var(--bg-app) 0 50%);
+  --checker: repeating-conic-gradient(
+    var(--text-primary) 0 25%,
+    var(--bg-app) 0 50%
+  );
 
   /* Scale — everything here now tracks the theme's radius knob directly
      (default 0, for the square-cornered/slanted look), rather than being
@@ -177,9 +192,21 @@
      formula, but since bg-surface is now white and text-primary is now
      dark, the same direction of mix naturally produces a slightly
      shaded (not brightened) chip — still "one step off the card." */
-  --surface-raised: color-mix(in oklab, var(--bg-surface) 92%, var(--text-primary) 8%);
-  --surface-hover: color-mix(in oklab, var(--bg-surface) 96%, var(--text-primary) 4%);
-  --border-strong: color-mix(in oklab, var(--border-color) 40%, var(--text-primary) 60%);
+  --surface-raised: color-mix(
+    in oklab,
+    var(--bg-surface) 92%,
+    var(--text-primary) 8%
+  );
+  --surface-hover: color-mix(
+    in oklab,
+    var(--bg-surface) 96%,
+    var(--text-primary) 4%
+  );
+  --border-strong: color-mix(
+    in oklab,
+    var(--border-color) 40%,
+    var(--text-primary) 60%
+  );
 
   /* Dark-toned again (the reverse of the dark variant's light dots) so a
      league's fallback dot stays visible against this now-light sidebar. */
@@ -205,7 +232,11 @@ body {
   background-color: var(--bg-app);
   /* A faint diagonal grain across the whole page ground — reads as
      texture, not noise, at this low an opacity. */
-  background-image: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 28px);
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.025) 0 2px,
+    transparent 2px 28px
+  );
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -294,7 +325,11 @@ a:not([class]):hover {
   font-size: 0.85rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
     transform 0.1s ease;
 }
 
@@ -306,13 +341,21 @@ a:not([class]):hover {
   background: var(--text-on-accent);
   color: var(--accent);
   transform: scale(1.1);
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
     transform 0.3s ease-out;
 }
 
 .linkButton:active {
   transform: scale(0.97);
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
     transform 0.1s ease;
 }
 
@@ -330,7 +373,11 @@ a:not([class]):hover {
   font-size: 0.85rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .linkButtonOutline:hover {
@@ -338,12 +385,20 @@ a:not([class]):hover {
   color: var(--bg-app);
   border-color: var(--text-primary);
   transform: scale(1.1);
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.3s ease-out;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.3s ease-out;
 }
 
 .linkButtonOutline:active {
   transform: scale(0.97);
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 code {
@@ -445,7 +500,9 @@ textarea {
   border-radius: var(--radius-sm);
   padding: 0.5em 0.75em;
   margin-top: var(--space-1);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 input[type="text"]:hover:not(:focus),
@@ -485,7 +542,11 @@ input[type="radio"] {
 button {
   font: inherit;
   cursor: pointer;
-  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
     transform 0.1s ease;
 }
 
@@ -523,7 +584,11 @@ button:active:not(:disabled) {
    rule's faster, snappier transform timing. */
 button:hover:not(:disabled):not(:active) {
   transform: scale(1.1);
-  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
     transform 0.3s ease-out;
 }
 
@@ -603,6 +668,20 @@ table {
   font-size: 0.9rem;
 }
 
+/* Every <th>/<td> below is white-space: nowrap, so a table with several
+   columns (or long header labels) routinely needs more width than a
+   narrow card has — the `width: 100%` above is only a floor, not a cap,
+   in the browser's table layout algorithm. Without this wrapper that
+   overflow doesn't show as a horizontal scrollbar: body has a sitewide
+   overflow-x: hidden (keeps the page itself from ever scrolling
+   sideways), so the table's extra columns are just silently clipped and
+   unreachable instead. Wrap any table that isn't already handled some
+   other way (FullScoreMatrix's own scroll box, the Stats tab's
+   desktop/mobile-tab split) in this so it scrolls within its own card. */
+.tableScroll {
+  overflow-x: auto;
+}
+
 table caption {
   text-align: left;
   font-size: 0.8rem;
@@ -668,4 +747,3 @@ form > * + * {
     scroll-behavior: auto !important;
   }
 }
-
