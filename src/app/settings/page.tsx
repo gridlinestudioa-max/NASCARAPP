@@ -12,6 +12,7 @@ import LeagueColorsForm from "./LeagueColorsForm";
 import AppearanceForm from "./AppearanceForm";
 import AvatarUploadForm from "./AvatarUploadForm";
 import InstallAppCard from "@/components/install/InstallAppCard";
+import LinkButton from "@/components/ui/LinkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,15 @@ export default async function SettingsPage() {
           <NotificationsForm notifyResultsEmail={user.notifyResultsEmail} />
         </Card>
       </CardGrid>
+
+      <Card title="Support the Site">
+        <p>
+          <small>Running and hosting this app costs money — if you&apos;d like to help out, it&apos;s appreciated.</small>
+        </p>
+        <LinkButton href="https://venmo.com/u/will-potter-20" external>
+          Donate via Venmo
+        </LinkButton>
+      </Card>
     </main>
   );
 }
