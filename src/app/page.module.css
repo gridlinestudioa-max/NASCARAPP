@@ -1,3 +1,111 @@
+/* ============================================================
+   "Night Race Broadcast" — home page only.
+
+   Every design token below (colors, fonts, radii, shadow) shadows the
+   site-wide default from globals.css's :root, but only for descendants
+   of .nightRace (the page's own <main>) — the sidebar sits outside that
+   subtree as a layout sibling, and every other page/component keeps
+   reading the real :root values untouched. .linkButton/.linkButtonOutline
+   are global classes (defined in globals.css, reused on other pages), so
+   they're re-themed the same way: via :global() selectors scoped under
+   .nightRace, never by touching the shared rule itself.
+   ============================================================ */
+.nightRace {
+  --ink: #edeff3;
+  --pageBg: #0b0d12;
+  --surface: #12151c;
+  --surfaceRaised: #1e232e;
+  --surfaceHover: #171b24;
+  --border: #262b36;
+  --borderStrong: #4a5468;
+  --accent: #ffd400;
+  --accentInk: #0b0d12;
+  --muted: #b4bbc7;
+  --faint: #9aa3b2;
+
+  --color-ink: var(--ink);
+  --font-heading: var(--font-night-heading), "Barlow", sans-serif;
+  --font-body: var(--font-night-body), Helvetica, Arial, sans-serif;
+
+  --bg-app: var(--pageBg);
+  --bg-surface: var(--surface);
+  --bg-surface-muted: var(--surfaceHover);
+  --border-color: var(--border);
+  --shadow-card: none;
+
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-muted: var(--faint);
+  --text-on-ink: var(--accentInk);
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-btn: 0;
+
+  --slant-8: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  background-color: var(--bg-app);
+  background-image: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 28px);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  padding: var(--space-5);
+}
+
+/* Checkered-flag strip across the top of the page content — the "Night
+   Race Broadcast" signature. Scoped to this page's own box rather than
+   the real <body> element (which the reference design puts it on), since
+   <body> is shared by every page in the app. */
+.nightRace::before {
+  content: "";
+  display: block;
+  height: 12px;
+  margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) var(--space-5);
+  background: repeating-conic-gradient(var(--ink) 0 25%, var(--pageBg) 0 50%) 0 0 / 12px 12px;
+}
+
+.nightRace :global(.linkButton),
+.nightRace :global(.linkButtonOutline) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 1.35em;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  clip-path: var(--slant-8);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.nightRace :global(.linkButton) {
+  background: var(--accent);
+  color: var(--accentInk);
+  border: 1px solid var(--accent);
+}
+.nightRace :global(.linkButtonOutline) {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--borderStrong);
+}
+.nightRace :global(.linkButton):hover,
+.nightRace :global(.linkButtonOutline):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nightRace :global(.linkButton):hover,
+  .nightRace :global(.linkButtonOutline):hover {
+    transform: none;
+  }
+}
+
 .header {
   display: flex;
   align-items: flex-end;
@@ -5,155 +113,237 @@
   gap: var(--space-4);
   flex-wrap: wrap;
 }
-
+.header > div::before {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 10px;
+  background: var(--accent);
+  transform: skewX(-24deg);
+  margin-bottom: 18px;
+}
+.header h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 0.88;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
 .headerSub {
-  margin: 6px 0 0;
+  margin: 14px 0 0;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 }
 
 .empty {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.95rem;
 }
 
+/* Home-page-local card shell — a bespoke lightweight version of the
+   shared <Card> component's markup, kept local to this file on purpose:
+   <Card>/Card.module.css are used across the whole app, and this look
+   (square corners, slanted title marker) is a home-page-only experiment
+   for now, not a change to that shared component. */
+.card {
+  background: var(--bg-surface);
+  padding: var(--space-5);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.cardTitle::before {
+  content: "";
+  width: 14px;
+  height: 22px;
+  background: var(--accent);
+  transform: skewX(-20deg);
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.seeAll {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.commish {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 2px 7px;
+  background: transparent;
+}
+
+/* ---- My Leagues table ---- */
 .tableHead {
   display: grid;
-  grid-template-columns: 2.2fr 0.7fr 0.8fr 0.7fr 1fr 1.2fr;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.7fr) minmax(0, 0.8fr) minmax(0, 0.7fr) minmax(0, 1fr) minmax(
+      0,
+      1.2fr
+    );
   gap: var(--space-3);
   padding: 10px var(--space-3);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
   color: var(--text-muted);
-  border-bottom: 1px solid var(--border-color);
 }
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2.2fr 0.7fr 0.8fr 0.7fr 1fr 1.2fr;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.7fr) minmax(0, 0.8fr) minmax(0, 0.7fr) minmax(0, 1fr) minmax(
+      0,
+      1.2fr
+    );
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-top: 1px solid var(--border-color);
+  text-decoration: none;
+  color: inherit;
 }
-
 .tableRow:hover {
   background: var(--bg-surface-muted);
-}
-
-.tableRow + .tableRow {
-  border-top: 1px solid var(--border-color);
 }
 
 .leagueCell {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 14px;
   min-width: 0;
 }
-
 .leagueCellText {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-btn);
-  background: var(--color-ink);
-  color: var(--text-on-ink);
+  width: 40px;
+  height: 40px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  background: var(--surfaceRaised);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.95rem;
+  font-weight: 900;
+  font-size: 1.2rem;
   font-family: var(--font-heading);
+  flex-shrink: 0;
+}
+.avatarImg {
+  width: 40px;
+  height: 40px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  object-fit: cover;
   flex-shrink: 0;
 }
 
 .leagueName {
-  font-size: 0.92rem;
+  font-size: 1.02rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  /* A flex item's default min-width is its content size, not 0 — without
-     this, a long name never actually shrinks to ellipsize; it just
-     forces .leagueCellText (and everything up the chain) wider instead. */
   min-width: 0;
 }
 
 .muted {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   color: var(--text-muted);
+}
+.rankFirst {
+  color: var(--accent) !important;
+  font-weight: 700;
 }
 
 .driverCell {
   display: inline-flex;
   align-items: center;
-  /* Matches .scheduleRace's gap — same first-column width (.rankNum /
-     .weekChip, both 24px) plus the same gap lines the logo and the
-     driver badge up at the same x between the two snapshot lists. */
-  gap: 10px;
+  gap: 12px;
   flex: 1;
   min-width: 0;
 }
-
 .driverName {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
 }
-
 .driverBadge {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-ink);
-  color: var(--text-on-ink);
+  width: 40px;
+  height: 26px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  background: var(--surfaceRaised);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.6rem;
+  font-weight: 900;
+  font-size: 0.75rem;
+  font-family: var(--font-heading);
   flex-shrink: 0;
 }
 
-/* On desktop, score and rank stay in their own two of the six table
-   columns — this wrapper only matters on mobile (below), where display:
-   contents keeps it invisible to the desktop grid so it doesn't collapse
-   those two columns into one. */
 .scoreRank {
   display: contents;
 }
-
 .scoreCell {
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .lockedCell {
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
-
 .lockChip {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-ink);
-  color: var(--text-on-ink);
+  min-width: 34px;
+  height: 26px;
+  padding: 0 4px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+  background: var(--surfaceRaised);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.6rem;
+  font-weight: 900;
+  font-size: 0.7rem;
+  font-family: var(--font-heading);
   flex-shrink: 0;
 }
 
@@ -166,18 +356,10 @@
   .tableHead {
     display: none;
   }
-
-  /* League name on the left, score stacked above rank on the right —
-     minmax(0, 1fr) (not bare 1fr, see the .snapshotRow comment below for
-     why) lets a long league name shrink and ellipsize instead of pushing
-     into the score/rank column. */
   .tableRow {
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "league score"
-      "action action";
+    grid-template-areas: "league score" "action action";
   }
-
   .scoreRank {
     grid-area: score;
     display: flex;
@@ -185,156 +367,120 @@
     align-items: flex-end;
     gap: 2px;
   }
-
   .leagueCell {
     grid-area: league;
   }
-
-  /* The commish badge used to sit inline after the name, on already-tight
-     mobile width, and won them ellipsis away most of it. column-reverse
-     (not swapping the JSX order, which would also reorder the desktop
-     inline reading order "Name Badge") puts whichever renders last in the
-     DOM — the badge — visually first, above the name, without touching
-     markup shared with the desktop layout. */
   .leagueCellText {
     flex-direction: column-reverse;
     align-items: flex-start;
     gap: 2px;
   }
-
-  /* align-items: flex-start above (needed so the commish badge doesn't
-     stretch full-width) also means .leagueName, as a column flex item,
-     sizes to its own content instead of the container's width — nothing
-     is left to ellipsize against. An explicit 100% width gives it that
-     bound back, without affecting the badge above it. */
   .leagueName {
     width: 100%;
   }
-
-  /* Name, score, and rank now share one row — trim the avatar and the
-     gap in front of it a little so the name gets back some of the room
-     that cost it. */
   .leagueCell {
     gap: 8px;
   }
-
   .avatar,
   .avatarImg {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
   }
-
   .actionCell {
     grid-area: action;
     justify-content: stretch;
     margin-top: 4px;
   }
-
   .actionCell > a {
     width: 100%;
     justify-content: center;
   }
-
   .tableRow > *:nth-child(2),
   .lockedCell {
     display: none;
   }
 }
 
+/* ---- Upcoming Schedule / Driver Points ---- */
 .snapshotRow {
   display: grid;
-  /* minmax(0, 1fr), not bare 1fr — a bare 1fr track's minimum width is
-     "auto" (its content's min-content size), and the nowrap+ellipsis race/
-     driver names below have a min-content size equal to their full
-     unwrapped text width. Without the 0 floor, that intrinsic size
-     propagates up through the grid and forces the whole card wider than
-     the viewport, silently clipped by .content's overflow: hidden rather
-     than scrolling or wrapping. */
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-4);
+  align-items: start;
 }
-
 @media (max-width: 760px) {
   .snapshotRow {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-.avatarImg {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-btn);
-  object-fit: cover;
-  flex-shrink: 0;
+.rowList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rowList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-color);
+}
+.rowList li:first-child {
+  border-top: none;
 }
 
-.scheduleRace {
+.scheduleRace,
+.driverCell {
   display: flex;
   align-items: center;
   gap: 10px;
   flex: 1;
   min-width: 0;
+  text-decoration: none;
+  color: inherit;
 }
 
-/* Fixed width, matching .weekChip below — so the race logo and the
-   driver badge in the two snapshot lists both start at the same x,
-   forming one straight column down the page instead of drifting with
-   however wide "1." vs "32" happens to render. */
-.rankNum {
-  width: 24px;
+.rankNum,
+.weekChip {
+  width: 26px;
   flex-shrink: 0;
-  font-weight: 800;
-  font-size: 0.8rem;
-  color: var(--text-muted);
   font-family: var(--font-heading);
 }
-
-/* `.snapshotList` (plain local class, not `:global(.rowList)`) is what
-   actually matches here — CSS Modules hashes any bare `.rowList` token
-   written in *this* file into a name that never matches the literal
-   "rowList" class applied via className="rowList" in the JSX, so a rule
-   written as `.rowList ...` silently never fires no matter how it reads.
-   Stacking a type selector on top of `.snapshotList` (ul./a.) instead of
-   relying on class count alone guarantees this beats globals.css's
-   `.rowList a` / `.rowList > li` (each one class + one tag) regardless of
-   which stylesheet the cascade happens to load first — no !important.
-
-   Two layers of extra left padding compound here: globals.css gives every
-   anchor inside a rowList its own space-3 padding meant for a link that
-   fills its whole row (this link is only the left portion — zeroed), and
-   the <li> itself carries a second space-3 left inset on top of the
-   Card's own edge padding, pushing rows further right than the card's
-   title (also zeroed; top/bottom/right stay for row spacing and the
-   hover target). */
-/* globals.css's `.rowList a` also sets `justify-content: space-between`
-   and `gap: var(--space-3)` (12px) — beating .scheduleRace/.driverCell's
-   own gap:10px on specificity ((0,1,1) vs (0,1,0)). space-between then
-   spreads each row's leftover width (which varies row to row with the
-   trailing date/points text and .driverCell's own flex:1) unevenly
-   between the icon and the name instead of holding a fixed gap — the
-   icons visibly drifting left/right row to row. flex-start + an explicit
-   gap here, at high enough specificity to actually win, pins them. */
-ul.snapshotList a.scheduleRace,
-ul.snapshotList a.driverCell {
-  padding: 0;
-  justify-content: flex-start;
-  gap: 10px;
+.rankNum {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+}
+.weekChip {
+  height: 26px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+  background: var(--surfaceRaised);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+/* Next race = first row of the schedule list: highlight it. */
+.rowList li:first-child .weekChip {
+  background: var(--accent);
+  color: var(--accentInk);
+}
+.rowList li:first-child:has(.weekChip) > .muted {
+  color: var(--accent);
+  font-weight: 600;
 }
 
-ul.snapshotList > li {
-  padding-left: 0;
-}
-
-/* Zeroing the row's own left padding above still leaves the Card's own
-   24px edge padding — noticeably more than the ~4px the "Upcoming
-   Schedule" / "Driver Points" title above it sits in from the card edge.
-   Pulling the list out (and letting its auto width fill back in, since
-   only margin-left moves) lines row content back up close to the title
-   instead of sitting indented under it — space-3 short of fully flush,
-   so there's still a small breathing gap rather than content butting
-   right up against the card's edge. */
-ul.snapshotList {
-  margin-left: calc(var(--space-1) - var(--space-5) + var(--space-3));
+.scheduleLogo {
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--borderStrong);
 }
 
 .raceName {
@@ -342,23 +488,4 @@ ul.snapshotList {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-}
-
-.weekChip {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.72rem;
-  flex-shrink: 0;
-  font-family: var(--font-heading);
-  border: 1px solid var(--border-color);
-}
-
-.scheduleLogo {
-  flex-shrink: 0;
 }
