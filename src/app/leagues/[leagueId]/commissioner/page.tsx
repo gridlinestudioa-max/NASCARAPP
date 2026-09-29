@@ -6,6 +6,7 @@ import { parseTieredDraftRuleSetConfig } from "@/lib/tieredDraft";
 import { sanitizePickOrder, type PickOrderMode } from "@/lib/pickOrder";
 import LeagueRulesForm from "@/components/LeagueRulesForm";
 import Card from "@/components/ui/Card";
+import CardGrid from "@/components/ui/CardGrid";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { displayRaceName } from "@/lib/raceName";
 import { getLeagueHubData } from "../(hub)/leagueData";
@@ -64,34 +65,36 @@ export default async function CommissionerPage(props: { params: Promise<{ league
 
       <InviteCodeForm leagueId={leagueId} inviteCode={league.inviteCode} />
 
-      <Card title="League Icon">
-        <LeagueIconForm leagueId={leagueId} leagueName={league.name} iconUrl={league.iconUrl} />
-      </Card>
+      <CardGrid>
+        <Card title="League Icon">
+          <LeagueIconForm leagueId={leagueId} leagueName={league.name} iconUrl={league.iconUrl} />
+        </Card>
 
-      <Card title="Commissioner">
-        <TransferCommissionerForm
-          leagueId={leagueId}
-          members={members.map((m) => ({
-            userId: m.userId,
-            name: m.user.name ?? m.user.email,
-            isCurrentOwner: m.userId === league.ownerId,
-          }))}
-        />
-      </Card>
+        <Card title="Commissioner">
+          <TransferCommissionerForm
+            leagueId={leagueId}
+            members={members.map((m) => ({
+              userId: m.userId,
+              name: m.user.name ?? m.user.email,
+              isCurrentOwner: m.userId === league.ownerId,
+            }))}
+          />
+        </Card>
 
-      {league.type === "PICKEM" && (() => {
-        const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
-        const order = sanitizePickOrder(league.pickOrder, members.map((m) => m.userId));
-        return (
-          <Card title="Pick order">
-            <PickOrderForm
-              leagueId={leagueId}
-              mode={league.pickOrderMode as PickOrderMode}
-              members={order.map((userId) => ({ userId, name: nameByUserId.get(userId) ?? "—" }))}
-            />
-          </Card>
-        );
-      })()}
+        {league.type === "PICKEM" && (() => {
+          const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
+          const order = sanitizePickOrder(league.pickOrder, members.map((m) => m.userId));
+          return (
+            <Card title="Pick order">
+              <PickOrderForm
+                leagueId={leagueId}
+                mode={league.pickOrderMode as PickOrderMode}
+                members={order.map((userId) => ({ userId, name: nameByUserId.get(userId) ?? "—" }))}
+              />
+            </Card>
+          );
+        })()}
+      </CardGrid>
 
       <h2>Rules</h2>
       {leagueSeason ? (

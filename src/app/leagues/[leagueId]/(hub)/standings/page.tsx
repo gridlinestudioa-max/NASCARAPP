@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
+import CardGrid from "@/components/ui/CardGrid";
 import UserAvatar from "@/components/ui/UserAvatar";
 import StandingsTrendChart from "@/components/league/StandingsTrendChart";
 import { computeWeeklyTotals, scoredRacesInOrder, computePlayerSeasonStats, computeTrendSeries } from "@/lib/leagueStats";
@@ -32,7 +33,7 @@ export default async function LeagueStandingsPage(props: { params: Promise<{ lea
   const trend = computeTrendSeries(members, scoredRaces, weekly);
 
   return (
-    <>
+    <CardGrid>
       <Card title="Standings">
         <table>
           <thead>
@@ -71,6 +72,6 @@ export default async function LeagueStandingsPage(props: { params: Promise<{ lea
           <StandingsTrendChart labels={trend.labels} places={trend.places} diffs={trend.diffs} />
         </Card>
       )}
-    </>
+    </CardGrid>
   );
 }

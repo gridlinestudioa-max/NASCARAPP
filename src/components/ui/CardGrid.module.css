@@ -1,0 +1,28 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  /* Each card sizes to its own content instead of stretching to match
+     the tallest card in its row — with unevenly-sized cards (e.g. a
+     short "Install App" card next to a long "Your Leagues" list), the
+     grid default (stretch) leaves a lot of empty space inside the
+     shorter ones. */
+  align-items: start;
+  gap: var(--space-4);
+}
+
+/* Card's own .outsideWrap sets height: 100% (needed when it's deliberately
+   stretched to match a row — see Card.module.css), which fights the
+   align-items: start above: a 100%-height child still expands to fill
+   its grid row's auto track height once every other item in that row is
+   taken into account. Reset it back to auto so a short card actually
+   stays short instead of just moving its empty space from "stretched
+   card" to "stretched grid row". */
+.grid > * {
+  height: auto !important;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

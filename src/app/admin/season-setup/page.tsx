@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import CardGrid from "@/components/ui/CardGrid";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import DriverRosterPanel from "@/components/admin/DriverRosterPanel";
 import SeasonScheduleCard from "@/components/admin/SeasonScheduleCard";
@@ -64,23 +65,25 @@ export default async function SeasonSetupPage(props: PageProps<"/admin/season-se
         </Link>
       </nav>
 
-      <Card title={`${activeSeason.year} schedule`}>
-        <SeasonScheduleCard
-          seasonId={activeSeason.id}
-          races={activeRaces.map(toRaceRow)}
-          editable={tab === "next"}
-          previousSeasonId={previousSeasonId}
-        />
-      </Card>
+      <CardGrid>
+        <Card title={`${activeSeason.year} schedule`}>
+          <SeasonScheduleCard
+            seasonId={activeSeason.id}
+            races={activeRaces.map(toRaceRow)}
+            editable={tab === "next"}
+            previousSeasonId={previousSeasonId}
+          />
+        </Card>
 
-      <Card title="Driver roster">
-        <DriverRosterPanel
-          drivers={drivers}
-          editable={tab === "next"}
-          seasonId={activeSeason.id}
-          previousSeasonId={previousSeasonId}
-        />
-      </Card>
+        <Card title="Driver roster">
+          <DriverRosterPanel
+            drivers={drivers}
+            editable={tab === "next"}
+            seasonId={activeSeason.id}
+            previousSeasonId={previousSeasonId}
+          />
+        </Card>
+      </CardGrid>
 
       {tab === "next" && (
         <Card title="Advance the season">

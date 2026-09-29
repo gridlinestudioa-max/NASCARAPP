@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import CardGrid from "@/components/ui/CardGrid";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import FactsGrid from "@/components/ui/FactsGrid";
 import RaceLogo from "@/components/ui/RaceLogo";
@@ -121,27 +122,29 @@ export default async function RacePage(props: PageProps<"/races/[raceId]">) {
         ]}
       />
 
-      <Card title="Results">
-        <RaceResultsTabs stage1={stage1Rows} stage2={stage2Rows} final={finalRows} />
-      </Card>
+      <CardGrid>
+        <Card title="Results">
+          <RaceResultsTabs stage1={stage1Rows} stage2={stage2Rows} final={finalRows} />
+        </Card>
 
-      <Card title="Past winners">
-        {past3Winners.length === 0 ? (
-          <p>No past results for this race in our data yet.</p>
-        ) : (
-          <ul className="rowList">
-            {past3Winners.map((w) => (
-              <li key={w.year}>
-                <span>{w.year}</span>
-                <span className={styles.driverCell}>
-                  <DriverNumberBadge number={w.driverNumber} name={w.driverName} className={styles.driverBadge} />
-                  {w.driverName}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+        <Card title="Past winners">
+          {past3Winners.length === 0 ? (
+            <p>No past results for this race in our data yet.</p>
+          ) : (
+            <ul className="rowList">
+              {past3Winners.map((w) => (
+                <li key={w.year}>
+                  <span>{w.year}</span>
+                  <span className={styles.driverCell}>
+                    <DriverNumberBadge number={w.driverNumber} name={w.driverName} className={styles.driverBadge} />
+                    {w.driverName}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </CardGrid>
     </main>
   );
 }
