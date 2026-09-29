@@ -32,6 +32,8 @@ export default async function AdminDashboardPage() {
         <Link href="/admin/historical-import">Historical results import &rarr;</Link>
         {" · "}
         <Link href="/admin/drivers">Duplicate drivers &rarr;</Link>
+        {" · "}
+        <Link href="/admin/leagues">Leagues &rarr;</Link>
       </p>
 
       <Card>
