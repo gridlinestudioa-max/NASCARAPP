@@ -5,6 +5,11 @@
 }
 
 .option {
+  /* Opts out of the sitewide CTA button shape (see globals.css) — this
+     is a segmented toggle, not a primary action. */
+  clip-path: none;
+  text-transform: none;
+  letter-spacing: normal;
   flex: 1;
   padding: 8px 0;
   border-radius: var(--radius-btn);

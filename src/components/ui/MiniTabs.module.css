@@ -13,6 +13,11 @@
 }
 
 .toggleBtn {
+  /* Opts out of the sitewide CTA button shape (see globals.css). */
+  clip-path: none;
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: inherit;
   padding: 6px 14px;
   border-radius: var(--radius-pill);
   font-size: 0.78rem;

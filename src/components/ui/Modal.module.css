@@ -19,6 +19,8 @@
 }
 
 .closeButton {
+  /* Opts out of the sitewide CTA button shape (see globals.css). */
+  clip-path: none;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 50%;

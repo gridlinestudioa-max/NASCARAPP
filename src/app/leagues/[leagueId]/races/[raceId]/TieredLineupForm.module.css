@@ -39,17 +39,19 @@
   }
 }
 
-/* button.slot (not just .slot): globals.css's `button[type="button"]` reset
-   has specificity (0,1,1) — one class-level attribute selector plus the
-   `button` element — which otherwise beats a bare `.slot` class (0,1,0)
-   outright and silently overwrites this rule's background/border/color with
-   its light theme-surface defaults. That's invisible on its own dashed
-   border, but it also flips these slots from this card's black background
-   to a near-white one, which then swallows the white-on-dark child text
-   (.placeholder/.tapHint) that assumes the black background. Same fix is
-   applied below to .slotFilled, .closeBtn, .removeBtn and .driverRow, which
-   have the identical problem. */
-button.slot {
+/* Plain .slot (not button.slot): globals.css's sitewide button CTA rules
+   are now :where()-wrapped (zero specificity — see globals.css's Buttons
+   section), so a plain class here reliably wins without needing to match
+   `button`'s own tag specificity the way the old `button.slot` compound
+   selector had to. Dropping the tag qualifier also fixes a real bug it
+   was silently causing: TieredLineupPickPanel's read-only locked-slot
+   preview renders this same class on a <div>, not a <button> — under the
+   old `button.slot` selector that div never matched at all, so it got
+   none of this layout (no flex column, no gap between the tier tag/
+   "Locked"/unlock-time text), and they ran together with no spacing.
+   Same fix applied below to .slotFilled, .closeBtn, .removeBtn and
+   .driverRow, which had the identical tag-qualifier problem. */
+.slot {
   all: unset;
   box-sizing: border-box;
   width: 100%;
@@ -66,21 +68,21 @@ button.slot {
   text-align: left;
 }
 
-button.slot:hover {
+.slot:hover {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-button.slot:focus-visible {
+.slot:focus-visible {
   outline: 2px solid var(--tier-b);
   outline-offset: 2px;
 }
 
-button.slot.slotDropOk {
+.slot.slotDropOk {
   border-color: var(--success);
   background: rgba(120, 220, 150, 0.18);
 }
 
-button.slot.slotDropNo {
+.slot.slotDropNo {
   border-color: var(--danger);
   background: rgba(230, 90, 90, 0.14);
 }
@@ -169,7 +171,7 @@ button.slot.slotDropNo {
   color: var(--tier-c);
 }
 
-button.slot.slotFilled {
+.slot.slotFilled {
   border-style: solid;
   background: rgba(255, 255, 255, 0.14);
 }
@@ -332,9 +334,7 @@ button.slot.slotFilled {
   margin: 0;
 }
 
-/* button.closeBtn / button.removeBtn: same globals.css button[type="button"]
-   specificity problem as button.slot above. */
-button.closeBtn {
+.closeBtn {
   all: unset;
   width: 30px;
   height: 30px;
@@ -348,7 +348,7 @@ button.closeBtn {
   flex: none;
 }
 
-button.closeBtn:hover {
+.closeBtn:hover {
   background: var(--bg-surface-muted);
 }
 
@@ -357,7 +357,7 @@ button.closeBtn:hover {
   flex: none;
 }
 
-button.removeBtn {
+.removeBtn {
   all: unset;
   cursor: pointer;
   font-size: 0.82rem;
@@ -365,7 +365,7 @@ button.removeBtn {
   font-weight: 500;
 }
 
-button.removeBtn:hover {
+.removeBtn:hover {
   text-decoration: underline;
 }
 
@@ -400,7 +400,7 @@ button.removeBtn:hover {
   flex: 1 1 auto;
 }
 
-button.driverRow {
+.driverRow {
   all: unset;
   box-sizing: border-box;
   display: grid;
@@ -413,20 +413,20 @@ button.driverRow {
   cursor: pointer;
 }
 
-button.driverRow:first-child {
+.driverRow:first-child {
   border-top: none;
 }
 
-button.driverRow:hover:not(:disabled) {
+.driverRow:hover:not(:disabled) {
   background: var(--bg-surface-muted);
 }
 
-button.driverRow:disabled {
+.driverRow:disabled {
   cursor: not-allowed;
   opacity: 0.4;
 }
 
-button.driverRow.driverRowCurrent {
+.driverRow.driverRowCurrent {
   background: var(--success-bg);
 }
 

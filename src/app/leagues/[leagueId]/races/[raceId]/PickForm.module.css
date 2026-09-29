@@ -87,6 +87,11 @@
    border reset) on every driver row once it wasn't also hovered, e.g.
    right after the driver list re-filters and the row remounts. */
 button[type="button"].driverRow {
+  /* Opts out of the sitewide CTA button shape (see globals.css) — a
+     driver's name in this list should read as plain text. */
+  clip-path: none;
+  text-transform: none;
+  letter-spacing: normal;
   display: flex;
   align-items: center;
   gap: 8px;

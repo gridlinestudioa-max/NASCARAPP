@@ -84,14 +84,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <head>
-        {/* Sets data-theme before hydration so dark mode never flashes light
-            first — a plain inline script is the standard way to read a
+        {/* Sets data-theme before hydration so an explicit "light" choice
+            never flashes dark first — the site's default (no attribute)
+            is already dark, so only the light opt-in needs setting here;
+            a plain inline script is the standard way to read a
             client-only preference (localStorage) ahead of paint; this
             string is fixed and owned by us, not user input. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(localStorage.getItem('colorMode')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}",
+              "try{if(localStorage.getItem('colorMode')==='light'){document.documentElement.setAttribute('data-theme','light');}}catch(e){}",
           }}
         />
       </head>
