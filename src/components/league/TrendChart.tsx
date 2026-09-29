@@ -9,12 +9,11 @@ import {
   LinearScale,
   CategoryScale,
   Tooltip,
-  Filler,
 } from "chart.js";
 import RangeSlider from "@/components/ui/RangeSlider";
 import styles from "./TrendChart.module.css";
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler);
+Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip);
 
 // Cycled by series index — a small, distinct categorical palette rather
 // than one color per specific player, since a league can have any number
@@ -101,18 +100,11 @@ export default function TrendChart({
 
     const datasets = slicedSeries.map((s, i) => {
       const color = SERIES_COLORS[i % SERIES_COLORS.length];
-      // A soft gradient fade under the line reads as an intentional
-      // "dashboard" chart rather than a bare plotted line — the classic
-      // tell of a not-quite-designed graph.
-      const gradient = ctx.createLinearGradient(0, 0, 0, height);
-      gradient.addColorStop(0, `${color}33`);
-      gradient.addColorStop(1, `${color}00`);
       return {
         label: s.name,
         data: s.data,
         borderColor: color,
-        backgroundColor: gradient,
-        fill: true,
+        fill: false,
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 4,
@@ -153,6 +145,10 @@ export default function TrendChart({
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          // The slider re-slices data on every drag, which would otherwise
+          // replay Chart.js's default "grow up from the axis" animation on
+          // each step — the graph should just snap to the new window.
+          animation: false,
           interaction: { mode: "index", intersect: false },
           plugins: {
             legend: { display: false },
