@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
+import CardGrid from "@/components/ui/CardGrid";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import { displayRaceName } from "@/lib/raceName";
@@ -32,20 +33,22 @@ export default async function AdminRacePage(props: PageProps<"/admin/races/[race
           ` · last synced ${race.lastSyncedAt.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}`}
       </p>
 
-      <Card title="Schedule">
-        <ScheduleEditForm raceId={raceId} trackName={race.trackName} date={race.date.toISOString().slice(0, 10)} />
-      </Card>
+      <CardGrid>
+        <Card title="Schedule">
+          <ScheduleEditForm raceId={raceId} trackName={race.trackName} date={race.date.toISOString().slice(0, 10)} />
+        </Card>
 
-      <Card title="Race data">
-        <p>
-          <Link href={`/admin/races/${raceId}/entries`}>Enter entry list</Link> ·{" "}
-          <Link href={`/admin/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
-          <Link href={`/admin/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
-          <Link href={`/admin/races/${raceId}/results`}>
-            {race.results.length > 0 ? "Edit results" : "Enter results"}
-          </Link>
-        </p>
-      </Card>
+        <Card title="Race data">
+          <p>
+            <Link href={`/admin/races/${raceId}/entries`}>Enter entry list</Link> ·{" "}
+            <Link href={`/admin/races/${raceId}/tiers`}>Assign weekly tiers</Link> ·{" "}
+            <Link href={`/admin/races/${raceId}/qualifying`}>Enter qualifying results</Link> ·{" "}
+            <Link href={`/admin/races/${raceId}/results`}>
+              {race.results.length > 0 ? "Edit results" : "Enter results"}
+            </Link>
+          </p>
+        </Card>
+      </CardGrid>
 
       <Card title="Results">
         {race.results.length === 0 ? (

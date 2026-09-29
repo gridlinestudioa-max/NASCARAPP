@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Card from "@/components/ui/Card";
+import CardGrid from "@/components/ui/CardGrid";
 import Badge from "@/components/ui/Badge";
 import UserAvatar from "@/components/ui/UserAvatar";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
@@ -461,9 +462,10 @@ export default async function LeagueStatsTabPage(props: { params: Promise<{ leag
         </div>
       </Card>
 
-      {renderPersonalStatsCard(data, userId)}
-
-      {renderPersonalLimitCard(data, userId)}
+      <CardGrid>
+        {renderPersonalStatsCard(data, userId)}
+        {renderPersonalLimitCard(data, userId)}
+      </CardGrid>
 
       <Card title="Drivers">
         <div className={styles.desktopTable}>
