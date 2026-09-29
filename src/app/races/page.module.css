@@ -55,6 +55,11 @@
   border-radius: calc(var(--radius) + 2px);
   box-shadow: 0 1px 2px rgba(7, 7, 7, 0.04), 0 8px 24px rgba(7, 7, 7, 0.05);
   overflow: hidden;
+  /* Matches the Card component's own max-width (see Card.module.css) so
+     this page's month boxes — built by hand rather than with <Card>,
+     since each needs its own heading above it — don't stretch edge to
+     edge on a wide screen while every other page's cards cap out. */
+  max-width: 1100px;
 }
 
 .raceRow {

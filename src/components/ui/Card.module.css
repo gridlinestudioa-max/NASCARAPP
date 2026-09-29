@@ -58,6 +58,18 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* Caps a lone/standalone card (not paired with siblings in a CardGrid)
+     at roughly the page's old single-column width, instead of stretching
+     edge to edge across the wide content column — matches what a
+     CardGrid's own columns already look like, so a page with just one
+     card doesn't read differently from one with several. A genuinely
+     wide table (many columns, e.g. FullScoreMatrix) opts out via its own
+     className; see that component's CSS. */
+  max-width: 1100px;
+}
+
+.wide {
+  max-width: none;
 }
 
 /* Lets the visible card box fill whatever height the wrapper ends up
