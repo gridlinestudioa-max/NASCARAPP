@@ -228,19 +228,31 @@ a:not([class]):hover {
   align-items: center;
   background: var(--color-ink);
   color: var(--text-on-ink);
+  border: 1px solid var(--color-ink);
   border-radius: var(--radius-btn);
   padding: 0.5em 1em;
   font-weight: 600;
   font-size: 0.82rem;
-  transition: opacity 0.15s ease, transform 0.1s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    transform 0.1s ease;
 }
 
+/* Same grow-and-invert hover treatment as sitewide <button> elements
+   (see the "Buttons" block above) — these are <a>/<Link> elements styled
+   to look like buttons for navigation actions, so they need the identical
+   feedback for the effect to read as consistent across the app. */
 .linkButton:hover {
-  opacity: 0.85;
+  background: var(--text-on-ink);
+  color: var(--color-ink);
+  transform: scale(1.1);
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    transform 0.3s ease-out;
 }
 
 .linkButton:active {
   transform: scale(0.97);
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .linkButtonOutline {
@@ -253,15 +265,20 @@ a:not([class]):hover {
   padding: 0.5em 1em;
   font-weight: 600;
   font-size: 0.82rem;
-  transition: border-color 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
 .linkButtonOutline:hover {
-  border-color: var(--text-muted);
+  background: var(--text-primary);
+  color: var(--bg-app);
+  border-color: var(--text-primary);
+  transform: scale(1.1);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.3s ease-out;
 }
 
 .linkButtonOutline:active {
   transform: scale(0.97);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
 code {
