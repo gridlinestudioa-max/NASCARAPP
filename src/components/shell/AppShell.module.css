@@ -378,6 +378,15 @@
   display: none;
 }
 
+/* The brand row at the top of the content column — mobile only (desktop
+   already gets the brand from the sidebar, see brandRow above), see the
+   media query below for its actual layout. Defined here so the class
+   exists even when the query doesn't apply, matching this file's usual
+   pattern for mobile-only elements. */
+.mobileBrandRow {
+  display: none;
+}
+
 /* Fixed bottom tab bar — mobile only, see the media query below for its
    actual layout. Defined here (rather than only inside the query) so the
    class names exist even when the query doesn't apply, matching how the
@@ -453,6 +462,35 @@
     /* Clears the fixed bottom bar so its last row of content is never
        hidden behind it. */
     padding-bottom: calc(var(--bottom-bar-height) + var(--space-4));
+  }
+
+  /* Sits above every page's own content (a page's first heading, e.g.
+     Home's "Welcome back" banner, renders immediately after this) —
+     the same mark+wordmark lockup the desktop sidebar shows, since
+     mobile has nowhere else to put it once the sidebar itself is
+     hidden below. */
+  .mobileBrandRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: var(--space-4);
+    text-decoration: none;
+  }
+
+  .mobileBrandMarkWrap {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .mobileBrandMark {
+    height: 26px;
+    width: auto;
+  }
+
+  .mobileBrandWordmark {
+    height: 20px;
+    width: auto;
   }
 
   /* Fixed, always-visible, same shape whether a sheet is open or not —

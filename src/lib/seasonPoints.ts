@@ -8,9 +8,12 @@
 // playoff-points/elimination-round system):
 //
 //   - Finish points: winner scores 55; 2nd through 40th score
-//     max(1, 36 - position). isNonPoints races (e.g. the All-Star race)
-//     don't count at all, same as NASCAR's own scoring, and aren't part of
-//     the 26/10 race-count split below.
+//     max(1, 37 - position) — 2nd=35, 3rd=34 ... 35th=2, 36th-40th=1 (see
+//     scoring.ts's buildNascarOfficialPreset, which uses the identical
+//     formula for the pick'em "NASCAR Official Points" ruleset preset).
+//     isNonPoints races (e.g. the All-Star race) don't count at all, same
+//     as NASCAR's own scoring, and aren't part of the 26/10 race-count
+//     split below.
 //   - Stage points: top 10 of each of a race's (up to) two stages score
 //     10 down to 1.
 //   - Regular season = the first 26 points races. Points accumulate
