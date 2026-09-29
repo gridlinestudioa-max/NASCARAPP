@@ -11,60 +11,68 @@ type DriverRow = {
   stage2Position: number | null;
 };
 
-export default function ResultsForm({ raceId, drivers }: { raceId: string; drivers: DriverRow[] }) {
+export default function ResultsForm({
+  raceId,
+  drivers,
+}: {
+  raceId: string;
+  drivers: DriverRow[];
+}) {
   const [error, formAction, pending] = useActionState(submitResults, undefined);
 
   return (
     <form action={formAction}>
       <input type="hidden" name="raceId" value={raceId} />
 
-      <table>
-        <thead>
-          <tr>
-            <th>Driver</th>
-            <th>Finishing position</th>
-            <th>Stage 1 (top 10, blank if not)</th>
-            <th>Stage 2 (top 10, blank if not)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {drivers.map((d) => (
-            <tr key={d.driverId}>
-              <td>
-                {d.name}
-                <input type="hidden" name="driverId" value={d.driverId} />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  name={`finish-${d.driverId}`}
-                  min={1}
-                  required
-                  defaultValue={d.finishPosition ?? undefined}
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  name={`stage1-${d.driverId}`}
-                  min={1}
-                  max={10}
-                  defaultValue={d.stage1Position ?? undefined}
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  name={`stage2-${d.driverId}`}
-                  min={1}
-                  max={10}
-                  defaultValue={d.stage2Position ?? undefined}
-                />
-              </td>
+      <div className="tableScroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th>Finishing position</th>
+              <th>Stage 1 (top 10, blank if not)</th>
+              <th>Stage 2 (top 10, blank if not)</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {drivers.map((d) => (
+              <tr key={d.driverId}>
+                <td>
+                  {d.name}
+                  <input type="hidden" name="driverId" value={d.driverId} />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    name={`finish-${d.driverId}`}
+                    min={1}
+                    required
+                    defaultValue={d.finishPosition ?? undefined}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    name={`stage1-${d.driverId}`}
+                    min={1}
+                    max={10}
+                    defaultValue={d.stage1Position ?? undefined}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    name={`stage2-${d.driverId}`}
+                    min={1}
+                    max={10}
+                    defaultValue={d.stage2Position ?? undefined}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {error && <p role="alert">{error}</p>}
 

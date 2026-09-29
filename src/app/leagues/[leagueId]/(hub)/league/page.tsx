@@ -12,7 +12,10 @@ import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
-function describePickemRules(config: ReturnType<typeof parseRuleSetConfig>, pickOrderMode: PickOrderMode): string[] {
+function describePickemRules(
+  config: ReturnType<typeof parseRuleSetConfig>,
+  pickOrderMode: PickOrderMode,
+): string[] {
   const rules: string[] = [
     `Draft order: ${PICK_ORDER_MODE_INFO[pickOrderMode].description}`,
     config.picksPerWeek > 1
@@ -22,8 +25,12 @@ function describePickemRules(config: ReturnType<typeof parseRuleSetConfig>, pick
       ? "Points are awarded from a fixed points table by finishing position."
       : "Points scale with the race's field size — 1st place is worth however many cars started.",
   ];
-  if (config.includeStagePoints) rules.push("Top-10 stage finishers earn bonus stage points.");
-  if (config.includeWinnerBonus) rules.push(`Winning a race adds a further ${config.winnerBonus} bonus points.`);
+  if (config.includeStagePoints)
+    rules.push("Top-10 stage finishers earn bonus stage points.");
+  if (config.includeWinnerBonus)
+    rules.push(
+      `Winning a race adds a further ${config.winnerBonus} bonus points.`,
+    );
   rules.push(
     config.maxPicksPerDriverPerSeason != null
       ? `Each driver can be picked at most ${config.maxPicksPerDriverPerSeason} time(s) per player this season.`
@@ -37,7 +44,9 @@ function describePickemRules(config: ReturnType<typeof parseRuleSetConfig>, pick
   return rules;
 }
 
-function describeTieredRules(config: ReturnType<typeof parseTieredDraftRuleSetConfig>): string[] {
+function describeTieredRules(
+  config: ReturnType<typeof parseTieredDraftRuleSetConfig>,
+): string[] {
   return [
     "Each week, roster 4 starters — one Tier A, two Tier B, one Tier C — plus a matching bench driver for each.",
     "Starters earn qualifying and finish points; bench drivers earn qualifying points only.",
@@ -55,7 +64,10 @@ async function computeSeasonChampion(
   seasonId: string,
   nameByUserId: Map<string, string>,
 ): Promise<{ name: string; total: number } | null> {
-  const races = await prisma.race.findMany({ where: { seasonId }, select: { id: true } });
+  const races = await prisma.race.findMany({
+    where: { seasonId },
+    select: { id: true },
+  });
   if (races.length === 0) return null;
   const picks = await prisma.pick.findMany({
     where: { leagueId, raceId: { in: races.map((r) => r.id) } },
@@ -67,7 +79,9 @@ async function computeSeasonChampion(
     totalByUser.set(p.userId, (totalByUser.get(p.userId) ?? 0) + p.score.total);
   }
   if (totalByUser.size === 0) return null;
-  const [championUserId, total] = [...totalByUser.entries()].sort((a, b) => b[1] - a[1])[0];
+  const [championUserId, total] = [...totalByUser.entries()].sort(
+    (a, b) => b[1] - a[1],
+  )[0];
   return { name: nameByUserId.get(championUserId) ?? "—", total };
 }
 
@@ -89,7 +103,9 @@ export default async function LeagueTabPage(props: {
   }
 
   const { league, leagueSeason, members } = data;
-  const nameByUserId = new Map(members.map((m) => [m.userId, m.user.name ?? m.user.email]));
+  const nameByUserId = new Map(
+    members.map((m) => [m.userId, m.user.name ?? m.user.email]),
+  );
 
   // Every season this league has ever taken part in — drives the year
   // tabs and the previous-winners table. A league with only one season
@@ -102,7 +118,9 @@ export default async function LeagueTabPage(props: {
   const currentSeasonId = data.season?.id ?? null;
   const requestedYear = seasonParam ? Number(seasonParam) : null;
   const viewingSeasonRow =
-    (requestedYear != null ? leagueSeasons.find((ls) => ls.season.year === requestedYear) : null) ??
+    (requestedYear != null
+      ? leagueSeasons.find((ls) => ls.season.year === requestedYear)
+      : null) ??
     leagueSeasons.find((ls) => ls.seasonId === currentSeasonId) ??
     null;
   const isViewingCurrent = viewingSeasonRow?.seasonId === currentSeasonId;
@@ -110,7 +128,8 @@ export default async function LeagueTabPage(props: {
   const [races, picks] = isViewingCurrent
     ? [data.races, data.picks]
     : await (async () => {
-        if (!viewingSeasonRow) return [[], []] as [typeof data.races, typeof data.picks];
+        if (!viewingSeasonRow)
+          return [[], []] as [typeof data.races, typeof data.picks];
         const seasonRaces = await prisma.race.findMany({
           where: { seasonId: viewingSeasonRow.seasonId },
           orderBy: { week: "asc" },
@@ -119,25 +138,42 @@ export default async function LeagueTabPage(props: {
           where: { leagueId, raceId: { in: seasonRaces.map((r) => r.id) } },
           include: { score: true, driver: true, user: true },
         });
-        return [seasonRaces, seasonPicks] as [typeof data.races, typeof data.picks];
+        return [seasonRaces, seasonPicks] as [
+          typeof data.races,
+          typeof data.picks,
+        ];
       })();
 
   const rules =
     leagueSeason && isViewingCurrent
       ? league.type === "TIERED_DRAFT"
-        ? describeTieredRules(parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config))
-        : describePickemRules(parseRuleSetConfig(leagueSeason.ruleSet.config), league.pickOrderMode as PickOrderMode)
+        ? describeTieredRules(
+            parseTieredDraftRuleSetConfig(leagueSeason.ruleSet.config),
+          )
+        : describePickemRules(
+            parseRuleSetConfig(leagueSeason.ruleSet.config),
+            league.pickOrderMode as PickOrderMode,
+          )
       : [];
 
-  const pastSeasons = leagueSeasons.filter((ls) => ls.seasonId !== currentSeasonId);
+  const pastSeasons = leagueSeasons.filter(
+    (ls) => ls.seasonId !== currentSeasonId,
+  );
   const previousWinners = (
     await Promise.all(
       pastSeasons.map(async (ls) => ({
         year: ls.season.year,
-        champion: await computeSeasonChampion(leagueId, ls.seasonId, nameByUserId),
+        champion: await computeSeasonChampion(
+          leagueId,
+          ls.seasonId,
+          nameByUserId,
+        ),
       })),
     )
-  ).filter((w) => w.champion != null) as { year: number; champion: { name: string; total: number } }[];
+  ).filter((w) => w.champion != null) as {
+    year: number;
+    champion: { name: string; total: number };
+  }[];
 
   // race -> user -> total score that week
   const scoreByRaceUser = new Map<string, Map<string, number>>();
@@ -186,30 +222,37 @@ export default async function LeagueTabPage(props: {
       })),
     };
   });
-  const matrixMembers = members.map((m) => ({ userId: m.userId, name: m.user.name ?? m.user.email }));
+  const matrixMembers = members.map((m) => ({
+    userId: m.userId,
+    name: m.user.name ?? m.user.email,
+  }));
 
   return (
     <>
       {previousWinners.length > 0 && (
         <Card title="Previous Winners">
-          <table>
-            <thead>
-              <tr>
-                <th>Season</th>
-                <th>Champion</th>
-                <th>Points</th>
-              </tr>
-            </thead>
-            <tbody>
-              {previousWinners.map((w) => (
-                <tr key={w.year}>
-                  <td>{w.year}</td>
-                  <td>{w.champion.name}</td>
-                  <td className={styles.num}>{w.champion.total.toLocaleString()}</td>
+          <div className="tableScroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Season</th>
+                  <th>Champion</th>
+                  <th>Points</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {previousWinners.map((w) => (
+                  <tr key={w.year}>
+                    <td>{w.year}</td>
+                    <td>{w.champion.name}</td>
+                    <td className={styles.num}>
+                      {w.champion.total.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
@@ -232,7 +275,8 @@ export default async function LeagueTabPage(props: {
           </div>
         )}
         <p className={styles.sub}>
-          Every player&apos;s score, every week, {isViewingCurrent ? "this season" : viewingSeasonRow?.season.year} —
+          Every player&apos;s score, every week,{" "}
+          {isViewingCurrent ? "this season" : viewingSeasonRow?.season.year} —
           click a race to see the breakdown.
         </p>
         {scoredRaces.length === 0 ? (

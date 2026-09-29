@@ -8,14 +8,27 @@ import {
   PRESETS,
   type PickemRuleSetConfig,
 } from "@/lib/scoring";
-import { buildTieredDraftDefaultConfig, TIERS, type DriverTier, type TieredDraftRuleSetConfig } from "@/lib/tieredDraft";
+import {
+  buildTieredDraftDefaultConfig,
+  TIERS,
+  type DriverTier,
+  type TieredDraftRuleSetConfig,
+} from "@/lib/tieredDraft";
 import { checkPickemCapacity, checkTieredCapacity } from "@/lib/leagueCapacity";
-import { createLeague, previewRules, type PreviewRow } from "@/app/leagues/new/actions";
+import {
+  createLeague,
+  previewRules,
+  type PreviewRow,
+} from "@/app/leagues/new/actions";
 import { updateLeagueRules } from "@/app/leagues/[leagueId]/commissioner/actions";
 import Card from "@/components/ui/Card";
 import styles from "./LeagueRulesForm.module.css";
 
-const TIER_LABEL: Record<DriverTier, string> = { A: "Tier A", B: "Tier B", C: "Tier C" };
+const TIER_LABEL: Record<DriverTier, string> = {
+  A: "Tier A",
+  B: "Tier B",
+  C: "Tier C",
+};
 
 type RaceOption = { id: string; label: string };
 
@@ -101,12 +114,18 @@ export default function LeagueRulesForm({
   editingLeague?: EditingLeague;
 }) {
   const [name, setName] = useState("");
-  const [leagueType, setLeagueType] = useState<LeagueType>(editingLeague?.type ?? "PICKEM");
+  const [leagueType, setLeagueType] = useState<LeagueType>(
+    editingLeague?.type ?? "PICKEM",
+  );
   const [config, setConfig] = useState<PickemRuleSetConfig>(() =>
-    editingLeague?.pickemConfig ? clonePreset(editingLeague.pickemConfig) : clonePreset(PRESETS.ourDefault),
+    editingLeague?.pickemConfig
+      ? clonePreset(editingLeague.pickemConfig)
+      : clonePreset(PRESETS.ourDefault),
   );
   const [unlimitedRepeats, setUnlimitedRepeats] = useState(
-    editingLeague?.pickemConfig ? editingLeague.pickemConfig.maxPicksPerDriverPerSeason == null : true,
+    editingLeague?.pickemConfig
+      ? editingLeague.pickemConfig.maxPicksPerDriverPerSeason == null
+      : true,
   );
   const [tieredConfig, setTieredConfig] = useState<TieredDraftRuleSetConfig>(
     editingLeague?.tieredConfig ?? buildTieredDraftDefaultConfig(),
@@ -115,7 +134,9 @@ export default function LeagueRulesForm({
   const [createError, setCreateError] = useState<string | undefined>();
   const [creating, startCreate] = useTransition();
 
-  const [previewRaceId, setPreviewRaceId] = useState(completedRaces[0]?.id ?? "");
+  const [previewRaceId, setPreviewRaceId] = useState(
+    completedRaces[0]?.id ?? "",
+  );
   const [previewRows, setPreviewRows] = useState<PreviewRow[] | null>(null);
   const [previewError, setPreviewError] = useState<string | undefined>();
   const [previewing, startPreview] = useTransition();
@@ -160,7 +181,9 @@ export default function LeagueRulesForm({
   function updateTierStarters(tier: DriverTier, starters: number) {
     setTieredConfig((c) => ({
       ...c,
-      tierComposition: c.tierComposition.map((t) => (t.tier === tier ? { ...t, starters } : t)),
+      tierComposition: c.tierComposition.map((t) =>
+        t.tier === tier ? { ...t, starters } : t,
+      ),
     }));
   }
 
@@ -168,15 +191,24 @@ export default function LeagueRulesForm({
     setTieredConfig((c) => ({
       ...c,
       qualifyingScoredCount: count,
-      qualifyingPositionPoints: Array.from({ length: count }, (_, i) => c.qualifyingPositionPoints[i] ?? 0),
+      qualifyingPositionPoints: Array.from(
+        { length: count },
+        (_, i) => c.qualifyingPositionPoints[i] ?? 0,
+      ),
     }));
   }
 
   const pickemScorableWeeks = config.includeNonPointsRaces
     ? seasonRaceCount
     : Math.max(0, seasonRaceCount - seasonNonPointsRaceCount);
-  const pickemCapacity = checkPickemCapacity(config, { driverPoolSize, scorableWeeks: pickemScorableWeeks });
-  const tieredCapacity = checkTieredCapacity(tieredConfig, { driverPoolSize, scorableWeeks: seasonRaceCount });
+  const pickemCapacity = checkPickemCapacity(config, {
+    driverPoolSize,
+    scorableWeeks: pickemScorableWeeks,
+  });
+  const tieredCapacity = checkTieredCapacity(tieredConfig, {
+    driverPoolSize,
+    scorableWeeks: seasonRaceCount,
+  });
 
   function handlePreview() {
     setPreviewError(undefined);
@@ -227,7 +259,9 @@ export default function LeagueRulesForm({
       {!editingLeague && (
         <Card title="League type">
           <div className={styles.typeGrid}>
-            <label className={`${styles.typeCard} ${leagueType === "PICKEM" ? styles.typeCardActive : ""}`}>
+            <label
+              className={`${styles.typeCard} ${leagueType === "PICKEM" ? styles.typeCardActive : ""}`}
+            >
               <input
                 type="radio"
                 name="leagueType"
@@ -238,11 +272,14 @@ export default function LeagueRulesForm({
               <span>
                 <span className={styles.typeCardTitle}>Pick&apos;em</span>
                 <div className={styles.typeCardDesc}>
-                  Pick a driver (or several) each week, fully customizable scoring.
+                  Pick a driver (or several) each week, fully customizable
+                  scoring.
                 </div>
               </span>
             </label>
-            <label className={`${styles.typeCard} ${leagueType === "TIERED_DRAFT" ? styles.typeCardActive : ""}`}>
+            <label
+              className={`${styles.typeCard} ${leagueType === "TIERED_DRAFT" ? styles.typeCardActive : ""}`}
+            >
               <input
                 type="radio"
                 name="leagueType"
@@ -253,7 +290,8 @@ export default function LeagueRulesForm({
               <span>
                 <span className={styles.typeCardTitle}>Tiered Lineup</span>
                 <div className={styles.typeCardDesc}>
-                  Draft a weekly 8-driver roster from 3 performance tiers, old-Yahoo-style.
+                  Draft a weekly 8-driver roster from 3 performance tiers,
+                  old-Yahoo-style.
                 </div>
               </span>
             </label>
@@ -265,26 +303,33 @@ export default function LeagueRulesForm({
         <>
           <Card title="How Tiered Lineup works">
             <p className={styles.intro}>
-              Every week, drivers are sorted into three tiers (A, B, C) based on that week&apos;s performance/ranking.
-              Each player drafts a lineup with a bench backup for every starter — how many starters come from each
-              tier is set below.
+              Every week, drivers are sorted into three tiers (A, B, C) based on
+              that week&apos;s performance/ranking. Each player drafts a lineup
+              with a bench backup for every starter — how many starters come
+              from each tier is set below.
             </p>
             <p className={styles.intro}>
-              <strong>Lineup lock:</strong> your lineup locks at 2:00 AM Pacific on qualifying day. After that, you
-              can still swap a starter for its bench counterpart (no new drivers) right up until 5 minutes before the
-              race starts. If you never touch your lineup for a week, last week&apos;s carries over.
+              <strong>Lineup lock:</strong> your lineup locks at 2:00 AM Pacific
+              on qualifying day. After that, you can still swap a starter for
+              its bench counterpart (no new drivers) right up until 5 minutes
+              before the race starts. If you never touch your lineup for a week,
+              last week&apos;s carries over.
             </p>
             <p className={styles.intro}>
-              <strong>Scoring:</strong> every rostered driver, starter or bench, scores qualifying points. Starters
-              additionally score finishing points; bench drivers never score finishing points, win or lose. Tier
-              bucket sizes and lock timing aren&apos;t editable, but the roster shape and every point value below
-              are — the defaults shown match the classic Yahoo Fantasy NASCAR payouts.
+              <strong>Scoring:</strong> every rostered driver, starter or bench,
+              scores qualifying points. Starters additionally score finishing
+              points; bench drivers never score finishing points, win or lose.
+              Tier bucket sizes and lock timing aren&apos;t editable, but the
+              roster shape and every point value below are — the defaults shown
+              match the classic Yahoo Fantasy NASCAR payouts.
             </p>
           </Card>
 
           <Card title="Roster structure">
             <div className={styles.fieldBlock}>
-              <div className={styles.fieldLabel}>Starters per tier (bench mirrors this 1:1)</div>
+              <div className={styles.fieldLabel}>
+                Starters per tier (bench mirrors this 1:1)
+              </div>
               <div className={styles.matrix}>
                 {TIERS.map((tier) => (
                   <div key={tier} className={styles.matrixCell}>
@@ -294,17 +339,39 @@ export default function LeagueRulesForm({
                       inputMode="numeric"
                       pattern="[0-9]*"
                       aria-label={`${TIER_LABEL[tier]} starters`}
-                      value={tieredConfig.tierComposition.find((t) => t.tier === tier)?.starters ?? 0}
-                      onChange={(e) => updateTierStarters(tier, Math.max(0, parseDigits(e.target.value, 0)))}
+                      value={
+                        tieredConfig.tierComposition.find(
+                          (t) => t.tier === tier,
+                        )?.starters ?? 0
+                      }
+                      onChange={(e) =>
+                        updateTierStarters(
+                          tier,
+                          Math.max(0, parseDigits(e.target.value, 0)),
+                        )
+                      }
                       className={styles.matrixInput}
                     />
                   </div>
                 ))}
               </div>
               <div className={styles.fieldHelper}>
-                Weekly roster: {tieredConfig.tierComposition.reduce((sum, t) => sum + t.starters, 0)} starter(s) +{" "}
-                {tieredConfig.tierComposition.reduce((sum, t) => sum + t.starters, 0)} bench ={" "}
-                {tieredConfig.tierComposition.reduce((sum, t) => sum + t.starters, 0) * 2} drivers total.
+                Weekly roster:{" "}
+                {tieredConfig.tierComposition.reduce(
+                  (sum, t) => sum + t.starters,
+                  0,
+                )}{" "}
+                starter(s) +{" "}
+                {tieredConfig.tierComposition.reduce(
+                  (sum, t) => sum + t.starters,
+                  0,
+                )}{" "}
+                bench ={" "}
+                {tieredConfig.tierComposition.reduce(
+                  (sum, t) => sum + t.starters,
+                  0,
+                ) * 2}{" "}
+                drivers total.
               </div>
             </div>
           </Card>
@@ -324,11 +391,17 @@ export default function LeagueRulesForm({
                 onChange={(e) =>
                   setTieredConfig((c) => ({
                     ...c,
-                    maxStartsPerDriverPerSeason: Math.max(1, parseDigits(e.target.value, 1)),
+                    maxStartsPerDriverPerSeason: Math.max(
+                      1,
+                      parseDigits(e.target.value, 1),
+                    ),
                   }))
                 }
               />
-              <div className={styles.fieldHelper}>Benching a driver doesn&apos;t count against this cap — only starting them does.</div>
+              <div className={styles.fieldHelper}>
+                Benching a driver doesn&apos;t count against this cap — only
+                starting them does.
+              </div>
             </div>
 
             <div className={styles.fieldBlock}>
@@ -342,7 +415,11 @@ export default function LeagueRulesForm({
                 pattern="[0-9]*"
                 className={styles.numberInputSmall}
                 value={tieredConfig.qualifyingScoredCount}
-                onChange={(e) => updateQualifyingScoredCount(Math.max(1, parseDigits(e.target.value, 1)))}
+                onChange={(e) =>
+                  updateQualifyingScoredCount(
+                    Math.max(1, parseDigits(e.target.value, 1)),
+                  )
+                }
               />
             </div>
           </Card>
@@ -351,44 +428,57 @@ export default function LeagueRulesForm({
             <Card title="Season capacity check">
               {tieredCapacity.feasible ? (
                 <p className={styles.intro}>
-                  This roster shape and starts cap are mathematically sustainable across the {seasonRaceCount}-race
-                  season with roughly {driverPoolSize} drivers in the pool.
+                  This roster shape and starts cap are mathematically
+                  sustainable across the {seasonRaceCount}-race season with
+                  roughly {driverPoolSize} drivers in the pool.
                 </p>
               ) : (
                 <p role="alert">
-                  This roster shape can&apos;t be filled all season under the current starts cap — see the tier(s)
-                  flagged below. Lower the starters required, raise the starts cap, or the pool needs more drivers.
+                  This roster shape can&apos;t be filled all season under the
+                  current starts cap — see the tier(s) flagged below. Lower the
+                  starters required, raise the starts cap, or the pool needs
+                  more drivers.
                 </p>
               )}
-              <table>
-                <thead>
-                  <tr>
-                    <th>Tier</th>
-                    <th>Starters/wk</th>
-                    <th>Est. pool</th>
-                    <th>Starts needed (season)</th>
-                    <th>Starts available</th>
-                    <th>Leftover</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tieredCapacity.rows.map((r) => (
-                    <tr key={r.tier}>
-                      <td>{TIER_LABEL[r.tier]}</td>
-                      <td>{r.starters}</td>
-                      <td>{r.poolSize}</td>
-                      <td>{r.slotsNeeded}</td>
-                      <td>{r.slotsAvailable}</td>
-                      <td style={{ color: r.leftover < 0 ? "var(--danger, crimson)" : undefined }}>
-                        {r.leftover >= 0 ? `+${r.leftover}` : r.leftover}
-                      </td>
+              <div className="tableScroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Tier</th>
+                      <th>Starters/wk</th>
+                      <th>Est. pool</th>
+                      <th>Starts needed (season)</th>
+                      <th>Starts available</th>
+                      <th>Leftover</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {tieredCapacity.rows.map((r) => (
+                      <tr key={r.tier}>
+                        <td>{TIER_LABEL[r.tier]}</td>
+                        <td>{r.starters}</td>
+                        <td>{r.poolSize}</td>
+                        <td>{r.slotsNeeded}</td>
+                        <td>{r.slotsAvailable}</td>
+                        <td
+                          style={{
+                            color:
+                              r.leftover < 0
+                                ? "var(--danger, crimson)"
+                                : undefined,
+                          }}
+                        >
+                          {r.leftover >= 0 ? `+${r.leftover}` : r.leftover}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               <div className={styles.fieldHelper} style={{ marginTop: 10 }}>
-                Estimate, not a guarantee — a driver&apos;s tier can shift week to week with performance, so this
-                assumes roughly this many distinct drivers cycle through each tier all season.
+                Estimate, not a guarantee — a driver&apos;s tier can shift week
+                to week with performance, so this assumes roughly this many
+                distinct drivers cycle through each tier all season.
               </div>
             </Card>
           )}
@@ -415,7 +505,11 @@ export default function LeagueRulesForm({
 
           <div className={styles.submitRow}>
             <button type="submit" disabled={creating}>
-              {creating ? "Saving..." : editingLeague ? "Save changes" : "Create league"}
+              {creating
+                ? "Saving..."
+                : editingLeague
+                  ? "Save changes"
+                  : "Create league"}
             </button>
           </div>
         </>
@@ -423,13 +517,25 @@ export default function LeagueRulesForm({
         <>
           <Card title="Presets">
             <div className={styles.presetRow}>
-              <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.nascarOfficial)}>
+              <button
+                type="button"
+                className={styles.presetButton}
+                onClick={() => applyPreset(PRESETS.nascarOfficial)}
+              >
                 NASCAR Official Points
               </button>
-              <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.ourDefault)}>
+              <button
+                type="button"
+                className={styles.presetButton}
+                onClick={() => applyPreset(PRESETS.ourDefault)}
+              >
                 Fantasy NASCAR HQ Points
               </button>
-              <button type="button" className={styles.presetButton} onClick={() => applyPreset(PRESETS.custom)}>
+              <button
+                type="button"
+                className={styles.presetButton}
+                onClick={() => applyPreset(PRESETS.custom)}
+              >
                 Custom Points
               </button>
             </div>
@@ -448,7 +554,13 @@ export default function LeagueRulesForm({
                 className={styles.numberInputSmall}
                 value={config.picksPerWeek}
                 onChange={(e) =>
-                  setConfig((c) => ({ ...c, picksPerWeek: Math.min(10, Math.max(1, parseDigits(e.target.value, 1))) }))
+                  setConfig((c) => ({
+                    ...c,
+                    picksPerWeek: Math.min(
+                      10,
+                      Math.max(1, parseDigits(e.target.value, 1)),
+                    ),
+                  }))
                 }
               />
             </div>
@@ -460,7 +572,10 @@ export default function LeagueRulesForm({
                   checked={unlimitedRepeats}
                   onChange={(e) => {
                     setUnlimitedRepeats(e.target.checked);
-                    setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: e.target.checked ? null : 1 }));
+                    setConfig((c) => ({
+                      ...c,
+                      maxPicksPerDriverPerSeason: e.target.checked ? null : 1,
+                    }));
                   }}
                 />
                 Unlimited repeat picks of the same driver
@@ -478,7 +593,13 @@ export default function LeagueRulesForm({
                     className={styles.numberInputSmall}
                     value={config.maxPicksPerDriverPerSeason ?? 1}
                     onChange={(e) =>
-                      setConfig((c) => ({ ...c, maxPicksPerDriverPerSeason: Math.max(1, parseDigits(e.target.value, 1)) }))
+                      setConfig((c) => ({
+                        ...c,
+                        maxPicksPerDriverPerSeason: Math.max(
+                          1,
+                          parseDigits(e.target.value, 1),
+                        ),
+                      }))
                     }
                   />
                 </div>
@@ -490,7 +611,12 @@ export default function LeagueRulesForm({
                 <input
                   type="checkbox"
                   checked={config.includeNonPointsRaces}
-                  onChange={(e) => setConfig((c) => ({ ...c, includeNonPointsRaces: e.target.checked }))}
+                  onChange={(e) =>
+                    setConfig((c) => ({
+                      ...c,
+                      includeNonPointsRaces: e.target.checked,
+                    }))
+                  }
                 />
                 Include non-points races (e.g. the All-Star race)
               </label>
@@ -507,12 +633,20 @@ export default function LeagueRulesForm({
                     name="lockTiming"
                     className={styles.radioOptionRadio}
                     checked={config.lockTiming === "afterQualifying"}
-                    onChange={() => setConfig((c) => ({ ...c, lockTiming: "afterQualifying" }))}
+                    onChange={() =>
+                      setConfig((c) => ({
+                        ...c,
+                        lockTiming: "afterQualifying",
+                      }))
+                    }
                   />
                   <span>
-                    <div className={styles.radioOptionTitle}>After qualifying</div>
+                    <div className={styles.radioOptionTitle}>
+                      After qualifying
+                    </div>
                     <div className={styles.radioOptionDesc}>
-                      Picks lock 5 minutes before the race starts, informed by starting position.
+                      Picks lock 5 minutes before the race starts, informed by
+                      starting position.
                     </div>
                   </span>
                 </label>
@@ -524,11 +658,20 @@ export default function LeagueRulesForm({
                     name="lockTiming"
                     className={styles.radioOptionRadio}
                     checked={config.lockTiming === "beforeQualifying"}
-                    onChange={() => setConfig((c) => ({ ...c, lockTiming: "beforeQualifying" }))}
+                    onChange={() =>
+                      setConfig((c) => ({
+                        ...c,
+                        lockTiming: "beforeQualifying",
+                      }))
+                    }
                   />
                   <span>
-                    <div className={styles.radioOptionTitle}>Before qualifying</div>
-                    <div className={styles.radioOptionDesc}>Picks lock blind, the moment qualifying begins.</div>
+                    <div className={styles.radioOptionTitle}>
+                      Before qualifying
+                    </div>
+                    <div className={styles.radioOptionDesc}>
+                      Picks lock blind, the moment qualifying begins.
+                    </div>
                   </span>
                 </label>
               </div>
@@ -537,7 +680,10 @@ export default function LeagueRulesForm({
 
           {seasonRaceCount > 0 && (
             <Card title="Season capacity check">
-              <p className={pickemCapacity.feasible ? styles.intro : undefined} role={pickemCapacity.feasible ? undefined : "alert"}>
+              <p
+                className={pickemCapacity.feasible ? styles.intro : undefined}
+                role={pickemCapacity.feasible ? undefined : "alert"}
+              >
                 {pickemCapacity.message}
               </p>
             </Card>
@@ -549,7 +695,12 @@ export default function LeagueRulesForm({
                 <input
                   type="checkbox"
                   checked={config.includeStagePoints}
-                  onChange={(e) => setConfig((c) => ({ ...c, includeStagePoints: e.target.checked }))}
+                  onChange={(e) =>
+                    setConfig((c) => ({
+                      ...c,
+                      includeStagePoints: e.target.checked,
+                    }))
+                  }
                 />
                 Include stage points
               </label>
@@ -558,17 +709,26 @@ export default function LeagueRulesForm({
             <div className={styles.fieldBlock}>
               <div className={styles.fieldLabel}>Position points</div>
               <div className={styles.radioGroup}>
-                <label className={`${styles.radioOption} ${config.pointsMode === "fixed" ? styles.radioOptionActive : ""}`}>
+                <label
+                  className={`${styles.radioOption} ${config.pointsMode === "fixed" ? styles.radioOptionActive : ""}`}
+                >
                   <input
                     type="radio"
                     name="pointsMode"
                     className={styles.radioOptionRadio}
                     checked={config.pointsMode === "fixed"}
-                    onChange={() => setConfig((c) => ({ ...c, pointsMode: "fixed" }))}
+                    onChange={() =>
+                      setConfig((c) => ({ ...c, pointsMode: "fixed" }))
+                    }
                   />
                   <span>
-                    <div className={styles.radioOptionTitle}>Fixed points matrix</div>
-                    <div className={styles.radioOptionDesc}>Each position is always worth the same, like real NASCAR points.</div>
+                    <div className={styles.radioOptionTitle}>
+                      Fixed points matrix
+                    </div>
+                    <div className={styles.radioOptionDesc}>
+                      Each position is always worth the same, like real NASCAR
+                      points.
+                    </div>
                   </span>
                 </label>
                 <label
@@ -579,19 +739,28 @@ export default function LeagueRulesForm({
                     name="pointsMode"
                     className={styles.radioOptionRadio}
                     checked={config.pointsMode === "fieldSizeRelative"}
-                    onChange={() => setConfig((c) => ({ ...c, pointsMode: "fieldSizeRelative" }))}
+                    onChange={() =>
+                      setConfig((c) => ({
+                        ...c,
+                        pointsMode: "fieldSizeRelative",
+                      }))
+                    }
                   />
                   <span>
-                    <div className={styles.radioOptionTitle}>Field-size relative</div>
+                    <div className={styles.radioOptionTitle}>
+                      Field-size relative
+                    </div>
                     <div className={styles.radioOptionDesc}>
-                      1st place is worth however many cars started, scaling down each race.
+                      1st place is worth however many cars started, scaling down
+                      each race.
                     </div>
                   </span>
                 </label>
               </div>
               <div className={styles.fieldHelper} style={{ marginTop: 10 }}>
-                Want to reward 1st place extra? Switch to the fixed points matrix and set position 1&apos;s points
-                higher than position 2&apos;s — no separate winner bonus needed.
+                Want to reward 1st place extra? Switch to the fixed points
+                matrix and set position 1&apos;s points higher than position
+                2&apos;s — no separate winner bonus needed.
               </div>
             </div>
           </Card>
@@ -609,8 +778,8 @@ export default function LeagueRulesForm({
           {config.pointsMode === "fieldSizeRelative" && (
             <Card title="Position points">
               <p className={styles.intro}>
-                A finisher scores (field size + 1 − finishing position) points — e.g. 1st in a 36-car field scores
-                36, last scores 1.
+                A finisher scores (field size + 1 − finishing position) points —
+                e.g. 1st in a 36-car field scores 36, last scores 1.
               </p>
             </Card>
           )}
@@ -627,11 +796,16 @@ export default function LeagueRulesForm({
 
           <Card title="Test these rules against real results">
             {completedRaces.length === 0 ? (
-              <p className={styles.intro}>No race has results entered yet — nothing to test against.</p>
+              <p className={styles.intro}>
+                No race has results entered yet — nothing to test against.
+              </p>
             ) : (
               <>
                 <div className={styles.previewRow}>
-                  <div className={styles.fieldBlock} style={{ padding: 0, border: "none" }}>
+                  <div
+                    className={styles.fieldBlock}
+                    style={{ padding: 0, border: "none" }}
+                  >
                     <label htmlFor="previewRace" className={styles.fieldLabel}>
                       Race
                     </label>
@@ -648,7 +822,11 @@ export default function LeagueRulesForm({
                       ))}
                     </select>
                   </div>
-                  <button type="button" onClick={handlePreview} disabled={previewing}>
+                  <button
+                    type="button"
+                    onClick={handlePreview}
+                    disabled={previewing}
+                  >
                     {previewing ? "Testing..." : "Test"}
                   </button>
                 </div>
@@ -691,7 +869,11 @@ export default function LeagueRulesForm({
 
           <div className={styles.submitRow}>
             <button type="submit" disabled={creating}>
-              {creating ? "Saving..." : editingLeague ? "Save changes" : "Create league"}
+              {creating
+                ? "Saving..."
+                : editingLeague
+                  ? "Save changes"
+                  : "Create league"}
             </button>
           </div>
         </>

@@ -58,14 +58,21 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* Caps a lone/standalone card (not paired with siblings in a CardGrid)
-     at roughly the page's old single-column width, instead of stretching
-     edge to edge across the wide content column — matches what a
-     CardGrid's own columns already look like, so a page with just one
-     card doesn't read differently from one with several. A genuinely
-     wide table (many columns, e.g. FullScoreMatrix) opts out via its own
-     className; see that component's CSS. */
-  max-width: 1100px;
+  /* Caps every card — standalone or a CardGrid child — at what a
+     CardGrid's own 2-up row already settles on inside a maxed-out
+     contentInner (1600px, minus its padding and the grid gap, split
+     in half: (1600 - space-5*2 - space-4) / 2). That's deliberate, not
+     just arithmetic that happens to land here: a card sized to roughly
+     half the content column is also roughly half of a maximized browser
+     window on an ordinary monitor, so a lone card stops there instead of
+     stretching to fill the whole column — and a *second* independent
+     card on the same page (wrapped alongside it in a CardGrid) now
+     actually has room to sit beside it once the window is wide enough,
+     rather than the old 1100px cap (bigger than half the column) leaving
+     no space for that to happen. A genuinely wide table (many columns,
+     e.g. FullScoreMatrix) opts out via its own className; see that
+     component's CSS. */
+  max-width: 768px;
 }
 
 .wide {

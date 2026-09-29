@@ -11,7 +11,13 @@ type DriverRow = {
   source: "AUTO" | "MANUAL" | null;
 };
 
-export default function TiersForm({ raceId, drivers }: { raceId: string; drivers: DriverRow[] }) {
+export default function TiersForm({
+  raceId,
+  drivers,
+}: {
+  raceId: string;
+  drivers: DriverRow[];
+}) {
   const [error, formAction, pending] = useActionState(submitTiers, undefined);
   const router = useRouter();
   const [autoMessage, setAutoMessage] = useState<string | undefined>();
@@ -35,12 +41,16 @@ export default function TiersForm({ raceId, drivers }: { raceId: string; drivers
   return (
     <>
       <p>
-        <button type="button" onClick={handleAutoAssign} disabled={autoAssigning}>
+        <button
+          type="button"
+          onClick={handleAutoAssign}
+          disabled={autoAssigning}
+        >
           {autoAssigning ? "Computing..." : "Recompute now"}
         </button>{" "}
         <small>
-          weighted 65% season points / 25% recent form / 10% track history — also clears any hand-edits below back
-          to automatic
+          weighted 65% season points / 25% recent form / 10% track history —
+          also clears any hand-edits below back to automatic
         </small>
       </p>
       {autoMessage && <p role="status">{autoMessage}</p>}
@@ -48,31 +58,36 @@ export default function TiersForm({ raceId, drivers }: { raceId: string; drivers
       <form key={formKey} action={formAction}>
         <input type="hidden" name="raceId" value={raceId} />
 
-        <table>
-          <thead>
-            <tr>
-              <th>Driver</th>
-              <th>Tier</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.map((d) => (
-              <tr key={d.driverId}>
-                <td>
-                  {d.name} {d.source === "MANUAL" && <small>(pinned)</small>}
-                </td>
-                <td>
-                  <select name={`tier-${d.driverId}`} defaultValue={d.tier ?? ""}>
-                    <option value="">&mdash;</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                  </select>
-                </td>
+        <div className="tableScroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Driver</th>
+                <th>Tier</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {drivers.map((d) => (
+                <tr key={d.driverId}>
+                  <td>
+                    {d.name} {d.source === "MANUAL" && <small>(pinned)</small>}
+                  </td>
+                  <td>
+                    <select
+                      name={`tier-${d.driverId}`}
+                      defaultValue={d.tier ?? ""}
+                    >
+                      <option value="">&mdash;</option>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {error && <p role="alert">{error}</p>}
 
