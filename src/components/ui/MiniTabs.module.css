@@ -40,7 +40,7 @@ button.toggleBtn:active {
 .toggleBtnActive,
 .toggleBtnActive:hover {
   background: var(--accent);
-  color: #fafafa;
+  color: var(--text-on-accent);
   font-weight: 700;
 }
 

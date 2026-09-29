@@ -1,110 +1,7 @@
-/* ============================================================
-   "Night Race Broadcast" — home page only.
-
-   Every design token below (colors, fonts, radii, shadow) shadows the
-   site-wide default from globals.css's :root, but only for descendants
-   of .nightRace (the page's own <main>) — the sidebar sits outside that
-   subtree as a layout sibling, and every other page/component keeps
-   reading the real :root values untouched. .linkButton/.linkButtonOutline
-   are global classes (defined in globals.css, reused on other pages), so
-   they're re-themed the same way: via :global() selectors scoped under
-   .nightRace, never by touching the shared rule itself.
-   ============================================================ */
-.nightRace {
-  --ink: #edeff3;
-  --pageBg: #0b0d12;
-  --surface: #12151c;
-  --surfaceRaised: #1e232e;
-  --surfaceHover: #171b24;
-  --border: #262b36;
-  --borderStrong: #4a5468;
-  --accent: #ffd400;
-  --accentInk: #0b0d12;
-  --muted: #b4bbc7;
-  --faint: #9aa3b2;
-
-  --color-ink: var(--ink);
-  --font-heading: var(--font-night-heading), "Barlow", sans-serif;
-  --font-body: var(--font-night-body), Helvetica, Arial, sans-serif;
-
-  --bg-app: var(--pageBg);
-  --bg-surface: var(--surface);
-  --bg-surface-muted: var(--surfaceHover);
-  --border-color: var(--border);
-  --shadow-card: none;
-
-  --text-primary: var(--ink);
-  --text-secondary: var(--muted);
-  --text-muted: var(--faint);
-  --text-on-ink: var(--accentInk);
-
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-btn: 0;
-
-  --slant-8: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  background-color: var(--bg-app);
-  background-image: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 28px);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  padding: var(--space-5);
-}
-
-/* Checkered-flag strip across the top of the page content — the "Night
-   Race Broadcast" signature. Scoped to this page's own box rather than
-   the real <body> element (which the reference design puts it on), since
-   <body> is shared by every page in the app. */
-.nightRace::before {
-  content: "";
-  display: block;
-  height: 12px;
-  margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) var(--space-5);
-  background: repeating-conic-gradient(var(--ink) 0 25%, var(--pageBg) 0 50%) 0 0 / 12px 12px;
-}
-
-.nightRace :global(.linkButton),
-.nightRace :global(.linkButtonOutline) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 44px;
-  padding: 0 1.35em;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  clip-path: var(--slant-8);
-  transition: transform 0.15s ease, filter 0.15s ease;
-}
-.nightRace :global(.linkButton) {
-  background: var(--accent);
-  color: var(--accentInk);
-  border: 1px solid var(--accent);
-}
-.nightRace :global(.linkButtonOutline) {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--borderStrong);
-}
-.nightRace :global(.linkButton):hover,
-.nightRace :global(.linkButtonOutline):hover {
-  transform: translateY(-2px);
-  filter: brightness(1.12);
-}
-@media (prefers-reduced-motion: reduce) {
-  .nightRace :global(.linkButton):hover,
-  .nightRace :global(.linkButtonOutline):hover {
-    transform: none;
-  }
-}
+/* Home page layout — the "Night Race Broadcast" look itself (palette,
+   type, card shell, buttons) is now the site-wide default (globals.css +
+   Card.module.css + Badge.module.css), so this file only holds the home
+   page's own structure: the My Leagues table, and the two snapshot lists. */
 
 .header {
   display: flex;
@@ -122,15 +19,6 @@
   transform: skewX(-24deg);
   margin-bottom: 18px;
 }
-.header h1 {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-weight: 900;
-  font-size: clamp(2.5rem, 6vw, 4rem);
-  line-height: 0.88;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-}
 .headerSub {
   margin: 14px 0 0;
   color: var(--text-muted);
@@ -140,55 +28,6 @@
 .empty {
   color: var(--text-muted);
   font-size: 0.95rem;
-}
-
-/* Home-page-local card shell — a bespoke lightweight version of the
-   shared <Card> component's markup, kept local to this file on purpose:
-   <Card>/Card.module.css are used across the whole app, and this look
-   (square corners, slanted title marker) is a home-page-only experiment
-   for now, not a change to that shared component. */
-.card {
-  background: var(--bg-surface);
-  padding: var(--space-5);
-}
-
-.cardHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.cardTitle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-  font-family: var(--font-heading);
-  font-weight: 900;
-  font-size: 1.6rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-.cardTitle::before {
-  content: "";
-  width: 14px;
-  height: 22px;
-  background: var(--accent);
-  transform: skewX(-20deg);
-}
-
-.cardActions {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.seeAll {
-  text-decoration: none;
-  font-weight: 600;
-  color: var(--text-muted);
 }
 
 .commish {
@@ -252,8 +91,8 @@
   width: 40px;
   height: 40px;
   clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-  background: var(--surfaceRaised);
-  color: var(--accent);
+  background: var(--surface-raised);
+  color: var(--text-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -305,8 +144,8 @@
   width: 40px;
   height: 26px;
   clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-  background: var(--surfaceRaised);
-  color: var(--accent);
+  background: var(--surface-raised);
+  color: var(--text-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -336,8 +175,8 @@
   height: 26px;
   padding: 0 4px;
   clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
-  background: var(--surfaceRaised);
-  color: var(--accent);
+  background: var(--surface-raised);
+  color: var(--text-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -458,8 +297,8 @@
 .weekChip {
   height: 26px;
   clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
-  background: var(--surfaceRaised);
-  color: var(--accent);
+  background: var(--surface-raised);
+  color: var(--text-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -469,7 +308,7 @@
 /* Next race = first row of the schedule list: highlight it. */
 .rowList li:first-child .weekChip {
   background: var(--accent);
-  color: var(--accentInk);
+  color: var(--text-on-accent);
 }
 .rowList li:first-child:has(.weekChip) > .muted {
   color: var(--accent);
@@ -480,7 +319,7 @@
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
-  border: 1px solid var(--borderStrong);
+  border: 1px solid var(--border-strong);
 }
 
 .raceName {

@@ -6,7 +6,7 @@
 
 .installButton {
   background: var(--accent);
-  color: var(--text-on-ink);
+  color: var(--text-on-accent);
   border: 1px solid var(--accent);
 }
 

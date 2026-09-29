@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Big_Shoulders, Barlow } from "next/font/google";
 import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Card from "@/components/ui/Card";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import RaceLogo from "@/components/ui/RaceLogo";
 import { getLeagueHubData } from "@/app/leagues/[leagueId]/(hub)/leagueData";
@@ -15,21 +15,6 @@ import { firstNameFor } from "@/lib/displayName";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
-
-// "Night Race Broadcast" look, home page only — loaded here (not in the
-// root layout) so no other page pays for these fonts or picks up the
-// look. See page.module.css's .nightRace block for where these variables
-// get consumed.
-const nightHeading = Big_Shoulders({
-  variable: "--font-night-heading",
-  weight: ["700", "800", "900"],
-  subsets: ["latin"],
-});
-const nightBody = Barlow({
-  variable: "--font-night-body",
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-});
 
 export default async function Home() {
   const session = await auth();
@@ -70,24 +55,25 @@ export default async function Home() {
   const numberByDriverId = new Map(topDriverNumbers.map((d) => [d.id, d.number]));
 
   return (
-    <main className={`${styles.nightRace} ${nightHeading.variable} ${nightBody.variable}`}>
+    <main>
       {memberships.length === 0 ? (
         <>
           <h1>Welcome, {firstName}</h1>
-          <section className={styles.card}>
-            <div className={styles.cardHead}>
-              <h2 className={styles.cardTitle}>Your Leagues</h2>
-              <div className={styles.cardActions}>
+          <Card
+            title="Your Leagues"
+            actions={
+              <>
                 <Link href="/leagues/new" className="linkButton">
                   Create a league
                 </Link>
                 <Link href="/leagues/join" className="linkButtonOutline">
                   Join with code
                 </Link>
-              </div>
-            </div>
+              </>
+            }
+          >
             <p>You&apos;re not in any leagues yet.</p>
-          </section>
+          </Card>
         </>
       ) : (
         <HomeDashboard userId={userId} firstName={firstName} memberships={memberships} />
@@ -116,13 +102,7 @@ function ScheduleSnapshot({
   }[];
 }) {
   return (
-    <section className={styles.card}>
-      <div className={styles.cardHead}>
-        <h2 className={styles.cardTitle}>Upcoming Schedule</h2>
-        <Link href="/races" className={styles.seeAll}>
-          See all →
-        </Link>
-      </div>
+    <Card title="Upcoming Schedule" actions={<Link href="/races">See all →</Link>}>
       {races.length === 0 ? (
         <p className={styles.empty}>No upcoming races scheduled.</p>
       ) : (
@@ -146,7 +126,7 @@ function ScheduleSnapshot({
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -156,13 +136,7 @@ function DriverPointsSnapshot({
   standings: { driverId: string; driverName: string; points: number; number: number | null }[];
 }) {
   return (
-    <section className={styles.card}>
-      <div className={styles.cardHead}>
-        <h2 className={styles.cardTitle}>Driver Points</h2>
-        <Link href="/stats" className={styles.seeAll}>
-          See all →
-        </Link>
-      </div>
+    <Card title="Driver Points" actions={<Link href="/stats">See all →</Link>}>
       {standings.length === 0 ? (
         <p className={styles.empty}>No results scored yet this season.</p>
       ) : (
@@ -179,7 +153,7 @@ function DriverPointsSnapshot({
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -245,18 +219,19 @@ async function HomeDashboard({
         </div>
       </div>
 
-      <section className={styles.card}>
-        <div className={styles.cardHead}>
-          <h2 className={styles.cardTitle}>My Leagues</h2>
-          <div className={styles.cardActions}>
+      <Card
+        title="My Leagues"
+        actions={
+          <>
             <Link href="/leagues/new" className="linkButton">
               Create a league
             </Link>
             <Link href="/leagues/join" className="linkButtonOutline">
               Join with code
             </Link>
-          </div>
-        </div>
+          </>
+        }
+      >
         <div className={styles.tableHead}>
           <span>League</span>
           <span>Members</span>
@@ -308,7 +283,7 @@ async function HomeDashboard({
             </span>
           </div>
         ))}
-      </section>
+      </Card>
     </>
   );
 }

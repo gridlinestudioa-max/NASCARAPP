@@ -2,7 +2,7 @@
 // from a client component for the Global Style page's live preview. See
 // src/lib/theme.ts for the server-side loader that wraps these.
 
-export type HeadingFont = "Barlow" | "Oswald";
+export type HeadingFont = "Barlow" | "Oswald" | "BigShoulders";
 export type AppTheme = {
   ink: string;
   pageBg: string;
@@ -17,14 +17,21 @@ export type AppTheme = {
   logoUrl: string | null;
 };
 
+// "Night Race Broadcast" — the site's default look as of the full-site
+// reskin: near-black ground, a raised-navy "ink" (used for solid chip
+// fills — avatars, badges, the sidebar brand mark), flag-yellow accent,
+// zero radius (the square-cornered, slanted-edge shape language lives in
+// globals.css's fixed --radius-sm/-btn/-pill and the --slant-8 clip-path,
+// not here). Still fully admin-editable from /admin/style — this is a
+// starting point, not a hardcoded look.
 export const DEFAULT_THEME: AppTheme = {
-  ink: "#2e2e2e",
-  pageBg: "#ffffff",
-  surface: "#f7f7f7",
-  border: "#e3e3e3",
-  accent: "#000000",
-  headingFont: "Barlow",
-  radius: 14,
+  ink: "#1e232e",
+  pageBg: "#0b0d12",
+  surface: "#12151c",
+  border: "#262b36",
+  accent: "#ffd400",
+  headingFont: "BigShoulders",
+  radius: 0,
   logoUrl: null,
 };
 
@@ -41,9 +48,21 @@ export function themeToCssVars(theme: AppTheme): Record<string, string> {
     "--surface": theme.surface,
     "--border": theme.border,
     "--accent": theme.accent,
-    "--muted": `color-mix(in oklab, ${theme.ink} 70%, ${theme.pageBg})`,
-    "--faint": `color-mix(in oklab, ${theme.ink} 48%, ${theme.pageBg})`,
-    "--heading-font-name": theme.headingFont === "Oswald" ? "var(--font-oswald)" : "var(--font-barlow)",
+    // Both directions of mix flipped from the original light-theme-only
+    // assumption (mixing a dark "ink" toward a light "pageBg" to get a
+    // muted gray only works when pageBg actually is the lighter of the
+    // two) — --text-primary is its own knob-independent readable color
+    // now (see globals.css's :root), so muted/faint mix that toward
+    // pageBg instead of ink, which stays correct whichever way the admin
+    // sets pageBg/ink relative to each other.
+    "--muted": `color-mix(in oklab, var(--text-primary) 70%, ${theme.pageBg})`,
+    "--faint": `color-mix(in oklab, var(--text-primary) 48%, ${theme.pageBg})`,
+    "--heading-font-name":
+      theme.headingFont === "Oswald"
+        ? "var(--font-oswald)"
+        : theme.headingFont === "BigShoulders"
+          ? "var(--font-big-shoulders)"
+          : "var(--font-barlow)",
     "--radius": `${theme.radius}px`,
     "--shellRadius": `max(0px, calc(${theme.radius}px - 4px))`,
   };

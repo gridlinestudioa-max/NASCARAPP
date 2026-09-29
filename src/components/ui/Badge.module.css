@@ -25,7 +25,7 @@
 
 .accent {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--text-on-accent);
 }
 
 .success {

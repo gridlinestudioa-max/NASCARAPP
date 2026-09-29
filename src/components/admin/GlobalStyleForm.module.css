@@ -157,7 +157,7 @@
 
 .previewButton {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-btn);
   padding: 0.6em 1.3em;

@@ -110,7 +110,7 @@ button[type="button"].driverRow:hover {
 button[type="button"].driverRowActive,
 button[type="button"].driverRowActive:hover {
   background: var(--accent);
-  color: #fafafa;
+  color: var(--text-on-accent);
   font-weight: 700;
 }
 

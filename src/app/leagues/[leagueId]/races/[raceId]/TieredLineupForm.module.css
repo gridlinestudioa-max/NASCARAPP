@@ -3,10 +3,14 @@
    relied on light-background text tokens gets a white-on-black override
    below. The driver-picker modal opts back out (see .modal) since it's a
    fixed-position overlay with its own light background, not part of this
-   card's black surface. */
+   card's black surface. Deliberately --color-ink, not --accent — this
+   wants "the site's solid dark chip color," which --accent only
+   coincidentally was back when the default accent was black; now that
+   accent is a bright signature yellow, using it here would turn a status
+   card into what reads as a warning banner. */
 .lineupCard {
-  background: var(--accent) !important;
-  color: #fafafa;
+  background: var(--color-ink) !important;
+  color: var(--text-on-ink);
 }
 
 .roleLabel {
@@ -242,12 +246,16 @@ button.slot.slotFilled {
   margin-top: var(--space-4);
 }
 
-/* The default submit-button styling is black-on-black against this card —
-   invert it so it reads as a button rather than disappearing. */
+/* The default submit-button styling (accent fill) barely stands out
+   against this card's own dark --color-ink background — invert to a
+   light chip instead so it reads as a distinct button. Was `color:
+   var(--accent)` on a near-white fill, which was illegible once accent
+   became a bright yellow (yellow-on-white fails contrast); --color-ink
+   is the correct "text on a light chip" pairing already used elsewhere. */
 .saveBar button[type="submit"] {
-  background: #fafafa;
-  color: var(--accent);
-  border-color: #fafafa;
+  background: var(--text-on-ink);
+  color: var(--color-ink);
+  border-color: var(--text-on-ink);
 }
 
 .saveBar button[type="submit"]:hover:not(:disabled) {

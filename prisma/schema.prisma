@@ -76,13 +76,13 @@ model SyncAlertState {
 // storage.
 model AppTheme {
   id          String   @id @default("singleton")
-  ink         String   @default("#2e2e2e")
-  pageBg      String   @default("#ffffff")
-  surface     String   @default("#f7f7f7")
-  border      String   @default("#e3e3e3")
-  accent      String   @default("#000000")
-  headingFont String   @default("Barlow")
-  radius      Int      @default(14)
+  ink         String   @default("#1e232e")
+  pageBg      String   @default("#0b0d12")
+  surface     String   @default("#12151c")
+  border      String   @default("#262b36")
+  accent      String   @default("#ffd400")
+  headingFont String   @default("BigShoulders")
+  radius      Int      @default(0)
   // App-wide logo, shown in the sidebar brand mark in place of the default
   // placeholder mark. Nullable — no real brand asset exists yet, so the UI
   // falls back to the placeholder rather than fabricating one.
