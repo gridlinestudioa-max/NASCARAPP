@@ -513,6 +513,22 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
 // the current week's time-windowed sync without re-fetching old races
 // over and over.
 //
+// Also does one delayed "settle" re-sync per race: the cron's own
+// dueForResults window (see the sync route) only pulls finishing/stage
+// positions 3-5 hours after green flag, which is sometimes a snapshot of
+// the feed mid-review rather than NASCAR's truly final numbers — stage
+// finishers and finishing order have both been seen to shift slightly
+// after that window closes (a late-race incident reclassified, a stage
+// tie resolved) with nothing to catch it, since a COMPLETE race is
+// otherwise never touched again. A COMPLETE race becomes eligible again
+// once its last sync is at least SETTLE_CHECK_MIN_HOURS old, bounded to
+// races that finished within SETTLE_CHECK_MAX_HOURS — re-syncing re-fetches
+// and overwrites (upsert), so this is safe to fire more than once per race
+// while it stays in that window, and naturally stops once the race ages
+// out of it. Not unbounded: without the date bound this would re-fetch the
+// entire season's history every tick, since every old COMPLETE race has a
+// "stale" lastSyncedAt by definition.
+//
 // Capped per call: a freshly-seeded season can have dozens of unsynced
 // races at once, each needing its own external fetch, which risks running
 // long enough to hit Vercel's function timeout (60s even at the Hobby-plan
@@ -520,12 +536,23 @@ export async function syncSeasonScheduleWithNascarFeed(seasonId: string): Promis
 // means a large backfill spreads itself across several ~15-minute ticks
 // instead of gambling everything on one slow request.
 const PAST_RACE_BACKFILL_BATCH_SIZE = 8;
+const SETTLE_CHECK_MIN_HOURS = 20;
+const SETTLE_CHECK_MAX_HOURS = 72;
 
 export async function syncPastRacesWithNascarFeed(seasonId: string): Promise<SyncResult> {
+  const now = new Date();
   const where = {
     seasonId,
-    date: { lte: new Date() },
-    OR: [{ status: { not: "COMPLETE" as const } }, { lastSyncedAt: null }],
+    date: { lte: now },
+    OR: [
+      { status: { not: "COMPLETE" as const } },
+      { lastSyncedAt: null },
+      {
+        status: "COMPLETE" as const,
+        date: { gte: new Date(now.getTime() - SETTLE_CHECK_MAX_HOURS * HOUR_MS) },
+        lastSyncedAt: { lte: new Date(now.getTime() - SETTLE_CHECK_MIN_HOURS * HOUR_MS) },
+      },
+    ],
   };
   const [races, totalRemaining] = await Promise.all([
     prisma.race.findMany({ where, orderBy: { date: "asc" }, take: PAST_RACE_BACKFILL_BATCH_SIZE }),
