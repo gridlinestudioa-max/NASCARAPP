@@ -34,6 +34,8 @@ export default async function AdminDashboardPage() {
         <Link href="/admin/drivers">Duplicate drivers &rarr;</Link>
         {" · "}
         <Link href="/admin/leagues">Leagues &rarr;</Link>
+        {" · "}
+        <Link href="/admin/users">Users &rarr;</Link>
       </p>
 
       <Card>
