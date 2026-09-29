@@ -1,15 +1,18 @@
+/* Shared by every admin "list of X with a delete action" page (leagues,
+   users, ...) so the row/list layout is defined once instead of per page. */
+
 .empty {
   color: var(--text-muted);
   font-size: 0.88rem;
 }
 
-.userList {
+.list {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.user {
+.row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -20,48 +23,21 @@
   background: var(--bg-surface-muted);
 }
 
-.user + .user {
+.row + .row {
   border-top: 1px solid var(--border-color);
 }
 
-.userInfo {
+.rowInfo {
   min-width: 0;
 }
 
-.userName {
+.rowName {
   margin: 0 0 4px;
   font-weight: 600;
 }
 
-.userMeta {
+.rowMeta {
   margin: 0;
   font-size: 0.82rem;
   color: var(--text-muted);
-}
-
-.deleteTrigger {
-  flex-shrink: 0;
-  color: var(--danger);
-  border-color: var(--danger);
-}
-
-.deleteForm {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-.confirmLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
-
-.deleteActions {
-  display: flex;
-  gap: var(--space-2);
 }

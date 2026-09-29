@@ -4,8 +4,9 @@ import { isSiteAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
-import DeleteLeagueForm from "./DeleteLeagueForm";
-import styles from "./page.module.css";
+import ConfirmDeleteForm from "@/components/admin/ConfirmDeleteForm";
+import { deleteLeagueAction } from "./actions";
+import styles from "../adminList.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -39,21 +40,26 @@ export default async function AdminLeaguesPage() {
         {leagues.length === 0 ? (
           <p className={styles.empty}>No leagues exist.</p>
         ) : (
-          <ul className={styles.leagueList}>
+          <ul className={styles.list}>
             {leagues.map((league) => {
               const owner = ownerById.get(league.ownerId);
               return (
-                <li key={league.id} className={styles.league}>
-                  <div className={styles.leagueInfo}>
-                    <p className={styles.leagueName}>{league.name}</p>
-                    <p className={styles.leagueMeta}>
+                <li key={league.id} className={styles.row}>
+                  <div className={styles.rowInfo}>
+                    <p className={styles.rowName}>{league.name}</p>
+                    <p className={styles.rowMeta}>
                       {league.type === "PICKEM" ? "Pick'em" : "Tiered Lineup"} · {league._count.memberships} member
                       {league._count.memberships === 1 ? "" : "s"} · {league._count.picks} pick
                       {league._count.picks === 1 ? "" : "s"} · owned by {owner?.name ?? owner?.email ?? "unknown"} ·
                       created {league.createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                     </p>
                   </div>
-                  <DeleteLeagueForm leagueId={league.id} leagueName={league.name} />
+                  <ConfirmDeleteForm
+                    id={league.id}
+                    name={league.name}
+                    action={deleteLeagueAction}
+                    confirmMessage={`Permanently delete "${league.name}"? Every membership, rule set, pick, and score in it is gone for good.`}
+                  />
                 </li>
               );
             })}

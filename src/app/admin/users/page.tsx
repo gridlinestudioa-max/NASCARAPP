@@ -4,8 +4,9 @@ import { isSiteAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Breadcrumb from "@/components/ui/Breadcrumb";
-import DeleteUserForm from "./DeleteUserForm";
-import styles from "./page.module.css";
+import ConfirmDeleteForm from "@/components/admin/ConfirmDeleteForm";
+import { deleteUserAction } from "./actions";
+import styles from "../adminList.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -41,22 +42,27 @@ export default async function AdminUsersPage() {
         {users.length === 0 ? (
           <p className={styles.empty}>No users exist.</p>
         ) : (
-          <ul className={styles.userList}>
+          <ul className={styles.list}>
             {users.map((user) => {
               const identifier = user.name?.trim() || user.email;
               const owned = ownedLeaguesByUserId.get(user.id) ?? [];
               return (
-                <li key={user.id} className={styles.user}>
-                  <div className={styles.userInfo}>
-                    <p className={styles.userName}>{identifier}</p>
-                    <p className={styles.userMeta}>
+                <li key={user.id} className={styles.row}>
+                  <div className={styles.rowInfo}>
+                    <p className={styles.rowName}>{identifier}</p>
+                    <p className={styles.rowMeta}>
                       {user.email} · {user._count.memberships} membership{user._count.memberships === 1 ? "" : "s"} ·{" "}
                       {user._count.picks} pick{user._count.picks === 1 ? "" : "s"} · joined{" "}
                       {user.createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                       {owned.length > 0 && <> · owns {owned.join(", ")}</>}
                     </p>
                   </div>
-                  <DeleteUserForm userId={user.id} identifier={identifier} />
+                  <ConfirmDeleteForm
+                    id={user.id}
+                    name={identifier}
+                    action={deleteUserAction}
+                    confirmMessage={`Permanently delete "${identifier}"? Every membership, pick, and score they have is gone for good.`}
+                  />
                 </li>
               );
             })}

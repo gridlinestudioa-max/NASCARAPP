@@ -1,17 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
-import { isSiteAdmin } from "@/lib/authz";
+import { requireAdmin } from "@/lib/adminAuth";
 import { deleteUser } from "@/lib/userDelete";
-
-async function requireAdmin(): Promise<{ error: string | null; adminId: string | null }> {
-  const session = await auth();
-  if (!session?.user?.id || !isSiteAdmin(session.user.email)) {
-    return { error: "Not authorized.", adminId: null };
-  }
-  return { error: null, adminId: session.user.id };
-}
 
 export async function deleteUserAction(
   _prevState: string | undefined,
@@ -20,9 +11,9 @@ export async function deleteUserAction(
   const { error: unauthorized, adminId } = await requireAdmin();
   if (unauthorized) return unauthorized;
 
-  const userId = formData.get("userId");
-  const identifier = formData.get("identifier");
-  const confirmIdentifier = formData.get("confirmIdentifier");
+  const userId = formData.get("id");
+  const identifier = formData.get("name");
+  const confirmIdentifier = formData.get("confirmName");
   if (typeof userId !== "string" || !userId || typeof identifier !== "string") {
     return "Missing user.";
   }

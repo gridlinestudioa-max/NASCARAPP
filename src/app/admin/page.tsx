@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import LinkButton from "@/components/ui/LinkButton";
 import { displayRaceName } from "@/lib/raceName";
 import { getCurrentSeason } from "@/lib/season";
+import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -26,17 +28,13 @@ export default async function AdminDashboardPage() {
         Schedule, entry lists, qualifying, and results sync automatically from NASCAR. Use a race below only when
         the automatic sync hasn&apos;t caught up yet.
       </p>
-      <p>
-        <Link href="/admin/season-setup">Season setup (drivers, next year&apos;s schedule) &rarr;</Link>
-        {" · "}
-        <Link href="/admin/historical-import">Historical results import &rarr;</Link>
-        {" · "}
-        <Link href="/admin/drivers">Duplicate drivers &rarr;</Link>
-        {" · "}
-        <Link href="/admin/leagues">Leagues &rarr;</Link>
-        {" · "}
-        <Link href="/admin/users">Users &rarr;</Link>
-      </p>
+      <div className={styles.navRow}>
+        <LinkButton href="/admin/season-setup">Season setup</LinkButton>
+        <LinkButton href="/admin/historical-import">Historical import</LinkButton>
+        <LinkButton href="/admin/drivers">Duplicate drivers</LinkButton>
+        <LinkButton href="/admin/leagues">Leagues</LinkButton>
+        <LinkButton href="/admin/users">Users</LinkButton>
+      </div>
 
       <Card>
         {races.length === 0 ? (
