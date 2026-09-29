@@ -1,0 +1,121 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.track {
+  position: relative;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.trackBase {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--border-color);
+}
+
+.trackRange {
+  position: absolute;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+/* Two overlapping native range inputs is the standard robust way to build
+   a dual-handle slider without hand-rolling pointer/drag math: each input
+   is transparent and non-interactive everywhere except its own thumb
+   (pointer-events re-enabled only on ::-webkit-slider-thumb /
+   ::-moz-range-thumb below), so a click always reaches whichever thumb is
+   actually under the cursor instead of always hitting the top input. */
+.rangeInput {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+  height: 16px;
+}
+
+.rangeInput:focus-visible {
+  outline: none;
+}
+
+.rangeInput::-webkit-slider-thumb {
+  appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: transform 0.1s ease;
+}
+
+.rangeInput::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+
+.rangeInput::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: transform 0.1s ease;
+}
+
+.rangeInput::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+
+.rangeInput::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rangeInput::-webkit-slider-thumb,
+  .rangeInput::-moz-range-thumb {
+    transition: none;
+  }
+}
+
+/* A 16px thumb is a fine mouse target but cramped for a fingertip —
+   bumped up on touch-sized viewports so dragging either handle is easy
+   without needing pixel-precision. */
+@media (max-width: 760px) {
+  .rangeInput::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .rangeInput::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
+}

@@ -2,6 +2,10 @@
   position: relative;
 }
 
+.sliderWrap {
+  margin-top: var(--space-3);
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
