@@ -18,7 +18,7 @@ import { displayRaceName } from "./raceName";
 
 export type SendEmailResult = { ok: true } | { ok: false; error: string };
 
-const DEFAULT_FROM = "Fantasy NASCAR HQ <onboarding@resend.dev>";
+const DEFAULT_FROM = "FindTheGroove <onboarding@resend.dev>";
 
 export async function sendEmail(params: { to: string; subject: string; html: string }): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -46,7 +46,7 @@ export async function sendEmail(params: { to: string; subject: string; html: str
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<SendEmailResult> {
   return sendEmail({
     to,
-    subject: "Reset your Fantasy NASCAR HQ password",
+    subject: "Reset your FindTheGroove password",
     html: `
       <p>Someone (hopefully you) asked to reset the password on this account.</p>
       <p><a href="${resetUrl}">Click here to set a new password</a>. This link works once and expires in 30 minutes.</p>
@@ -74,7 +74,7 @@ export async function sendResultsPostedEmail(
 export async function sendSyncFailureAlert(to: string, details: string): Promise<SendEmailResult> {
   return sendEmail({
     to,
-    subject: "Fantasy NASCAR HQ: NASCAR data sync is failing",
+    subject: "FindTheGroove: NASCAR data sync is failing",
     html: `
       <p>The automated NASCAR data sync hit a problem and needs a look:</p>
       <pre style="white-space: pre-wrap; font-family: monospace; background: #f4f4f4; padding: 12px; border-radius: 6px;">${details}</pre>
@@ -90,7 +90,7 @@ export async function sendSyncFailureAlert(to: string, details: string): Promise
 export async function sendSyncSuccessAlert(to: string, notable: string[]): Promise<SendEmailResult> {
   return sendEmail({
     to,
-    subject: "Fantasy NASCAR HQ: new data synced",
+    subject: "FindTheGroove: new data synced",
     html: `
       <p>The automated NASCAR data sync just picked up something new:</p>
       <ul>${notable.map((n) => `<li>${n}</li>`).join("")}</ul>
@@ -113,7 +113,7 @@ export async function sendManualResultsAppliedAlert(
 ): Promise<SendEmailResult> {
   return sendEmail({
     to,
-    subject: `Fantasy NASCAR HQ: results manually entered for Week ${params.week}`,
+    subject: `FindTheGroove: results manually entered for Week ${params.week}`,
     html: `
       <p>Results were just posted for Week ${params.week} — ${escapeHtml(params.trackName)} — through the
       manual-results endpoint (not the automatic NASCAR feed sync).</p>

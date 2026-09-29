@@ -2,10 +2,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: -0.01em;
-  color: var(--text-primary);
-  font-family: var(--font-heading);
+}
+
+.wordmark {
+  height: 30px;
+  width: auto;
+}
+
+/* Same dark-default/light-opt-in swap as AppShell's brandLogoDark/Light. */
+.light {
+  display: none;
+}
+
+:root[data-theme="light"] .dark {
+  display: none;
+}
+
+:root[data-theme="light"] .light {
+  display: block;
 }

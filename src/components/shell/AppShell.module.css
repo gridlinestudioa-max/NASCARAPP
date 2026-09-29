@@ -95,6 +95,56 @@
   font-family: var(--font-heading);
 }
 
+/* Collapsed sidebar (72px): the compact FTG oval mark, centered by
+   brandRow's own inline justify-content. Sized to comfortably clear the
+   sidebar's own padding (12px each side) rather than the mark's native
+   2:1 aspect ratio filling the whole row. */
+.brandLogoMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brandLogoImg {
+  height: 22px;
+  width: auto;
+  max-width: 44px;
+}
+
+/* Expanded sidebar (240px): the full FindTheGroove wordmark in place of
+   a separate brandName text — the wordmark already spells the name out,
+   so there's nothing left for brandName to add. */
+.brandWordmarkWrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.brandWordmark {
+  height: 18px;
+  width: auto;
+  max-width: 100%;
+}
+
+/* Same theme swap as the checkered strip/league dots elsewhere in this
+   file — dark variant shown by default (the site's own default theme),
+   light variant shown under the light opt-in. Both images always render
+   so there's no client-side theme detection/flash; only visibility
+   toggles. */
+.brandLogoLight {
+  display: none;
+}
+
+:root[data-theme="light"] .brandLogoDark {
+  display: none;
+}
+
+:root[data-theme="light"] .brandLogoLight {
+  display: block;
+}
+
 .sectionLabel {
   font-size: 0.7rem;
   font-weight: 700;

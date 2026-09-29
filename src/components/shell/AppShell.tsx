@@ -155,25 +155,47 @@ export default function AppShell({
             className={styles.brandRow}
             style={{ justifyContent: expanded ? "flex-start" : "center" }}
           >
-            <span className={styles.brandMark}>
-              {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- admin-pasted URL, not a static/local asset
+            {logoUrl ? (
+              <span className={styles.brandMark}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- admin-pasted URL, not a static/local asset */}
                 <img src={logoUrl} alt="" className={styles.brandMarkImg} />
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M4 3v18M4 4h12l-2.5 3L16 10H4"
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              )}
-            </span>
-            {expanded && (
-              <span className={styles.brandText}>
-                <span className={styles.brandName}>Fantasy NASCAR HQ</span>
+              </span>
+            ) : expanded ? (
+              // The full FindTheGroove wordmark already spells out the
+              // name, so there's no separate brandName text to pair it
+              // with — showing the compact oval mark *and* the wordmark
+              // side by side would just say "FTG FindTheGroove" twice.
+              // Both theme variants render; CSS (see brandLogoDark/Light)
+              // shows only the one matching the live data-theme, same
+              // swap pattern as the mark below.
+              <span className={styles.brandWordmarkWrap}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+                <img
+                  src="/brand/ftg-wordmark-dark.svg"
+                  alt="FindTheGroove"
+                  className={`${styles.brandWordmark} ${styles.brandLogoDark}`}
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+                <img
+                  src="/brand/ftg-wordmark-light.svg"
+                  alt="FindTheGroove"
+                  className={`${styles.brandWordmark} ${styles.brandLogoLight}`}
+                />
+              </span>
+            ) : (
+              <span className={styles.brandLogoMark}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+                <img
+                  src="/brand/ftg-mark-dark.svg"
+                  alt="FindTheGroove"
+                  className={`${styles.brandLogoImg} ${styles.brandLogoDark}`}
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+                <img
+                  src="/brand/ftg-mark-light.svg"
+                  alt="FindTheGroove"
+                  className={`${styles.brandLogoImg} ${styles.brandLogoLight}`}
+                />
               </span>
             )}
           </Link>

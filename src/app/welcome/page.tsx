@@ -21,7 +21,7 @@ export default async function WelcomePage() {
       <Card title="Add to your home screen">
         <p>
           <small>
-            Install Fantasy NASCAR HQ for a full-screen, app-like experience — quick access from your home screen,
+            Install FindTheGroove for a full-screen, app-like experience — quick access from your home screen,
             no browser bar.
           </small>
         </p>
