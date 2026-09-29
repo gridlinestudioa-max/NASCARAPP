@@ -33,11 +33,36 @@
   --bg-surface: var(--surface);
   --bg-surface-muted: var(--surface);
   --border-color: var(--border);
-  --shadow-card: 0 14px 30px -10px rgba(20, 20, 20, 0.12), 0 1px 3px rgba(20, 20, 20, 0.05);
-  --shadow-shell: 0 24px 60px -12px rgba(20, 20, 20, 0.25), 0 2px 8px rgba(20, 20, 20, 0.08);
+  /* "Night Race Broadcast" is a flat, textured look (checkered strip,
+     diagonal grain) rather than a soft-shadow one — no drop shadows
+     site-wide. */
+  --shadow-card: none;
+  --shadow-shell: none;
+
+  /* A step up from --bg-surface — car-number-plate chips, avatars, and
+     other "raised" fills sit on this instead of the flat card surface.
+     Derived from --surface (an admin knob) mixed toward --text-primary,
+     so it stays a sensible "one step brighter than the card" regardless
+     of what colors an admin picks, not a hardcoded hex. Same idea for
+     --border-strong (a more visible hairline, for outline buttons) and
+     --surface-hover (a table/list row hover tint one step up from
+     --surface-hover... er, from --surface). */
+  --surface-raised: color-mix(in oklab, var(--surface) 82%, var(--text-primary) 18%);
+  --surface-hover: color-mix(in oklab, var(--surface) 90%, var(--text-primary) 10%);
+  --border-strong: color-mix(in oklab, var(--border) 55%, var(--text-primary) 45%);
 
   /* Text */
-  --text-primary: var(--ink);
+  /* Deliberately NOT var(--ink) — --ink is a solid "chip fill" color
+     (avatars, badges, the sidebar brand mark: a dark plate paired with
+     white text, see --text-on-ink below), not a text color. The two used
+     to be the same knob, which only worked because the original palette
+     assumed a light page background (dark ink text on a light page).
+     Now that the default page background is itself dark, body text needs
+     its own knob-independent readable color instead of inheriting
+     whatever --ink happens to be. If an admin picks a light --pageBg,
+     this won't auto-flip — same hand-tuned-per-theme tradeoff the
+     pre-existing --text-accent token below already makes. */
+  --text-primary: #edeff3;
   --text-secondary: var(--muted);
   --text-muted: var(--faint);
   --text-on-ink: #ffffff;
@@ -50,6 +75,12 @@
      effectively invisible. This token exists so that case can track the
      theme instead. */
   --text-accent: var(--accent);
+  /* The inverse case: text sitting directly ON a solid --accent fill (a
+     primary button, an accent-toned badge) — bright yellow needs dark
+     text, not white, to stay readable. Fixed rather than derived, like
+     --text-on-ink; if an admin picks a dark accent this would need
+     revisiting by hand. */
+  --text-on-accent: #0b0d12;
 
   /* Semantic accents (used sparingly, functional only) — intentionally
      fixed, not themed: an error/success color shouldn't shift just
@@ -72,20 +103,29 @@
   --tier-c-bg: #e6f0f1;
 
   /* Sidebar league-dot fallback (AppShell's DOT_COLORS) for a league with
-     no explicit color — themed below since #141414 is invisible against
-     the dark theme's near-black sidebar. */
-  --dot-1: #141414;
-  --dot-2: #6b6b6b;
+     no explicit color — light-toned by default since the sidebar
+     background is dark by default now (a dark dot would be invisible on
+     it, the reverse of the old light-theme default). */
+  --dot-1: #e8e7e3;
+  --dot-2: #c7c6c0;
   --dot-3: #9a9a97;
-  --dot-4: #c7c6c0;
+  --dot-4: #6b6b6b;
 
-  /* Scale — radius-md (cards) and shell-radius track the theme's radius
-     knob directly (radius-md at half, per a flatter card look); radius-
-     sm/btn/pill are smaller fixed steps that don't need to move with it. */
-  --radius-sm: 4px;
+  /* The signature slanted "car number plate" edge — buttons, avatars,
+     badges and stat chips share this same clip-path instead of a
+     border-radius. */
+  --slant-8: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  /* Checkered-flag texture strip, used at the top of the page shell. */
+  --checker: repeating-conic-gradient(var(--text-primary) 0 25%, var(--pageBg) 0 50%);
+
+  /* Scale — everything here now tracks the theme's radius knob directly
+     (default 0, for the square-cornered/slanted look), rather than being
+     fixed steps: at radius=0 they all collapse to 0 too, but an admin
+     dialing radius back up gets rounded corners and pill badges back. */
+  --radius-sm: calc(var(--radius) * 0.3);
   --radius-md: calc(var(--radius) / 2);
-  --radius-btn: 9px;
-  --radius-pill: 999px;
+  --radius-btn: calc(var(--radius) * 0.65);
+  --radius-pill: min(999px, calc(var(--radius) * 3));
   --shell-radius: var(--shellRadius);
   --space-1: 4px;
   --space-2: 8px;
@@ -101,18 +141,15 @@
   --bottom-bar-height: 62px;
 }
 
-/* Dark mode — a per-viewer preference (see AppearanceForm on /settings),
-   layered on top of whatever brand theme the admin set above. Only the
-   *derived* semantic tokens are overridden here, never the 7 raw admin
-   knobs (--ink/--pageBg/--surface/--border/--accent/...): those are
-   inlined on <html style="..."> by the root layout, and an inline style
-   always wins over a class/attribute selector, so redeclaring them here
-   would silently do nothing. --ink/--color-ink/--accent are also left
-   alone so "solid ink chip" backgrounds (buttons, badges, avatars — which
-   pair a dark fill with white text) keep working unchanged in both modes.
-   --text-accent is the deliberate exception: it's --accent used bare as
-   text color, which does need to flip per theme — see its definition
-   above. */
+/* Dark mode toggle (see AppearanceForm on /settings) — kept wired (the
+   attribute still flips, native form controls still theme correctly) but
+   with nothing left to override visually: the site's one default look
+   ("Night Race Broadcast") is already a dark theme, so there's no longer
+   a separate light default for this to diverge from. Before the reskin
+   this block hardcoded its own dark bg/surface/border/text values,
+   independent of the 7 admin knobs, specifically because the base :root
+   assumed a light theme; now that the base *is* the dark theme, those
+   overrides would just be redundant duplicates of the same numbers. */
 :root[data-theme="dark"] {
   /* Tells the browser to use its dark native-control chrome — select
      dropdown popups, scrollbars, date/time pickers — instead of defaulting
@@ -121,31 +158,6 @@
      --text-primary above; this only affects the OS-drawn parts CSS can't
      reach directly. */
   color-scheme: dark;
-
-  --muted: #b9b8b4;
-  --faint: #8b8a86;
-
-  --bg-app: #121212;
-  --bg-sidebar: #121212;
-  --bg-surface: #1c1c1b;
-  --bg-surface-muted: #1c1c1b;
-  --border-color: #2c2b29;
-  --color-cream: #121212;
-
-  --text-primary: #f2f1ee;
-  --text-secondary: var(--muted);
-  --text-muted: var(--faint);
-  --text-accent: var(--text-primary);
-
-  --shadow-card: 0 14px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-shell: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);
-
-  /* Reversed toward light so the fallback dots stay visible against the
-     dark sidebar instead of blending into it. */
-  --dot-1: #e8e7e3;
-  --dot-2: #c7c6c0;
-  --dot-3: #9a9a97;
-  --dot-4: #6b6b6b;
 }
 
 html {
@@ -161,12 +173,24 @@ body {
 body {
   min-height: 100%;
   color: var(--text-primary);
-  background: var(--bg-app);
+  background-color: var(--bg-app);
+  /* A faint diagonal grain across the whole page ground — reads as
+     texture, not noise, at this low an opacity. */
+  background-image: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 28px);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 15px;
   line-height: 1.5;
+}
+
+/* The "Night Race Broadcast" checkered-flag strip across the very top of
+   the page, above everything else (including the sidebar shell). */
+body::before {
+  content: "";
+  display: block;
+  height: 10px;
+  background: var(--checker) 0 0 / 10px 10px;
 }
 
 * {
@@ -183,15 +207,18 @@ figure {
 }
 
 h1 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-size: 1.9rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
   font-family: var(--font-heading);
 }
 
 h2 {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--text-primary);
   font-family: var(--font-heading);
 }
@@ -222,17 +249,22 @@ a:not([class]):hover {
 
 /* A link styled to look like a button — for header actions (e.g. "Create a
    league") that need to be an <a> (navigation) rather than a <button>
-   (form submission / client handler). */
+   (form submission / client handler). Shares the same slanted "number
+   plate" shape as real <button>s below, via --slant-8. */
 .linkButton {
   display: inline-flex;
   align-items: center;
-  background: var(--color-ink);
-  color: var(--text-on-ink);
-  border: 1px solid var(--color-ink);
-  border-radius: var(--radius-btn);
-  padding: 0.5em 1em;
-  font-weight: 600;
-  font-size: 0.82rem;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border: 1px solid var(--accent);
+  clip-path: var(--slant-8);
+  padding: 0.6em 1.3em;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
     transform 0.1s ease;
 }
@@ -242,8 +274,8 @@ a:not([class]):hover {
    to look like buttons for navigation actions, so they need the identical
    feedback for the effect to read as consistent across the app. */
 .linkButton:hover {
-  background: var(--text-on-ink);
-  color: var(--color-ink);
+  background: var(--text-on-accent);
+  color: var(--accent);
   transform: scale(1.1);
   transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
     transform 0.3s ease-out;
@@ -258,13 +290,17 @@ a:not([class]):hover {
 .linkButtonOutline {
   display: inline-flex;
   align-items: center;
-  background: var(--bg-app);
+  justify-content: center;
+  background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-btn);
-  padding: 0.5em 1em;
-  font-weight: 600;
-  font-size: 0.82rem;
+  border: 1px solid var(--border-strong);
+  clip-path: var(--slant-8);
+  padding: 0.6em 1.3em;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
@@ -419,10 +455,14 @@ input[type="radio"] {
 
 button {
   font: inherit;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
-  border-radius: var(--radius-btn);
-  padding: 0.55em 1.3em;
+  clip-path: var(--slant-8);
+  padding: 0.6em 1.3em;
   transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
     transform 0.1s ease;
 }
@@ -456,7 +496,7 @@ button:disabled {
 
 button[type="submit"] {
   background: var(--accent);
-  color: var(--text-on-ink);
+  color: var(--text-on-accent);
   border: 1px solid var(--accent);
 }
 
@@ -464,15 +504,15 @@ button[type="submit"] {
    just fading, so the "more interactive" feel comes from an actual color
    flip, not a dimmer opacity. */
 button[type="submit"]:hover:not(:disabled) {
-  background: var(--text-on-ink);
+  background: var(--text-on-accent);
   color: var(--accent);
   border-color: var(--accent);
 }
 
 button[type="button"] {
-  background: var(--bg-surface);
+  background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-strong);
 }
 
 button[type="button"]:hover:not(:disabled) {

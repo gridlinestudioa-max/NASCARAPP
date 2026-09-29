@@ -16,7 +16,8 @@ export async function getAppTheme(): Promise<AppTheme> {
     surface: row.surface,
     border: row.border,
     accent: row.accent,
-    headingFont: row.headingFont === "Oswald" ? "Oswald" : "Barlow",
+    headingFont:
+      row.headingFont === "Oswald" ? "Oswald" : row.headingFont === "BigShoulders" ? "BigShoulders" : "Barlow",
     radius: row.radius,
     logoUrl: row.logoUrl,
   };

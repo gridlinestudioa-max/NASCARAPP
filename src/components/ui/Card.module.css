@@ -12,20 +12,38 @@
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
   flex-wrap: wrap;
 }
 
+/* The slanted yellow marker before every card title — this "inside"
+   placement's border/background come from .card itself (the title sits
+   inside the same box), so the marker sits right up against the title
+   text; .outsideTitle below repeats the same marker for the other
+   placement, where the title floats above a separate box. */
 .title {
-  font-size: 0.8rem;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-heading);
+}
+
+.title::before,
+.outsideTitle::before {
+  content: "";
+  width: 10px;
+  height: 18px;
+  flex-shrink: 0;
+  background: var(--accent);
+  transform: skewX(-20deg);
 }
 
 .actions {
@@ -53,18 +71,21 @@
 
 .outsideHeader {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin: 0 var(--space-1) var(--space-2);
+  margin: 0 var(--space-1) var(--space-3);
   flex-wrap: wrap;
 }
 
 .outsideTitle {
-  font-size: 0.8rem;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-heading);
 }

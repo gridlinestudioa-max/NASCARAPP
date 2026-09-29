@@ -63,7 +63,7 @@
 .brandMark {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
   background: var(--ink);
   display: flex;
   align-items: center;
@@ -86,8 +86,10 @@
 }
 
 .brandName {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--sb-text);
   line-height: 1.25;
   font-family: var(--font-heading);
@@ -164,11 +166,16 @@
   transform: scale(0.97);
 }
 
+/* Accent left-edge bar (inset box-shadow, not a real border, so it never
+   shifts the row's own padding/layout) — "yellow means active/primary,"
+   the same signal used for the next-race chip and score-leader highlight
+   elsewhere in the app. */
 .navLinkActive,
 .navLinkActive:hover {
-  font-weight: 600;
-  color: var(--sb-text);
+  font-weight: 700;
+  color: var(--accent);
   background: var(--sb-active-bg);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .navIcon {
@@ -465,7 +472,7 @@
     width: 28px;
     height: 3px;
     border-radius: 0 0 3px 3px;
-    background: var(--text-primary);
+    background: var(--accent);
   }
 
   .bottomBarIcon {

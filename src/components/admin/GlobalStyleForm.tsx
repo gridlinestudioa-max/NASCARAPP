@@ -5,7 +5,8 @@ import { resetAppTheme, updateAppTheme } from "@/app/admin/style/actions";
 import { DEFAULT_THEME, themeToCssVars, type AppTheme, type HeadingFont } from "@/lib/themeVars";
 import styles from "./GlobalStyleForm.module.css";
 
-const FONT_OPTIONS: HeadingFont[] = ["Barlow", "Oswald"];
+const FONT_OPTIONS: HeadingFont[] = ["BigShoulders", "Barlow", "Oswald"];
+const FONT_LABELS: Record<HeadingFont, string> = { BigShoulders: "Big Shoulders", Barlow: "Barlow", Oswald: "Oswald" };
 
 const COLOR_FIELDS: { key: keyof Omit<AppTheme, "headingFont" | "radius" | "logoUrl">; label: string; helper: string }[] = [
   { key: "ink", label: "Ink", helper: "Headings & body text" },
@@ -90,7 +91,7 @@ export default function GlobalStyleForm({ initialTheme }: { initialTheme: AppThe
             >
               {FONT_OPTIONS.map((f) => (
                 <option key={f} value={f}>
-                  {f}
+                  {FONT_LABELS[f]}
                 </option>
               ))}
             </select>

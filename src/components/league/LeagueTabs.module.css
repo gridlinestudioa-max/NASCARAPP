@@ -34,7 +34,7 @@
 .active,
 .active:hover {
   background: var(--accent);
-  color: #fafafa;
+  color: var(--text-on-accent);
   font-weight: 700;
 }
 

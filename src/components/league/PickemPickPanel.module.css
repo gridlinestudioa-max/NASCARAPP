@@ -1,8 +1,12 @@
+/* --color-ink, not --accent — this wants "the site's solid dark chip
+   color" (paired below with a semi-transparent white border/text), which
+   --accent only coincidentally was back when the default accent was
+   black. TieredLineupForm's .lineupCard mirrors this same choice. */
 .turnBanner {
-  background: var(--accent);
+  background: var(--color-ink);
   border-radius: var(--radius-md);
   padding: 18px 24px;
-  color: #fafafa;
+  color: var(--text-on-ink);
 }
 
 .turnBannerHead {

@@ -4,7 +4,6 @@ import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Card from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
 import DriverNumberBadge from "@/components/ui/DriverNumberBadge";
 import RaceLogo from "@/components/ui/RaceLogo";
 import { getLeagueHubData } from "@/app/leagues/[leagueId]/(hub)/leagueData";
@@ -107,7 +106,7 @@ function ScheduleSnapshot({
       {races.length === 0 ? (
         <p className={styles.empty}>No upcoming races scheduled.</p>
       ) : (
-        <ul className={`rowList ${styles.snapshotList}`}>
+        <ul className={styles.rowList}>
           {races.map((r) => (
             <li key={r.id}>
               <Link href={`/races/${r.id}`} className={styles.scheduleRace}>
@@ -141,7 +140,7 @@ function DriverPointsSnapshot({
       {standings.length === 0 ? (
         <p className={styles.empty}>No results scored yet this season.</p>
       ) : (
-        <ul className={`rowList ${styles.snapshotList}`}>
+        <ul className={styles.rowList}>
           {standings.map((s, i) => (
             <li key={s.driverId}>
               <Link href={`/stats?driver=${s.driverId}`} className={styles.driverCell}>
@@ -252,13 +251,15 @@ async function HomeDashboard({
               )}
               <span className={styles.leagueCellText}>
                 <span className={styles.leagueName}>{row.name}</span>
-                {row.isCommissioner && <Badge tone="neutral">Commish</Badge>}
+                {row.isCommissioner && <span className={styles.commish}>Commish</span>}
               </span>
             </Link>
             <span className={styles.muted}>{row.memberCount}</span>
             <span className={styles.scoreRank}>
               <span className={styles.scoreCell}>{row.score.toLocaleString()}</span>
-              <span className={styles.muted}>{row.rank ? ordinal(row.rank) : "—"}</span>
+              <span className={row.rank === 1 ? `${styles.muted} ${styles.rankFirst}` : styles.muted}>
+                {row.rank ? ordinal(row.rank) : "—"}
+              </span>
             </span>
             <span className={styles.lockedCell}>
               {row.lockedDrivers.length === 0 ? (

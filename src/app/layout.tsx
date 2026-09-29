@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Inter, Barlow, Oswald } from "next/font/google";
+import { Geist_Mono, Inter, Barlow, Oswald, Big_Shoulders } from "next/font/google";
 import { auth } from "@/lib/auth";
 import { isSiteAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
@@ -25,6 +25,12 @@ const barlow = Barlow({
 const oswald = Oswald({
   variable: "--font-oswald",
   weight: ["600", "700"],
+  subsets: ["latin"],
+});
+
+const bigShoulders = Big_Shoulders({
+  variable: "--font-big-shoulders",
+  weight: ["700", "800", "900"],
   subsets: ["latin"],
 });
 
@@ -73,7 +79,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${barlow.variable} ${oswald.variable} ${geistMono.variable}`}
+      className={`${inter.variable} ${barlow.variable} ${oswald.variable} ${bigShoulders.variable} ${geistMono.variable}`}
       style={themeVars as CSSProperties}
       suppressHydrationWarning
     >
