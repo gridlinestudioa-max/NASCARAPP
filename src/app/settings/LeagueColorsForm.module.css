@@ -29,10 +29,13 @@
   gap: 6px;
 }
 
+/* The same slanted "flag" shape as the tier tags/car-number chips
+   elsewhere (--slant-8), not a plain circle — one consistent tag shape
+   language across the app instead of a one-off dot here. */
 .swatch {
-  width: 22px;
+  width: 26px;
   height: 22px;
-  border-radius: 50%;
+  clip-path: var(--slant-8);
   border: 2px solid transparent;
   cursor: pointer;
   padding: 0;

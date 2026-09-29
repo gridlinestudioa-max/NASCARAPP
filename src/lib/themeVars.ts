@@ -53,10 +53,22 @@ export function themeToCssVars(theme: AppTheme): Record<string, string> {
     // muted gray only works when pageBg actually is the lighter of the
     // two) — --text-primary is its own knob-independent readable color
     // now (see globals.css's :root), so muted/faint mix that toward
-    // pageBg instead of ink, which stays correct whichever way the admin
-    // sets pageBg/ink relative to each other.
-    "--muted": `color-mix(in oklab, var(--text-primary) 70%, ${theme.pageBg})`,
-    "--faint": `color-mix(in oklab, var(--text-primary) 48%, ${theme.pageBg})`,
+    // --bg-app instead of ink.
+    //
+    // var(--bg-app), not the literal theme.pageBg — this whole object gets
+    // INLINED onto <html style="...">, and an inline declaration always
+    // wins over any stylesheet rule for that same property, including the
+    // light/dark :root[data-theme] blocks in globals.css. Baking in the
+    // literal pageBg hex here would freeze --muted/--faint to always mix
+    // toward the (dark, by default) admin pageBg even when the Appearance
+    // toggle switches to light mode. --bg-app itself is NOT inlined (it's
+    // `--bg-app: var(--pageBg)` in the stylesheet, overridden per mode in
+    // the light block) — a var() reference inside an inline custom
+    // property's value still re-resolves against the normal cascade at
+    // use time, so nesting the reference like this lets the toggle reach
+    // through the inline layer correctly.
+    "--muted": `color-mix(in oklab, var(--text-primary) 70%, var(--bg-app))`,
+    "--faint": `color-mix(in oklab, var(--text-primary) 48%, var(--bg-app))`,
     "--heading-font-name":
       theme.headingFont === "Oswald"
         ? "var(--font-oswald)"

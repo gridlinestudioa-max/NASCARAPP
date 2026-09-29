@@ -27,6 +27,14 @@
   border: none !important;
   padding: 0 !important;
   border-radius: 0 !important;
+  /* Opts out of the sitewide CTA button shape (globals.css's
+     :where(button[type="submit"], button[type="button"])) — a driver's
+     name here should read as plain text, not an uppercase, slant-clipped
+     pill. */
+  clip-path: none;
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: inherit;
   font-weight: 500;
 }
 

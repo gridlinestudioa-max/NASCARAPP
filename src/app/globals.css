@@ -115,8 +115,13 @@
      badges and stat chips share this same clip-path instead of a
      border-radius. */
   --slant-8: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-  /* Checkered-flag texture strip, used at the top of the page shell. */
-  --checker: repeating-conic-gradient(var(--text-primary) 0 25%, var(--pageBg) 0 50%);
+  /* Checkered-flag texture strip, used at the top of the page shell.
+     var(--bg-app), not var(--pageBg) — --pageBg is one of the 7 admin
+     knobs, inlined on <html> and therefore frozen across the light/dark
+     toggle (see themeVars.ts's --muted/--faint comment for why); --bg-app
+     is the derived, cascadable token that the light block below actually
+     overrides. */
+  --checker: repeating-conic-gradient(var(--text-primary) 0 25%, var(--bg-app) 0 50%);
 
   /* Scale — everything here now tracks the theme's radius knob directly
      (default 0, for the square-cornered/slanted look), rather than being
@@ -141,23 +146,47 @@
   --bottom-bar-height: 62px;
 }
 
-/* Dark mode toggle (see AppearanceForm on /settings) — kept wired (the
-   attribute still flips, native form controls still theme correctly) but
-   with nothing left to override visually: the site's one default look
-   ("Night Race Broadcast") is already a dark theme, so there's no longer
-   a separate light default for this to diverge from. Before the reskin
-   this block hardcoded its own dark bg/surface/border/text values,
-   independent of the 7 admin knobs, specifically because the base :root
-   assumed a light theme; now that the base *is* the dark theme, those
-   overrides would just be redundant duplicates of the same numbers. */
-:root[data-theme="dark"] {
-  /* Tells the browser to use its dark native-control chrome — select
-     dropdown popups, scrollbars, date/time pickers — instead of defaulting
-     to a light popup with dark text that clashes with everything around
-     it. Every *styled* form element already follows --bg-surface/
-     --text-primary above; this only affects the OS-drawn parts CSS can't
-     reach directly. */
-  color-scheme: dark;
+/* Light mode (see AppearanceForm on /settings) — the site's default is
+   dark ("Night Race Broadcast"), so this is the opt-in variant rather
+   than the reverse. Same shape language (slant clip-paths, checkered
+   strip, Big Shoulders type) and the same --ink/--accent chip/CTA colors
+   (those two stay constant across modes, matching how this token system
+   has always treated them — see --text-on-ink's comment), just a light
+   ground instead of a dark one.
+   Only the *derived* tokens are overridden here, never the 7 raw admin
+   knobs (--ink/--pageBg/--surface/--border/--accent/...): those are
+   inlined on <html style="..."> by the root layout, and an inline style
+   always wins over a class/attribute selector, so redeclaring them here
+   would silently do nothing (see themeVars.ts for the same constraint on
+   --muted/--faint, worked around by referencing --bg-app instead of the
+   frozen inline --pageBg). */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-app: #f2f3f5;
+  --bg-sidebar: #f2f3f5;
+  --bg-surface: #ffffff;
+  --bg-surface-muted: #ffffff;
+  --border-color: #dde0e4;
+  --color-cream: #f2f3f5;
+
+  --text-primary: #15171b;
+  --text-accent: var(--accent);
+
+  /* Raised chips mix *toward* text-primary same as the dark variant's
+     formula, but since bg-surface is now white and text-primary is now
+     dark, the same direction of mix naturally produces a slightly
+     shaded (not brightened) chip — still "one step off the card." */
+  --surface-raised: color-mix(in oklab, var(--bg-surface) 92%, var(--text-primary) 8%);
+  --surface-hover: color-mix(in oklab, var(--bg-surface) 96%, var(--text-primary) 4%);
+  --border-strong: color-mix(in oklab, var(--border-color) 40%, var(--text-primary) 60%);
+
+  /* Dark-toned again (the reverse of the dark variant's light dots) so a
+     league's fallback dot stays visible against this now-light sidebar. */
+  --dot-1: #2a2a28;
+  --dot-2: #55534c;
+  --dot-3: #7d7b73;
+  --dot-4: #a6a49b;
 }
 
 html {
@@ -455,16 +484,25 @@ input[type="radio"] {
 
 button {
   font: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.1s ease;
+}
+
+/* The slanted "number plate" CTA shape — scoped to :where() (zero
+   specificity) and only the two typed variants, not every <button> on the
+   site: a bare or custom-classed button (a chart legend toggle, a plain
+   icon button, a driver-picker list row) opts out just by not being
+   type="submit"/"button" styled as a CTA, or by being a page's own class
+   that outranks a zero-specificity rule automatically. */
+:where(button[type="submit"], button[type="button"]) {
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 0.85rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  cursor: pointer;
   clip-path: var(--slant-8);
   padding: 0.6em 1.3em;
-  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
-    transform 0.1s ease;
 }
 
 /* Sitewide tap/press feedback — every button dips slightly on press and
@@ -494,7 +532,16 @@ button:disabled {
   opacity: 0.55;
 }
 
-button[type="submit"] {
+/* :where(...) around the type selector drops this rule's specificity to
+   zero, so it never fights a component's own button class on equal
+   footing — a page-level class like TieredLineupForm's `button.slot`
+   (element + class, same (0,1,1) specificity as a bare `button[type=…]`)
+   used to win or lose this fight depending on which stylesheet happened
+   to load later, which is exactly the kind of accidental-clip/accidental
+   -uppercase bug that showed up on the sign-out button and TrendChart's
+   legend. Now any page's own class always wins outright, with no
+   !important arms race needed on either side. */
+:where(button[type="submit"]) {
   background: var(--accent);
   color: var(--text-on-accent);
   border: 1px solid var(--accent);
@@ -503,19 +550,19 @@ button[type="submit"] {
 /* Hover inverts the button — background and text swap places — instead of
    just fading, so the "more interactive" feel comes from an actual color
    flip, not a dimmer opacity. */
-button[type="submit"]:hover:not(:disabled) {
+:where(button[type="submit"]:hover:not(:disabled)) {
   background: var(--text-on-accent);
   color: var(--accent);
   border-color: var(--accent);
 }
 
-button[type="button"] {
+:where(button[type="button"]) {
   background: transparent;
   color: var(--text-primary);
   border: 1px solid var(--border-strong);
 }
 
-button[type="button"]:hover:not(:disabled) {
+:where(button[type="button"]:hover:not(:disabled)) {
   background: var(--text-primary);
   color: var(--bg-surface);
   border-color: var(--text-primary);

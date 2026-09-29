@@ -189,10 +189,16 @@
   white-space: nowrap;
 }
 
+/* A small rotated square (rhombus), not a circle — matching the flag/tag
+   shape language used everywhere else (LeagueColorsForm's swatch picker
+   this indicator comes from, tier tags, chips). At this tiny a size the
+   site's usual slant-cut clip-path (--slant-8, a fixed 8px inset) would
+   consume the entire shape, so a 45°-rotated square reads better here. */
 .leagueDot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 2px;
+  transform: rotate(45deg);
   flex-shrink: 0;
 }
 
@@ -295,6 +301,10 @@
 }
 
 .signOutButton {
+  /* Opts out of the sitewide CTA button shape (globals.css's
+     :where(button[type="submit"], button[type="button"])) — this is a
+     small icon-only utility button, not a primary action. */
+  clip-path: none;
   background: transparent;
   border: none;
   color: var(--sb-text-faint);
@@ -453,6 +463,11 @@
      Schedule/Stats are <Link>s, unaffected). nav+button+class stacks
      enough specificity to actually win. */
   nav.bottomBar button.bottomBarItem {
+    /* Opts out of the sitewide CTA button shape (see globals.css) — these
+       two tabs (Leagues/More) need to match the other three, which are
+       <Link>s and never touched by button styling. */
+    clip-path: none;
+    text-transform: none;
     background: transparent;
     border: none;
     border-radius: 0;
@@ -529,6 +544,8 @@
   }
 
   .sheetCloseButton {
+    /* Opts out of the sitewide CTA button shape (see globals.css). */
+    clip-path: none;
     background: transparent;
     border: none;
     color: var(--text-muted);

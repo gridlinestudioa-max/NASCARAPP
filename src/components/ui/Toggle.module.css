@@ -17,13 +17,15 @@
   color: var(--text-primary);
 }
 
-/* button.track (not just .track): needs to beat globals.css's own
-   button[type="button"] base/hover rules, same specificity tie-break as
-   TieredLineupForm.module.css's button.slot and MiniTabs' button.toggleBtn
-   — both are (element + one selector), so this one has to win on source
-   order, and every state (base, hover, active, on) is re-declared here so
-   none of them silently fall back to the global button look. */
-button.track {
+/* Plain .track (not button.track): globals.css's sitewide button CTA
+   rules are :where()-wrapped (zero specificity), so a plain class always
+   wins without needing to match `button`'s own tag specificity. Every
+   state (base, hover, active, on) is re-declared here so none of them
+   silently fall back to the global button look. */
+.track {
+  /* Opts out of the sitewide CTA button shape (see globals.css). */
+  clip-path: none;
+  text-transform: none;
   position: relative;
   flex-shrink: 0;
   width: 42px;
@@ -35,16 +37,16 @@ button.track {
   transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
 }
 
-button.track:hover:not(:disabled) {
+.track:hover:not(:disabled) {
   border-color: var(--color-slate);
 }
 
-button.trackOn {
+.trackOn {
   background: var(--accent);
   border-color: var(--accent);
 }
 
-button.trackOn:hover:not(:disabled) {
+.trackOn:hover:not(:disabled) {
   border-color: var(--accent);
 }
 

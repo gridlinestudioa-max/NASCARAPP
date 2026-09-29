@@ -8,13 +8,14 @@ const COLOR_MODE_KEY = "colorMode";
 type ColorMode = "light" | "dark";
 
 export default function AppearanceForm() {
-  // Starts at "light" on both the server render and React's first client
+  // Starts at "dark" on both the server render and React's first client
   // render (which must match the server's — it can't know localStorage yet)
-  // — the no-flash inline script in layout.tsx already applied the real
-  // theme to <html> before paint, so the *page* never flashes light; only
-  // this component's own button then corrects itself a tick later via the
-  // effect below, without a hydration mismatch.
-  const [mode, setMode] = useState<ColorMode>("light");
+  // — the site's default is dark ("Night Race Broadcast"), and the
+  // no-flash inline script in layout.tsx already applied the real theme
+  // to <html> before paint, so the *page* never flashes the wrong mode;
+  // only this component's own button then corrects itself a tick later
+  // via the effect below, without a hydration mismatch.
+  const [mode, setMode] = useState<ColorMode>("dark");
 
   useEffect(() => {
     // One-time read of a client-only source (localStorage) right after
@@ -22,17 +23,18 @@ export default function AppearanceForm() {
     // guard against, so a plain effect (rather than useSyncExternalStore)
     // is the right tool here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMode(window.localStorage.getItem(COLOR_MODE_KEY) === "dark" ? "dark" : "light");
+    setMode(window.localStorage.getItem(COLOR_MODE_KEY) === "light" ? "light" : "dark");
   }, []);
 
   function choose(next: ColorMode) {
     setMode(next);
     window.localStorage.setItem(COLOR_MODE_KEY, next);
-    if (next === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
+    // Both states set an explicit attribute (rather than removing it for
+    // one of them) — the default (no attribute, used only pre-hydration
+    // to avoid a flash) already matches "dark", but writing it out here
+    // too keeps this function's own before/after obvious without relying
+    // on that default staying in sync with globals.css.
+    document.documentElement.setAttribute("data-theme", next);
   }
 
   return (
