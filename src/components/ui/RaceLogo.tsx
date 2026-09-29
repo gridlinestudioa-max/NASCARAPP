@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { CheckeredFlagIcon } from "./icons";
 import { getRaceLogo } from "@/lib/raceLogos";
 import styles from "./RaceLogo.module.css";
@@ -20,8 +23,13 @@ export default function RaceLogo({
 }) {
   const src = overrideSrc ?? getRaceLogo(trackName);
   const wrapClassName = className ? `${styles.wrap} ${className}` : styles.wrap;
+  // A stale overrideSrc (an admin-pinned path whose underlying asset was
+  // later renamed/removed, e.g. a jpg->png background-removal pass) would
+  // otherwise render as a broken image forever — fall back to the generic
+  // badge instead once the browser reports the load failed.
+  const [failed, setFailed] = useState(false);
 
-  if (!src) {
+  if (!src || failed) {
     return (
       <span className={wrapClassName} style={{ width: size, height: size }}>
         <CheckeredFlagIcon size={Math.round(size * 0.55)} />
@@ -32,7 +40,7 @@ export default function RaceLogo({
   return (
     <span className={wrapClassName} style={{ width: size, height: size }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- small fixed set of bundled logos, rendered many times per page */}
-      <img src={src} alt="" className={styles.img} />
+      <img src={src} alt="" className={styles.img} onError={() => setFailed(true)} />
     </span>
   );
 }

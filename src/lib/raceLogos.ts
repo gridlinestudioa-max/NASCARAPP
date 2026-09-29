@@ -9,8 +9,8 @@
 // a trackName that matches neither falls back to the generic checkered
 // flag badge (RaceLogo component) rather than showing nothing.
 const RACE_LOGOS: Record<string, string> = {
-  "daytona 1": "/race-logos/daytona-500.jpg",
-  "daytona 500": "/race-logos/daytona-500.jpg",
+  "daytona 1": "/race-logos/daytona-500.png",
+  "daytona 500": "/race-logos/daytona-500.png",
 
   "atlanta 1": "/race-logos/atlanta-spring.png",
   "ambetter health 400": "/race-logos/atlanta-spring.png",
@@ -38,11 +38,11 @@ const RACE_LOGOS: Record<string, string> = {
   martinsville: "/race-logos/martinsville-spring.webp",
   "cook out 400": "/race-logos/martinsville-spring.webp",
 
-  bristol: "/race-logos/bristol-spring.jpg",
-  "food city 500": "/race-logos/bristol-spring.jpg",
+  bristol: "/race-logos/bristol-spring.png",
+  "food city 500": "/race-logos/bristol-spring.png",
 
-  kansas: "/race-logos/kansas-spring.jpg",
-  "adventhealth 400": "/race-logos/kansas-spring.jpg",
+  kansas: "/race-logos/kansas-spring.png",
+  "adventhealth 400": "/race-logos/kansas-spring.png",
 
   talladega: "/race-logos/talladega-spring.png",
   "jack link's 500": "/race-logos/talladega-spring.png",
@@ -57,11 +57,11 @@ const RACE_LOGOS: Record<string, string> = {
 
   dover: "/race-logos/dover.png",
 
-  charlotte: "/race-logos/charlotte-spring.jpg",
-  "coca-cola 600": "/race-logos/charlotte-spring.jpg",
+  charlotte: "/race-logos/charlotte-spring.png",
+  "coca-cola 600": "/race-logos/charlotte-spring.png",
 
-  nashville: "/race-logos/nashville.jpg",
-  "ally 400": "/race-logos/nashville.jpg",
+  nashville: "/race-logos/nashville.png",
+  "ally 400": "/race-logos/nashville.png",
 
   michigan: "/race-logos/michigan.png",
   "firekeepers casino 400": "/race-logos/michigan.png",
@@ -69,13 +69,13 @@ const RACE_LOGOS: Record<string, string> = {
   pocono: "/race-logos/pocono.png",
   "great american getaway 400": "/race-logos/pocono.png",
 
-  "san diego": "/race-logos/san-diego.jpg",
+  "san diego": "/race-logos/san-diego.png",
 
   sonoma: "/race-logos/sonoma.png",
   "toyota / save mart 350": "/race-logos/sonoma.png",
   "toyota/save mart 350": "/race-logos/sonoma.png",
 
-  chicago: "/race-logos/chicago.jpg",
+  chicago: "/race-logos/chicago.png",
 
   "atlanta 2": "/race-logos/atlanta-summer.png",
   "quaker state 400": "/race-logos/atlanta-summer.png",
@@ -95,9 +95,9 @@ const RACE_LOGOS: Record<string, string> = {
   "daytona 2": "/race-logos/daytona-summer.jpg",
   "coke zero sugar 400": "/race-logos/daytona-summer.jpg",
 
-  "darlington 2": "/race-logos/darlington-fall.jpg",
-  "cook out southern 500": "/race-logos/darlington-fall.jpg",
-  "southern 500": "/race-logos/darlington-fall.jpg",
+  "darlington 2": "/race-logos/darlington-fall.png",
+  "cook out southern 500": "/race-logos/darlington-fall.png",
+  "southern 500": "/race-logos/darlington-fall.png",
 
   gateway: "/race-logos/gateway.webp",
   "enjoy illinois 300": "/race-logos/gateway.webp",
