@@ -1,0 +1,34 @@
+/* Mirrors globals.css's :where(button[type="button"]) treatment — an <a>
+   can't be targeted by that selector, so the same look is repeated here
+   rather than fighting specificity to reuse it. */
+.linkButton {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  clip-path: var(--slant-8);
+  padding: 0.6em 1.3em;
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  border: 1px solid var(--text-primary);
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.linkButton:hover {
+  background: color-mix(in oklab, var(--text-primary) 85%, var(--accent) 15%);
+  color: var(--bg-surface);
+  border-color: color-mix(in oklab, var(--text-primary) 85%, var(--accent) 15%);
+  transform: scale(1.05);
+}
+
+.linkButton:active {
+  transform: scale(0.97);
+}
