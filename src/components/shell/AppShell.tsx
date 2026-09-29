@@ -447,7 +447,43 @@ export default function AppShell({
       )}
 
       <div className={styles.content}>
-        <div className={styles.contentInner}>{children}</div>
+        <div className={styles.contentInner}>
+          {/* The sidebar (which carries the brand mark/wordmark on every
+              other viewport) is hidden entirely on mobile in favor of the
+              fixed bottom tab bar — without this, the site's own logo
+              never appeared anywhere on a phone. Shown only under the
+              mobile breakpoint (see .mobileBrandRow); desktop keeps
+              getting its brand from the sidebar only, not this too. */}
+          <Link href="/" className={styles.mobileBrandRow}>
+            <span className={styles.mobileBrandMarkWrap}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+              <img
+                src="/brand/ftg-mark-dark.svg"
+                alt=""
+                className={`${styles.mobileBrandMark} ${styles.brandLogoDark}`}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+              <img
+                src="/brand/ftg-mark-light.svg"
+                alt=""
+                className={`${styles.mobileBrandMark} ${styles.brandLogoLight}`}
+              />
+            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+            <img
+              src="/brand/ftg-wordmark-dark.svg"
+              alt="FindTheGroove"
+              className={`${styles.mobileBrandWordmark} ${styles.brandLogoDark}`}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element -- bundled brand asset, not photographic content next/image needs to optimize */}
+            <img
+              src="/brand/ftg-wordmark-light.svg"
+              alt="FindTheGroove"
+              className={`${styles.mobileBrandWordmark} ${styles.brandLogoLight}`}
+            />
+          </Link>
+          {children}
+        </div>
       </div>
     </div>
   );

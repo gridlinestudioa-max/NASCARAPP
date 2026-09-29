@@ -178,12 +178,20 @@
   white-space: nowrap;
 }
 
+/* flex-shrink was 0 here too (copy-pasted from .raceRowMain above,
+   presumably), which fought the comment's own stated plan — this side
+   is supposed to be the one that gives, shrinking via its own
+   minmax(0, 170px) track until the driver name ellipsizes. With
+   flex-shrink: 0 the flex algorithm never let it shrink below its
+   170px + 36px + gap hypothetical size at all, so on a narrow phone the
+   two sides' combined minimums routinely exceeded the card's width and
+   pushed the row (and the card around it) past the viewport edge. */
 .raceRowRight {
   display: grid;
   grid-template-columns: minmax(0, 170px) 36px;
   align-items: baseline;
   gap: var(--space-5);
-  flex-shrink: 0;
+  min-width: 0;
 }
 
 .raceRowDriver {

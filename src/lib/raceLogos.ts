@@ -51,9 +51,9 @@ const RACE_LOGOS: Record<string, string> = {
   "texas 1": "/race-logos/texas-spring.png",
   texas: "/race-logos/texas-spring.png",
 
-  glen: "/race-logos/watkins-glen.jpg",
-  "watkins glen": "/race-logos/watkins-glen.jpg",
-  "go bowling at the glen": "/race-logos/watkins-glen.jpg",
+  glen: "/race-logos/watkins-glen.png",
+  "watkins glen": "/race-logos/watkins-glen.png",
+  "go bowling at the glen": "/race-logos/watkins-glen.png",
 
   dover: "/race-logos/dover.png",
 
@@ -92,15 +92,15 @@ const RACE_LOGOS: Record<string, string> = {
   richmond: "/race-logos/richmond.png",
   "cook out 400 (richmond)": "/race-logos/richmond.png",
 
-  "daytona 2": "/race-logos/daytona-summer.jpg",
-  "coke zero sugar 400": "/race-logos/daytona-summer.jpg",
+  "daytona 2": "/race-logos/daytona-summer.png",
+  "coke zero sugar 400": "/race-logos/daytona-summer.png",
 
   "darlington 2": "/race-logos/darlington-fall.png",
   "cook out southern 500": "/race-logos/darlington-fall.png",
   "southern 500": "/race-logos/darlington-fall.png",
 
-  gateway: "/race-logos/gateway.webp",
-  "enjoy illinois 300": "/race-logos/gateway.webp",
+  gateway: "/race-logos/gateway.png",
+  "enjoy illinois 300": "/race-logos/gateway.png",
 
   "bass pro shops night race": "/race-logos/bristol-fall.png",
 
