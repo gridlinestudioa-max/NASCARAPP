@@ -406,7 +406,8 @@ button {
   cursor: pointer;
   border-radius: var(--radius-btn);
   padding: 0.55em 1.3em;
-  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.1s ease;
 }
 
 /* Sitewide tap/press feedback — every button dips slightly on press and
@@ -416,6 +417,19 @@ button {
    below) doesn't also look pressable. */
 button:active:not(:disabled) {
   transform: scale(0.97);
+}
+
+/* Sitewide hover growth — a button gets visibly bigger under the cursor so
+   hovering reads as an unmistakable invitation to click, not just a color
+   shift. :not(:active) so a press (mouse down while still hovering) isn't
+   fought over by two transforms — the press dip above always wins while
+   the button is actually held down. The transition override applies only
+   while entering hover; leaving it (or pressing) falls back to the base
+   rule's faster, snappier transform timing. */
+button:hover:not(:disabled):not(:active) {
+  transform: scale(1.1);
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.3s ease-out;
 }
 
 button:disabled {
@@ -429,8 +443,13 @@ button[type="submit"] {
   border: 1px solid var(--accent);
 }
 
+/* Hover inverts the button — background and text swap places — instead of
+   just fading, so the "more interactive" feel comes from an actual color
+   flip, not a dimmer opacity. */
 button[type="submit"]:hover:not(:disabled) {
-  opacity: 0.85;
+  background: var(--text-on-ink);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 button[type="button"] {
@@ -440,11 +459,9 @@ button[type="button"] {
 }
 
 button[type="button"]:hover:not(:disabled) {
-  border-color: var(--color-slate);
-  /* --bg-surface-muted currently equals --bg-surface exactly (see its
-     definition above), so a hover tint has to actually mix toward the ink
-     color rather than reference that token, or this rule would be a no-op. */
-  background: color-mix(in oklab, var(--bg-surface) 94%, var(--text-primary));
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  border-color: var(--text-primary);
 }
 
 /* ---------- Inline status messages ----------
